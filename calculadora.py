@@ -1,4 +1,6 @@
+import os
 import sys
+from datetime import datetime
 from decimal import Decimal
 
 try:
@@ -15,14 +17,19 @@ ESTADO_TYPING_OPERANDO = "typing_operando"
 ESTADO_OPERADOR_PENDIENTE = "operador_pendiente"
 ESTADO_RESULTADO_EN_DISPLAY = "resultado_en_display"
 
+ARCHIVO_LOG_DETALLADO = "calculadora.log"
+ARCHIVO_CINTA = "cinta.txt"
 
-def nueva_calculadora():
+
+def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
     return {
         "estado": ESTADO_APAGADA,
         "display": "",
         "operando_actual": "",
         "acumulado": "",
         "operador_pendiente": "",
+        "ruta_log": ruta_log,
+        "ruta_cinta": ruta_cinta,
     }
 
 
@@ -32,9 +39,13 @@ def encender(calculadora):
     calculadora["operando_actual"] = ""
     calculadora["acumulado"] = ""
     calculadora["operador_pendiente"] = ""
+    registrar_log(calculadora, "encender")
+    registrar_cinta(calculadora, encabezado_cinta("encendida"))
 
 
 def apagar(calculadora):
+    registrar_log(calculadora, "apagar")
+    registrar_cinta(calculadora, encabezado_cinta("apagada"))
     calculadora["estado"] = ESTADO_APAGADA
     calculadora["display"] = ""
     calculadora["operando_actual"] = ""
@@ -47,25 +58,41 @@ def presionar_tecla(calculadora, tecla):
         raise ValueError("La tecla debe ser un unico caracter.")
 
     if calculadora["estado"] == ESTADO_APAGADA:
+        registrar_log(
+            calculadora,
+            "error",
+            "tecla=" + tecla + " motivo=calculadora_apagada",
+        )
         raise ValueError("La calculadora esta apagada.")
 
-    if calculadora["estado"] == ESTADO_ENCENDIDA_ESPERANDO_TYPING:
-        manejar_encendida_esperando_typing(calculadora, tecla)
-        return
+    estado_antes = describir_estado(calculadora)
 
-    if calculadora["estado"] == ESTADO_TYPING_OPERANDO:
-        manejar_typing_operando(calculadora, tecla)
-        return
+    try:
+        if calculadora["estado"] == ESTADO_ENCENDIDA_ESPERANDO_TYPING:
+            manejar_encendida_esperando_typing(calculadora, tecla)
+        elif calculadora["estado"] == ESTADO_TYPING_OPERANDO:
+            manejar_typing_operando(calculadora, tecla)
+        elif calculadora["estado"] == ESTADO_OPERADOR_PENDIENTE:
+            manejar_operador_pendiente(calculadora, tecla)
+        elif calculadora["estado"] == ESTADO_RESULTADO_EN_DISPLAY:
+            manejar_resultado_en_display(calculadora, tecla)
+        else:
+            raise ValueError("Estado no soportado.")
+    except ValueError as error:
+        registrar_log(
+            calculadora,
+            "error",
+            "tecla=" + tecla + " antes=" + estado_antes + " motivo=" + str(error),
+        )
+        raise
 
-    if calculadora["estado"] == ESTADO_OPERADOR_PENDIENTE:
-        manejar_operador_pendiente(calculadora, tecla)
-        return
-
-    if calculadora["estado"] == ESTADO_RESULTADO_EN_DISPLAY:
-        manejar_resultado_en_display(calculadora, tecla)
-        return
-
-    raise ValueError("Estado no soportado.")
+    registrar_log(
+        calculadora,
+        "tecla",
+        "tecla=" + tecla
+        + " antes=" + estado_antes
+        + " despues=" + describir_estado(calculadora),
+    )
 
 
 def es_operador(tecla):
@@ -221,11 +248,24 @@ def preparar_o_encadenar_operacion(calculadora, operador):
     if calculadora["operador_pendiente"] == "":
         calculadora["acumulado"] = calculadora["operando_actual"]
     else:
-        calculadora["acumulado"] = resolver_operacion(
-            calculadora["acumulado"],
-            calculadora["operador_pendiente"],
-            calculadora["operando_actual"],
+        izquierda = calculadora["acumulado"]
+        operador_actual = calculadora["operador_pendiente"]
+        derecha = calculadora["operando_actual"]
+        resultado = resolver_operacion(izquierda, operador_actual, derecha)
+        registrar_operacion_en_cinta(
+            calculadora,
+            izquierda,
+            operador_actual,
+            derecha,
+            resultado,
         )
+        registrar_log(
+            calculadora,
+            "resolver",
+            "expresion=" + izquierda + " " + operador_actual + " " + derecha
+            + " resultado=" + resultado,
+        )
+        calculadora["acumulado"] = resultado
         calculadora["display"] = calculadora["acumulado"]
 
     calculadora["operador_pendiente"] = operador
@@ -239,10 +279,16 @@ def cerrar_operacion(calculadora):
         calculadora["estado"] = ESTADO_RESULTADO_EN_DISPLAY
         return
 
-    resultado = resolver_operacion(
-        calculadora["acumulado"],
-        calculadora["operador_pendiente"],
-        calculadora["operando_actual"],
+    izquierda = calculadora["acumulado"]
+    operador = calculadora["operador_pendiente"]
+    derecha = calculadora["operando_actual"]
+    resultado = resolver_operacion(izquierda, operador, derecha)
+    registrar_operacion_en_cinta(calculadora, izquierda, operador, derecha, resultado)
+    registrar_log(
+        calculadora,
+        "resolver",
+        "expresion=" + izquierda + " " + operador + " " + derecha
+        + " resultado=" + resultado,
     )
     calculadora["display"] = resultado
     calculadora["operando_actual"] = ""
@@ -257,6 +303,8 @@ def limpiar(calculadora):
     calculadora["operando_actual"] = ""
     calculadora["acumulado"] = ""
     calculadora["operador_pendiente"] = ""
+    registrar_cinta(calculadora, "C")
+    registrar_log(calculadora, "limpiar")
 
 
 def mostrar_estado(calculadora):
@@ -290,6 +338,51 @@ def leer_tecla():
     return tecla
 
 
+def describir_estado(calculadora):
+    return (
+        "estado=" + calculadora["estado"]
+        + ",display=" + calculadora["display"]
+        + ",operando_actual=" + calculadora["operando_actual"]
+        + ",acumulado=" + calculadora["acumulado"]
+        + ",operador_pendiente=" + calculadora["operador_pendiente"]
+    )
+
+
+def encabezado_cinta(evento):
+    return "--- " + marca_tiempo() + " " + evento + " ---"
+
+
+def marca_tiempo():
+    return datetime.now().isoformat(sep=" ", timespec="seconds")
+
+
+def registrar_log(calculadora, accion, detalle=""):
+    linea = "[" + marca_tiempo() + "] accion=" + accion
+    if detalle != "":
+        linea += " " + detalle
+    escribir_linea(calculadora["ruta_log"], linea)
+
+
+def registrar_cinta(calculadora, linea):
+    escribir_linea(calculadora["ruta_cinta"], linea)
+
+
+def registrar_operacion_en_cinta(calculadora, izquierda, operador, derecha, resultado):
+    registrar_cinta(
+        calculadora,
+        izquierda + " " + operador + " " + derecha + " = " + resultado,
+    )
+
+
+def escribir_linea(ruta, linea):
+    directorio = os.path.dirname(ruta)
+    if directorio != "":
+        os.makedirs(directorio, exist_ok=True)
+
+    with open(ruta, "a", encoding="utf-8") as archivo:
+        archivo.write(linea + "\n")
+
+
 def ejecutar_terminal():
     calculadora = nueva_calculadora()
     encender(calculadora)
@@ -299,6 +392,8 @@ def ejecutar_terminal():
     print("Usa teclas: 0-9 . + - * / = C")
     print("Cada tecla se procesa sin Enter")
     print("Usa q para salir")
+    print("Log detallado:", calculadora["ruta_log"])
+    print("Cinta:", calculadora["ruta_cinta"])
 
     while True:
         mostrar_estado(calculadora)

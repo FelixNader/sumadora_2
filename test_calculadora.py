@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 
 from calculadora import ESTADO_ENCENDIDA_ESPERANDO_TYPING
@@ -10,8 +12,26 @@ from calculadora import presionar_tecla
 
 
 class CalculadoraContableTest(unittest.TestCase):
+    def setUp(self):
+        self.directorio_temporal = tempfile.TemporaryDirectory()
+        self.ruta_log = os.path.join(self.directorio_temporal.name, "calculadora.log")
+        self.ruta_cinta = os.path.join(self.directorio_temporal.name, "cinta.txt")
+
+    def tearDown(self):
+        self.directorio_temporal.cleanup()
+
+    def crear_calculadora(self):
+        return nueva_calculadora(
+            ruta_log=self.ruta_log,
+            ruta_cinta=self.ruta_cinta,
+        )
+
+    def leer_archivo(self, ruta):
+        with open(ruta, "r", encoding="utf-8") as archivo:
+            return archivo.read()
+
     def test_encender_activa_estado_inicial(self):
-        calculadora = nueva_calculadora()
+        calculadora = self.crear_calculadora()
 
         encender(calculadora)
 
@@ -19,7 +39,7 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["display"], "0")
 
     def test_primer_digito_desde_esperando_typing_inicia_captura(self):
-        calculadora = nueva_calculadora()
+        calculadora = self.crear_calculadora()
         encender(calculadora)
 
         presionar_tecla(calculadora, "7")
@@ -28,7 +48,7 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["display"], "7")
 
     def test_operador_prepara_segundo_operando(self):
-        calculadora = nueva_calculadora()
+        calculadora = self.crear_calculadora()
         encender(calculadora)
 
         presionar_tecla(calculadora, "7")
@@ -39,7 +59,7 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["operador_pendiente"], "+")
 
     def test_suma_basica(self):
-        calculadora = nueva_calculadora()
+        calculadora = self.crear_calculadora()
         encender(calculadora)
 
         presionar_tecla(calculadora, "2")
@@ -51,7 +71,7 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["display"], "5")
 
     def test_resta_basica(self):
-        calculadora = nueva_calculadora()
+        calculadora = self.crear_calculadora()
         encender(calculadora)
 
         presionar_tecla(calculadora, "9")
@@ -62,7 +82,7 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["display"], "5")
 
     def test_multiplicacion_basica(self):
-        calculadora = nueva_calculadora()
+        calculadora = self.crear_calculadora()
         encender(calculadora)
 
         presionar_tecla(calculadora, "6")
@@ -73,7 +93,7 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["display"], "42")
 
     def test_division_basica(self):
-        calculadora = nueva_calculadora()
+        calculadora = self.crear_calculadora()
         encender(calculadora)
 
         presionar_tecla(calculadora, "8")
@@ -84,7 +104,7 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["display"], "2")
 
     def test_division_entre_cero_falla(self):
-        calculadora = nueva_calculadora()
+        calculadora = self.crear_calculadora()
         encender(calculadora)
 
         presionar_tecla(calculadora, "8")
@@ -93,6 +113,37 @@ class CalculadoraContableTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             presionar_tecla(calculadora, "=")
+
+    def test_log_detallado_registra_acciones_y_errores(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        presionar_tecla(calculadora, "2")
+        presionar_tecla(calculadora, "+")
+
+        with self.assertRaises(ValueError):
+            presionar_tecla(calculadora, "=")
+
+        contenido_log = self.leer_archivo(self.ruta_log)
+
+        self.assertIn("accion=encender", contenido_log)
+        self.assertIn("accion=tecla tecla=2", contenido_log)
+        self.assertIn("accion=tecla tecla=+", contenido_log)
+        self.assertIn("accion=error tecla==", contenido_log)
+
+    def test_cinta_registra_operacion_resuelta(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        presionar_tecla(calculadora, "2")
+        presionar_tecla(calculadora, "+")
+        presionar_tecla(calculadora, "3")
+        presionar_tecla(calculadora, "=")
+
+        contenido_cinta = self.leer_archivo(self.ruta_cinta)
+
+        self.assertIn("encendida", contenido_cinta)
+        self.assertIn("2 + 3 = 5", contenido_cinta)
 
 
 if __name__ == "__main__":
