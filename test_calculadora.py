@@ -37,6 +37,7 @@ class CalculadoraContableTest(unittest.TestCase):
 
         self.assertEqual(calculadora["estado"], ESTADO_ENCENDIDA_ESPERANDO_TYPING)
         self.assertEqual(calculadora["display"], "0")
+        self.assertEqual(calculadora["gran_total"], "0")
 
     def test_primer_digito_desde_esperando_typing_inicia_captura(self):
         calculadora = self.crear_calculadora()
@@ -144,6 +145,47 @@ class CalculadoraContableTest(unittest.TestCase):
 
         self.assertIn("encendida", contenido_cinta)
         self.assertIn("2 + 3 = 5", contenido_cinta)
+
+    def test_subtotal_suma_al_gran_total_y_reinicia_operacion(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        presionar_tecla(calculadora, "2")
+        presionar_tecla(calculadora, "+")
+        presionar_tecla(calculadora, "3")
+        presionar_tecla(calculadora, "s")
+
+        self.assertEqual(calculadora["estado"], ESTADO_ENCENDIDA_ESPERANDO_TYPING)
+        self.assertEqual(calculadora["display"], "0")
+        self.assertEqual(calculadora["ultimo_subtotal"], "5")
+        self.assertEqual(calculadora["gran_total"], "5")
+
+    def test_subtotales_son_independientes_y_acumulan_gran_total(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "2+3s4+1s":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["gran_total"], "10")
+        self.assertEqual(calculadora["display"], "0")
+        self.assertEqual(calculadora["estado"], ESTADO_ENCENDIDA_ESPERANDO_TYPING)
+
+    def test_gran_total_imprime_y_reinicia_todo(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "2+3s4+1sg":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["ultimo_gran_total"], "10")
+        self.assertEqual(calculadora["gran_total"], "0")
+        self.assertEqual(calculadora["display"], "0")
+        self.assertEqual(calculadora["estado"], ESTADO_ENCENDIDA_ESPERANDO_TYPING)
+
+        contenido_cinta = self.leer_archivo(self.ruta_cinta)
+        self.assertIn("SUBTOTAL = 5", contenido_cinta)
+        self.assertIn("GRAN TOTAL = 10", contenido_cinta)
 
 
 if __name__ == "__main__":

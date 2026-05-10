@@ -28,17 +28,19 @@ def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
         "operando_actual": "",
         "acumulado": "",
         "operador_pendiente": "",
+        "gran_total": "0",
+        "ultimo_subtotal": "",
+        "ultimo_gran_total": "",
         "ruta_log": ruta_log,
         "ruta_cinta": ruta_cinta,
     }
 
 
 def encender(calculadora):
-    calculadora["estado"] = ESTADO_ENCENDIDA_ESPERANDO_TYPING
-    calculadora["display"] = "0"
-    calculadora["operando_actual"] = ""
-    calculadora["acumulado"] = ""
-    calculadora["operador_pendiente"] = ""
+    reiniciar_operacion(calculadora)
+    calculadora["gran_total"] = "0"
+    calculadora["ultimo_subtotal"] = ""
+    calculadora["ultimo_gran_total"] = ""
     registrar_log(calculadora, "encender")
     registrar_cinta(calculadora, encabezado_cinta("encendida"))
 
@@ -68,7 +70,11 @@ def presionar_tecla(calculadora, tecla):
     estado_antes = describir_estado(calculadora)
 
     try:
-        if calculadora["estado"] == ESTADO_ENCENDIDA_ESPERANDO_TYPING:
+        if tecla in {"s", "S"}:
+            subtotalizar(calculadora)
+        elif tecla in {"g", "G"}:
+            gran_totalizar(calculadora)
+        elif calculadora["estado"] == ESTADO_ENCENDIDA_ESPERANDO_TYPING:
             manejar_encendida_esperando_typing(calculadora, tecla)
         elif calculadora["estado"] == ESTADO_TYPING_OPERANDO:
             manejar_typing_operando(calculadora, tecla)
@@ -297,14 +303,71 @@ def cerrar_operacion(calculadora):
     calculadora["estado"] = ESTADO_RESULTADO_EN_DISPLAY
 
 
+def subtotalizar(calculadora):
+    subtotal = obtener_subtotal_actual(calculadora)
+    gran_total = sumar_a_gran_total(calculadora["gran_total"], subtotal)
+    calculadora["ultimo_subtotal"] = subtotal
+    calculadora["gran_total"] = gran_total
+    registrar_cinta(calculadora, "SUBTOTAL = " + subtotal)
+    registrar_log(
+        calculadora,
+        "subtotal",
+        "subtotal=" + subtotal + " gran_total=" + gran_total,
+    )
+    reiniciar_operacion(calculadora)
+
+
+def gran_totalizar(calculadora):
+    gran_total = calculadora["gran_total"]
+    calculadora["ultimo_gran_total"] = gran_total
+    registrar_cinta(calculadora, "GRAN TOTAL = " + gran_total)
+    registrar_log(calculadora, "gran_total", "gran_total=" + gran_total)
+    reiniciar_operacion(calculadora)
+    calculadora["gran_total"] = "0"
+    calculadora["ultimo_subtotal"] = ""
+    registrar_cinta(calculadora, encabezado_cinta("nueva_calculadora"))
+
+
+def obtener_subtotal_actual(calculadora):
+    if calculadora["estado"] == ESTADO_ENCENDIDA_ESPERANDO_TYPING:
+        return "0"
+
+    if calculadora["estado"] == ESTADO_OPERADOR_PENDIENTE:
+        if calculadora["acumulado"] != "":
+            return calculadora["acumulado"]
+        return calculadora["display"] or "0"
+
+    if calculadora["estado"] == ESTADO_TYPING_OPERANDO:
+        if calculadora["operador_pendiente"] != "":
+            return resolver_operacion(
+                calculadora["acumulado"],
+                calculadora["operador_pendiente"],
+                calculadora["operando_actual"],
+            )
+        return calculadora["operando_actual"] or calculadora["display"] or "0"
+
+    if calculadora["estado"] == ESTADO_RESULTADO_EN_DISPLAY:
+        return calculadora["display"] or "0"
+
+    raise ValueError("No se pudo obtener subtotal.")
+
+
+def sumar_a_gran_total(gran_total, subtotal):
+    return formatear_decimal(Decimal(gran_total) + Decimal(subtotal))
+
+
 def limpiar(calculadora):
+    reiniciar_operacion(calculadora)
+    registrar_cinta(calculadora, "C")
+    registrar_log(calculadora, "limpiar")
+
+
+def reiniciar_operacion(calculadora):
     calculadora["estado"] = ESTADO_ENCENDIDA_ESPERANDO_TYPING
     calculadora["display"] = "0"
     calculadora["operando_actual"] = ""
     calculadora["acumulado"] = ""
     calculadora["operador_pendiente"] = ""
-    registrar_cinta(calculadora, "C")
-    registrar_log(calculadora, "limpiar")
 
 
 def mostrar_estado(calculadora):
@@ -313,6 +376,7 @@ def mostrar_estado(calculadora):
     print("Display:", calculadora["display"])
     print("Acumulado:", calculadora["acumulado"] or "-")
     print("Operador pendiente:", calculadora["operador_pendiente"] or "-")
+    print("Gran total:", calculadora["gran_total"])
 
 
 def leer_tecla():
@@ -345,6 +409,7 @@ def describir_estado(calculadora):
         + ",operando_actual=" + calculadora["operando_actual"]
         + ",acumulado=" + calculadora["acumulado"]
         + ",operador_pendiente=" + calculadora["operador_pendiente"]
+        + ",gran_total=" + calculadora["gran_total"]
     )
 
 
@@ -389,7 +454,9 @@ def ejecutar_terminal():
 
     print("Calculadora sumadora contable")
     print("Estado inicial: encendida_esperando_typing")
-    print("Usa teclas: 0-9 . + - * / = C")
+    print("Usa teclas: 0-9 . + - * / = C s g")
+    print("s subtotaliza y acumula al gran total")
+    print("g imprime el gran total y reinicia en ceros")
     print("Cada tecla se procesa sin Enter")
     print("Usa q para salir")
     print("Log detallado:", calculadora["ruta_log"])
