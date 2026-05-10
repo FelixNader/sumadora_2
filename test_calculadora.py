@@ -187,6 +187,81 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertIn("SUBTOTAL = 5", contenido_cinta)
         self.assertIn("GRAN TOTAL = 10", contenido_cinta)
 
+    def test_multiplicacion_despues_de_suma_no_suma_el_factor_antes_de_tiempo(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "50+50+2*":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "2")
+        self.assertEqual(calculadora["acumulado"], "100")
+        self.assertEqual(calculadora["acumulado_multiplicativo"], "2")
+        self.assertEqual(calculadora["operador_pendiente"], "*")
+
+    def test_multiplicacion_se_integra_al_subtotal_al_cerrar(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "50+50+2*50=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "200")
+        self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
+    def test_multiplicacion_despues_de_resta_no_resta_el_factor_antes_de_tiempo(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "100-2*":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "2")
+        self.assertEqual(calculadora["acumulado"], "100")
+        self.assertEqual(calculadora["acumulado_multiplicativo"], "2")
+        self.assertEqual(calculadora["operador_pendiente"], "*")
+        self.assertEqual(calculadora["operador_subtotal"], "-")
+
+    def test_multiplicacion_se_descuenta_del_subtotal_al_cerrar(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "100-2*50=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "0")
+        self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
+    def test_division_se_integra_al_subtotal_despues_de_suma(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "100+50/2=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "125")
+        self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
+    def test_division_se_descuenta_del_subtotal_despues_de_resta(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "100-50/2=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "75")
+        self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
+    def test_division_y_multiplicacion_encadenadas_forman_un_mismo_termino(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "100+50/2*4=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "200")
+        self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
 
 if __name__ == "__main__":
     unittest.main()

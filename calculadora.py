@@ -27,7 +27,9 @@ def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
         "display": "",
         "operando_actual": "",
         "acumulado": "",
+        "acumulado_multiplicativo": "",
         "operador_pendiente": "",
+        "operador_subtotal": "+",
         "gran_total": "0",
         "ultimo_subtotal": "",
         "ultimo_gran_total": "",
@@ -52,6 +54,7 @@ def apagar(calculadora):
     calculadora["display"] = ""
     calculadora["operando_actual"] = ""
     calculadora["acumulado"] = ""
+    calculadora["acumulado_multiplicativo"] = ""
     calculadora["operador_pendiente"] = ""
 
 
@@ -103,6 +106,14 @@ def presionar_tecla(calculadora, tecla):
 
 def es_operador(tecla):
     return tecla in {"+", "-", "*", "/"}
+
+
+def es_operador_aditivo(tecla):
+    return tecla in {"+", "-"}
+
+
+def es_operador_multiplicativo(tecla):
+    return tecla in {"*", "/"}
 
 
 def formatear_decimal(valor):
@@ -178,8 +189,12 @@ def manejar_typing_operando(calculadora, tecla):
         limpiar(calculadora)
         return
 
-    if es_operador(tecla):
-        preparar_o_encadenar_operacion(calculadora, tecla)
+    if es_operador_aditivo(tecla):
+        preparar_o_encadenar_adicion(calculadora, tecla)
+        return
+
+    if es_operador_multiplicativo(tecla):
+        preparar_o_encadenar_multiplicacion(calculadora, tecla)
         return
 
     if tecla == "=":
@@ -206,7 +221,14 @@ def manejar_operador_pendiente(calculadora, tecla):
         limpiar(calculadora)
         return
 
-    if es_operador(tecla):
+    if es_operador_aditivo(tecla) and es_operador_aditivo(calculadora["operador_pendiente"]):
+        calculadora["operador_pendiente"] = tecla
+        calculadora["operador_subtotal"] = tecla
+        return
+
+    if es_operador_multiplicativo(tecla) and es_operador_multiplicativo(
+        calculadora["operador_pendiente"]
+    ):
         calculadora["operador_pendiente"] = tecla
         return
 
@@ -218,18 +240,16 @@ def manejar_operador_pendiente(calculadora, tecla):
 
 def manejar_resultado_en_display(calculadora, tecla):
     if tecla.isdigit():
+        reiniciar_operacion(calculadora)
         calculadora["operando_actual"] = tecla
         calculadora["display"] = tecla
-        calculadora["acumulado"] = ""
-        calculadora["operador_pendiente"] = ""
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
         return
 
     if tecla == ".":
+        reiniciar_operacion(calculadora)
         calculadora["operando_actual"] = "0."
         calculadora["display"] = "0."
-        calculadora["acumulado"] = ""
-        calculadora["operador_pendiente"] = ""
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
         return
 
@@ -237,8 +257,19 @@ def manejar_resultado_en_display(calculadora, tecla):
         limpiar(calculadora)
         return
 
-    if es_operador(tecla):
+    if es_operador_aditivo(tecla):
         calculadora["acumulado"] = calculadora["display"]
+        calculadora["operador_subtotal"] = tecla
+        calculadora["operador_pendiente"] = tecla
+        calculadora["operando_actual"] = ""
+        calculadora["acumulado_multiplicativo"] = ""
+        calculadora["estado"] = ESTADO_OPERADOR_PENDIENTE
+        return
+
+    if es_operador_multiplicativo(tecla):
+        calculadora["acumulado"] = ""
+        calculadora["acumulado_multiplicativo"] = calculadora["display"]
+        calculadora["operador_subtotal"] = "+"
         calculadora["operador_pendiente"] = tecla
         calculadora["operando_actual"] = ""
         calculadora["estado"] = ESTADO_OPERADOR_PENDIENTE
@@ -250,61 +281,54 @@ def manejar_resultado_en_display(calculadora, tecla):
     raise ValueError("Tecla no soportada en resultado_en_display.")
 
 
-def preparar_o_encadenar_operacion(calculadora, operador):
-    if calculadora["operador_pendiente"] == "":
-        calculadora["acumulado"] = calculadora["operando_actual"]
-    else:
-        izquierda = calculadora["acumulado"]
-        operador_actual = calculadora["operador_pendiente"]
-        derecha = calculadora["operando_actual"]
-        resultado = resolver_operacion(izquierda, operador_actual, derecha)
-        registrar_operacion_en_cinta(
-            calculadora,
-            izquierda,
-            operador_actual,
-            derecha,
-            resultado,
-        )
-        registrar_log(
-            calculadora,
-            "resolver",
-            "expresion=" + izquierda + " " + operador_actual + " " + derecha
-            + " resultado=" + resultado,
-        )
-        calculadora["acumulado"] = resultado
-        calculadora["display"] = calculadora["acumulado"]
+def preparar_o_encadenar_adicion(calculadora, operador):
+    termino = resolver_termino_actual(calculadora, registrar=True)
 
+    if calculadora["acumulado"] == "":
+        nuevo_subtotal = termino
+    else:
+        nuevo_subtotal = resolver_y_registrar(
+            calculadora,
+            calculadora["acumulado"],
+            calculadora["operador_subtotal"],
+            termino,
+        )
+
+    calculadora["acumulado"] = nuevo_subtotal
+    calculadora["acumulado_multiplicativo"] = ""
+    calculadora["operador_subtotal"] = operador
     calculadora["operador_pendiente"] = operador
     calculadora["operando_actual"] = ""
+    calculadora["display"] = nuevo_subtotal
+    calculadora["estado"] = ESTADO_OPERADOR_PENDIENTE
+
+
+def preparar_o_encadenar_multiplicacion(calculadora, operador):
+    if calculadora["operador_pendiente"] in {"*", "/"}:
+        termino = resolver_termino_actual(calculadora, registrar=True)
+        calculadora["acumulado_multiplicativo"] = termino
+    else:
+        calculadora["acumulado_multiplicativo"] = calculadora["operando_actual"]
+        calculadora["operando_actual"] = ""
+        calculadora["display"] = calculadora["acumulado_multiplicativo"]
+
+    calculadora["operador_pendiente"] = operador
     calculadora["estado"] = ESTADO_OPERADOR_PENDIENTE
 
 
 def cerrar_operacion(calculadora):
-    if calculadora["operador_pendiente"] == "":
-        calculadora["display"] = calculadora["operando_actual"]
-        calculadora["estado"] = ESTADO_RESULTADO_EN_DISPLAY
-        return
-
-    izquierda = calculadora["acumulado"]
-    operador = calculadora["operador_pendiente"]
-    derecha = calculadora["operando_actual"]
-    resultado = resolver_operacion(izquierda, operador, derecha)
-    registrar_operacion_en_cinta(calculadora, izquierda, operador, derecha, resultado)
-    registrar_log(
-        calculadora,
-        "resolver",
-        "expresion=" + izquierda + " " + operador + " " + derecha
-        + " resultado=" + resultado,
-    )
-    calculadora["display"] = resultado
+    subtotal = obtener_subtotal_actual(calculadora, registrar=True)
+    calculadora["display"] = subtotal
     calculadora["operando_actual"] = ""
-    calculadora["acumulado"] = resultado
+    calculadora["acumulado"] = subtotal
+    calculadora["acumulado_multiplicativo"] = ""
     calculadora["operador_pendiente"] = ""
+    calculadora["operador_subtotal"] = "+"
     calculadora["estado"] = ESTADO_RESULTADO_EN_DISPLAY
 
 
 def subtotalizar(calculadora):
-    subtotal = obtener_subtotal_actual(calculadora)
+    subtotal = obtener_subtotal_actual(calculadora, registrar=True)
     gran_total = sumar_a_gran_total(calculadora["gran_total"], subtotal)
     calculadora["ultimo_subtotal"] = subtotal
     calculadora["gran_total"] = gran_total
@@ -328,28 +352,112 @@ def gran_totalizar(calculadora):
     registrar_cinta(calculadora, encabezado_cinta("nueva_calculadora"))
 
 
-def obtener_subtotal_actual(calculadora):
+def obtener_subtotal_actual(calculadora, registrar=False):
     if calculadora["estado"] == ESTADO_ENCENDIDA_ESPERANDO_TYPING:
+        if calculadora["acumulado"] != "":
+            return calculadora["acumulado"]
         return "0"
 
     if calculadora["estado"] == ESTADO_OPERADOR_PENDIENTE:
-        if calculadora["acumulado"] != "":
-            return calculadora["acumulado"]
-        return calculadora["display"] or "0"
+        if es_operador_aditivo(calculadora["operador_pendiente"]):
+            if calculadora["acumulado"] != "":
+                return calculadora["acumulado"]
+            if calculadora["display"] != "":
+                return calculadora["display"]
+            return "0"
 
-    if calculadora["estado"] == ESTADO_TYPING_OPERANDO:
-        if calculadora["operador_pendiente"] != "":
+        if es_operador_multiplicativo(calculadora["operador_pendiente"]):
+            termino = calculadora["acumulado_multiplicativo"] or "0"
+            if calculadora["acumulado"] == "":
+                return termino
+            if registrar:
+                return resolver_y_registrar(
+                    calculadora,
+                    calculadora["acumulado"],
+                    calculadora["operador_subtotal"],
+                    termino,
+                )
             return resolver_operacion(
                 calculadora["acumulado"],
-                calculadora["operador_pendiente"],
-                calculadora["operando_actual"],
+                calculadora["operador_subtotal"],
+                termino,
             )
-        return calculadora["operando_actual"] or calculadora["display"] or "0"
+
+    if calculadora["estado"] == ESTADO_TYPING_OPERANDO:
+        termino = resolver_termino_actual(calculadora, registrar=registrar)
+        if calculadora["acumulado"] == "":
+            return termino
+        if registrar:
+            return resolver_y_registrar(
+                calculadora,
+                calculadora["acumulado"],
+                calculadora["operador_subtotal"],
+                termino,
+            )
+        return resolver_operacion(
+            calculadora["acumulado"],
+            calculadora["operador_subtotal"],
+            termino,
+        )
 
     if calculadora["estado"] == ESTADO_RESULTADO_EN_DISPLAY:
         return calculadora["display"] or "0"
 
     raise ValueError("No se pudo obtener subtotal.")
+
+
+def resolver_termino_actual(calculadora, registrar=False):
+    if calculadora["operador_pendiente"] in {"*", "/"}:
+        if calculadora["operando_actual"] == "":
+            if calculadora["acumulado_multiplicativo"] != "":
+                return calculadora["acumulado_multiplicativo"]
+            raise ValueError("Falta capturar el segundo operando.")
+
+        izquierda = calculadora["acumulado_multiplicativo"]
+        if izquierda == "":
+            izquierda = calculadora["operando_actual"]
+
+        if registrar:
+            resultado = resolver_y_registrar(
+                calculadora,
+                izquierda,
+                calculadora["operador_pendiente"],
+                calculadora["operando_actual"],
+            )
+        else:
+            resultado = resolver_operacion(
+                izquierda,
+                calculadora["operador_pendiente"],
+                calculadora["operando_actual"],
+            )
+
+        calculadora["acumulado_multiplicativo"] = resultado
+        calculadora["operando_actual"] = ""
+        calculadora["display"] = resultado
+        return resultado
+
+    if calculadora["operando_actual"] != "":
+        return calculadora["operando_actual"]
+
+    if calculadora["acumulado_multiplicativo"] != "":
+        return calculadora["acumulado_multiplicativo"]
+
+    if calculadora["display"] != "":
+        return calculadora["display"]
+
+    return "0"
+
+
+def resolver_y_registrar(calculadora, izquierda, operador, derecha):
+    resultado = resolver_operacion(izquierda, operador, derecha)
+    registrar_operacion_en_cinta(calculadora, izquierda, operador, derecha, resultado)
+    registrar_log(
+        calculadora,
+        "resolver",
+        "expresion=" + izquierda + " " + operador + " " + derecha
+        + " resultado=" + resultado,
+    )
+    return resultado
 
 
 def sumar_a_gran_total(gran_total, subtotal):
@@ -367,7 +475,9 @@ def reiniciar_operacion(calculadora):
     calculadora["display"] = "0"
     calculadora["operando_actual"] = ""
     calculadora["acumulado"] = ""
+    calculadora["acumulado_multiplicativo"] = ""
     calculadora["operador_pendiente"] = ""
+    calculadora["operador_subtotal"] = "+"
 
 
 def mostrar_estado(calculadora):
@@ -375,6 +485,7 @@ def mostrar_estado(calculadora):
     print("Estado:", calculadora["estado"])
     print("Display:", calculadora["display"])
     print("Acumulado:", calculadora["acumulado"] or "-")
+    print("Acumulado multiplicativo:", calculadora["acumulado_multiplicativo"] or "-")
     print("Operador pendiente:", calculadora["operador_pendiente"] or "-")
     print("Gran total:", calculadora["gran_total"])
 
@@ -408,7 +519,9 @@ def describir_estado(calculadora):
         + ",display=" + calculadora["display"]
         + ",operando_actual=" + calculadora["operando_actual"]
         + ",acumulado=" + calculadora["acumulado"]
+        + ",acumulado_multiplicativo=" + calculadora["acumulado_multiplicativo"]
         + ",operador_pendiente=" + calculadora["operador_pendiente"]
+        + ",operador_subtotal=" + calculadora["operador_subtotal"]
         + ",gran_total=" + calculadora["gran_total"]
     )
 
