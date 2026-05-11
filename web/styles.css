@@ -647,3 +647,86 @@ html[data-orientation="landscape"] .calculator-card {
     align-items: start;
   }
 }
+
+@media (min-width: 641px) and (max-width: 1199px) {
+  .app-shell {
+    width: min(100%, 1100px);
+    padding:
+      max(1rem, env(safe-area-inset-top))
+      1rem
+      max(1.25rem, env(safe-area-inset-bottom));
+    gap: 0.9rem;
+  }
+
+  html[data-orientation="portrait"] .app-shell {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  html[data-orientation="portrait"] .calculator-card {
+    width: min(100%, 540px);
+    margin-inline: auto;
+    padding: 0.9rem;
+  }
+
+  html[data-orientation="portrait"] .paper-card {
+    width: min(100%, 720px);
+    margin-inline: auto;
+  }
+
+  html[data-orientation="portrait"] .calculator-header {
+    margin-bottom: 0.85rem;
+  }
+
+  html[data-orientation="portrait"] .display-wrap {
+    margin-bottom: 0.85rem;
+  }
+
+  html[data-orientation="portrait"] .keypad {
+    gap: 0.65rem;
+  }
+
+  html[data-orientation="portrait"] .key {
+    min-height: 4rem;
+    font-size: 1.26rem;
+  }
+
+  html[data-orientation="portrait"] .key.tall {
+    min-height: calc(8rem + 0.65rem);
+  }
+
+  html[data-orientation="landscape"] .app-shell {
+    grid-template-columns: minmax(420px, 500px) minmax(0, 1fr);
+    align-items: start;
+    gap: 0.85rem;
+  }
+
+  html[data-orientation="landscape"] .calculator-card {
+    width: 100%;
+    max-width: 500px;
+    min-height: calc(var(--app-vh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
+    max-height: calc(var(--app-vh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
+    margin-inline: 0;
+    padding: 0.8rem;
+  }
+
+  html[data-orientation="landscape"] .paper-card {
+    min-height: calc(var(--app-vh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
+  }
+
+  html[data-orientation="landscape"] .display-wrap {
+    margin-bottom: 0.65rem;
+  }
+
+  html[data-orientation="landscape"] .keypad {
+    gap: 0.5rem;
+  }
+
+  html[data-orientation="landscape"] .key {
+    font-size: 1.02rem;
+  }
+
+  html[data-orientation="landscape"] .paper-output {
+    max-height: calc(var(--app-vh) - 9rem);
+  }
+}
