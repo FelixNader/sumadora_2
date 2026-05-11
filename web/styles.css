@@ -1,4 +1,5 @@
 :root {
+  --app-vh: 100dvh;
   --bg: #d9ceb8;
   --bg-shadow: #bcae91;
   --card: #efe7d8;
@@ -30,7 +31,7 @@ body {
 body {
   margin: 0;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: var(--app-vh);
   font-family: "Avenir Next", "Helvetica Neue", sans-serif;
   -webkit-text-size-adjust: 100%;
   background:
@@ -42,7 +43,7 @@ body {
 .app-shell {
   width: min(980px, 100%);
   margin: 0 auto;
-  min-height: 100dvh;
+  min-height: var(--app-vh);
   padding: 1.25rem 1rem max(2rem, env(safe-area-inset-bottom));
   display: grid;
   gap: 1rem;
@@ -69,6 +70,12 @@ body {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 .calculator-header h1 {
@@ -105,6 +112,19 @@ body {
 .status-pill strong,
 .metrics strong {
   font-size: 0.95rem;
+}
+
+.mini-key {
+  border: 0;
+  border-radius: 14px;
+  min-width: 3.1rem;
+  min-height: 3.1rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 1rem;
+  font-weight: 800;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .display-wrap {
@@ -189,6 +209,10 @@ body {
     0 6px 12px rgba(89, 63, 37, 0.12);
 }
 
+.mini-key:active {
+  transform: translateY(4px);
+}
+
 .key.accent {
   background: linear-gradient(180deg, #ee944f, var(--accent));
   color: #fff7f0;
@@ -199,6 +223,15 @@ body {
 }
 
 .key.utility {
+  background: linear-gradient(180deg, #9c6951, var(--utility));
+  color: #fff8f3;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 5px 0 var(--utility-shadow),
+    0 10px 18px rgba(85, 51, 33, 0.22);
+}
+
+.mini-key.utility {
   background: linear-gradient(180deg, #9c6951, var(--utility));
   color: #fff8f3;
   box-shadow:
@@ -273,7 +306,7 @@ body {
   }
 
   .app-shell {
-    min-height: 100dvh;
+    min-height: var(--app-vh);
     padding:
       max(0.75rem, env(safe-area-inset-top))
       0.75rem
@@ -282,6 +315,9 @@ body {
   }
 
   .calculator-card {
+    position: sticky;
+    top: max(0.55rem, env(safe-area-inset-top));
+    z-index: 3;
     padding: 0.8rem;
     border-radius: 24px;
   }
@@ -290,6 +326,10 @@ body {
     gap: 0.7rem;
     margin-bottom: 0.8rem;
     align-items: stretch;
+  }
+
+  .header-actions {
+    gap: 0.45rem;
   }
 
   .calculator-header h1 {
@@ -306,6 +346,13 @@ body {
     width: 124px;
     padding: 0.55rem 0.7rem;
     border-radius: 14px;
+  }
+
+  .mini-key {
+    min-width: 2.8rem;
+    min-height: 2.8rem;
+    border-radius: 12px;
+    font-size: 0.96rem;
   }
 
   .status-pill span,
@@ -396,6 +443,202 @@ body {
     font-size: 0.8rem;
     line-height: 1.45;
   }
+}
+
+@media (max-width: 932px) {
+  html[data-orientation="portrait"] .calculator-card {
+    position: relative;
+    top: auto;
+    z-index: auto;
+    width: auto;
+    max-width: none;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  html[data-orientation="portrait"] .keypad {
+    height: auto;
+    grid-template-rows: none;
+  }
+
+  html[data-orientation="portrait"] .key {
+    min-height: 3.7rem;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  html[data-orientation="portrait"] .key.wide {
+    aspect-ratio: 2.1 / 1;
+  }
+
+  html[data-orientation="portrait"] .key.tall {
+    aspect-ratio: auto;
+    min-height: calc(7.4rem + 0.55rem);
+  }
+
+  html[data-orientation="landscape"] .app-shell {
+    min-height: 0;
+    padding:
+      max(0.3rem, env(safe-area-inset-top))
+      0.5rem
+      max(0.5rem, env(safe-area-inset-bottom));
+    gap: 0.45rem;
+  }
+
+  html[data-orientation="landscape"] .calculator-card {
+    position: relative;
+    top: auto;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    width: min(100%, 360px);
+    max-width: 360px;
+    margin-inline: auto;
+    min-height: calc(var(--app-vh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.8rem);
+    max-height: calc(var(--app-vh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.8rem);
+    padding: 0.5rem;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  html[data-orientation="landscape"] .calculator-header {
+    gap: 0.45rem;
+    margin-bottom: 0.35rem;
+    align-items: center;
+  }
+
+  html[data-orientation="landscape"] .header-actions {
+    gap: 0.35rem;
+  }
+
+  html[data-orientation="landscape"] .calculator-header h1 {
+    font-size: 0.96rem;
+  }
+
+  html[data-orientation="landscape"] .kicker {
+    display: none;
+  }
+
+  html[data-orientation="landscape"] .status-pill {
+    width: 98px;
+    min-width: 0;
+    padding: 0.34rem 0.46rem;
+    border-radius: 10px;
+  }
+
+  html[data-orientation="landscape"] .mini-key {
+    min-width: 2.2rem;
+    min-height: 2.2rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 3px 0 var(--utility-shadow),
+      0 6px 10px rgba(85, 51, 33, 0.16);
+  }
+
+  html[data-orientation="landscape"] .status-pill span,
+  html[data-orientation="landscape"] .metrics span {
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
+  }
+
+  html[data-orientation="landscape"] .status-pill strong,
+  html[data-orientation="landscape"] .metrics strong {
+    font-size: 0.72rem;
+  }
+
+  html[data-orientation="landscape"] .display-wrap {
+    padding: 0.42rem;
+    margin-bottom: 0.35rem;
+    border-radius: 14px;
+  }
+
+  html[data-orientation="landscape"] .metrics {
+    gap: 0.28rem;
+    margin-bottom: 0.3rem;
+  }
+
+  html[data-orientation="landscape"] .display-glass {
+    padding: 0.45rem 0.6rem;
+    border-radius: 12px;
+  }
+
+  html[data-orientation="landscape"] .display-text {
+    min-height: 1.8rem;
+    font-size: clamp(1.35rem, 4.6vw, 2rem);
+    letter-spacing: 0.02em;
+  }
+
+  html[data-orientation="landscape"] .keypad {
+    min-height: 0;
+    height: 100%;
+    gap: 0.3rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+  }
+
+  html[data-orientation="landscape"] .key {
+    min-height: 0;
+    height: 100%;
+    aspect-ratio: auto;
+    border-radius: 12px;
+    font-size: 0.98rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      0 3px 0 var(--button-shadow),
+      0 6px 10px rgba(89, 63, 37, 0.12);
+  }
+
+  html[data-orientation="landscape"] .key.accent {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      0 3px 0 var(--accent-shadow),
+      0 6px 10px rgba(163, 79, 28, 0.18);
+  }
+
+  html[data-orientation="landscape"] .key.utility {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 3px 0 var(--utility-shadow),
+      0 6px 10px rgba(85, 51, 33, 0.16);
+  }
+
+  html[data-orientation="landscape"] .key.tall {
+    min-height: 0;
+  }
+
+  html[data-orientation="landscape"] .paper-card {
+    padding: 0.55rem;
+    border-radius: 18px;
+  }
+
+  html[data-orientation="landscape"] .panel-switch {
+    margin-bottom: 0.45rem;
+  }
+
+  html[data-orientation="landscape"] .panel-switch button {
+    padding: 0.36rem 0.62rem;
+    font-size: 0.8rem;
+  }
+
+  html[data-orientation="landscape"] .paper-output {
+    min-height: 120px;
+    max-height: 30vh;
+    padding: 0.7rem;
+    border-radius: 14px;
+    font-size: 0.74rem;
+    line-height: 1.35;
+  }
+}
+
+html[data-orientation="portrait"] .calculator-card {
+  transform: translateZ(0);
+}
+
+html[data-orientation="landscape"] .calculator-card {
+  transform: translateZ(0);
 }
 
 @media (min-width: 900px) {

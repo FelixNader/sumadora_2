@@ -60,7 +60,11 @@ export function presionarTecla(calculadora, tecla) {
   const estadoAntes = describirEstado(calculadora);
 
   try {
-    if (tecla === "s" || tecla === "S") {
+    if (tecla === "e" || tecla === "E") {
+      borrarEntrada(calculadora);
+    } else if (tecla === "a" || tecla === "A") {
+      borrarTodo(calculadora);
+    } else if (tecla === "s" || tecla === "S") {
       subtotalizar(calculadora);
     } else if (tecla === "g" || tecla === "G") {
       granTotalizar(calculadora);
@@ -125,13 +129,8 @@ function manejarEncendidaEsperandoTyping(calculadora, tecla) {
     return;
   }
 
-  if (tecla === "C" || tecla === "c") {
-    limpiar(calculadora);
-    return;
-  }
-
   throw new Error(
-    "En encendida_esperando_typing solo se aceptan digitos, '.' o 'C'.",
+    "En encendida_esperando_typing solo se aceptan digitos, '.' o '-'.",
   );
 }
 
@@ -162,11 +161,6 @@ function manejarTypingOperando(calculadora, tecla) {
       calculadora.operando_actual += ".";
     }
     calculadora.display = calculadora.operando_actual;
-    return;
-  }
-
-  if (tecla === "C" || tecla === "c") {
-    limpiar(calculadora);
     return;
   }
 
@@ -210,11 +204,6 @@ function manejarOperadorPendiente(calculadora, tecla) {
     return;
   }
 
-  if (tecla === "C" || tecla === "c") {
-    limpiar(calculadora);
-    return;
-  }
-
   if (esOperadorAditivo(tecla) && esOperadorAditivo(calculadora.operador_pendiente)) {
     calculadora.operador_pendiente = tecla;
     calculadora.operador_subtotal = tecla;
@@ -250,11 +239,6 @@ function manejarResultadoEnDisplay(calculadora, tecla) {
     calculadora.operando_actual = "0.";
     calculadora.display = "0.";
     calculadora.estado = ESTADO_TYPING_OPERANDO;
-    return;
-  }
-
-  if (tecla === "C" || tecla === "c") {
-    limpiar(calculadora);
     return;
   }
 
@@ -514,10 +498,36 @@ function sumarAGranTotal(granTotal, subtotal) {
   return decimalToString(addDecimals(parseDecimal(granTotal), parseDecimal(subtotal)));
 }
 
-function limpiar(calculadora) {
+function borrarEntrada(calculadora) {
+  if (calculadora.estado === ESTADO_TYPING_OPERANDO) {
+    calculadora.operando_actual = "";
+    calculadora.display = "0";
+    calculadora.estado =
+      calculadora.operador_pendiente !== ""
+        ? ESTADO_OPERADOR_PENDIENTE
+        : ESTADO_ENCENDIDA_ESPERANDO_TYPING;
+  } else if (calculadora.estado === ESTADO_OPERADOR_PENDIENTE) {
+    calculadora.operando_actual = "";
+    calculadora.display = "0";
+  } else if (calculadora.estado === ESTADO_RESULTADO_EN_DISPLAY) {
+    reiniciarOperacion(calculadora);
+  } else {
+    calculadora.display = "0";
+    calculadora.estado = ESTADO_ENCENDIDA_ESPERANDO_TYPING;
+  }
+
+  registrarCinta(calculadora, "E");
+  registrarLog(calculadora, "borrar_entrada");
+}
+
+function borrarTodo(calculadora) {
   reiniciarOperacion(calculadora);
-  registrarCinta(calculadora, "C");
-  registrarLog(calculadora, "limpiar");
+  calculadora.gran_total = "0";
+  calculadora.ultimo_subtotal = "";
+  calculadora.ultimo_gran_total = "";
+  registrarCinta(calculadora, "A");
+  registrarCinta(calculadora, encabezadoCinta("nueva_calculadora"));
+  registrarLog(calculadora, "borrar_todo");
 }
 
 function reiniciarOperacion(calculadora) {

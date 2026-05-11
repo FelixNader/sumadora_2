@@ -70,6 +70,31 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["estado"], ESTADO_TYPING_OPERANDO)
         self.assertEqual(calculadora["display"], "7")
 
+    def test_e_borra_operando_actual_y_conserva_operador_pendiente(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "12+3e":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "0")
+        self.assertEqual(calculadora["operando_actual"], "")
+        self.assertEqual(calculadora["operador_pendiente"], "+")
+        self.assertEqual(calculadora["estado"], ESTADO_OPERADOR_PENDIENTE)
+
+    def test_a_reinicia_toda_la_calculadora_y_memorias(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "2+3s4+1a":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "0")
+        self.assertEqual(calculadora["estado"], ESTADO_ENCENDIDA_ESPERANDO_TYPING)
+        self.assertEqual(calculadora["gran_total"], "0")
+        self.assertEqual(calculadora["ultimo_subtotal"], "")
+        self.assertEqual(calculadora["ultimo_gran_total"], "")
+
     def test_operador_prepara_segundo_operando(self):
         calculadora = self.crear_calculadora()
         encender(calculadora)

@@ -5,6 +5,11 @@
     "estado_final": "resultado_en_display"
   },
   {
+    "secuencia": "12+3e4=",
+    "display_final": "16",
+    "estado_final": "resultado_en_display"
+  },
+  {
     "secuencia": "50+50+2*50=",
     "display_final": "200",
     "estado_final": "resultado_en_display"
@@ -36,6 +41,11 @@
   },
   {
     "secuencia": "2+3s4+1sg",
+    "display_final": "0",
+    "estado_final": "encendida_esperando_typing"
+  },
+  {
+    "secuencia": "2+3s4+1a",
     "display_final": "0",
     "estado_final": "encendida_esperando_typing"
   }

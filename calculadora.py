@@ -73,7 +73,11 @@ def presionar_tecla(calculadora, tecla):
     estado_antes = describir_estado(calculadora)
 
     try:
-        if tecla in {"s", "S"}:
+        if tecla in {"e", "E"}:
+            borrar_entrada(calculadora)
+        elif tecla in {"a", "A"}:
+            borrar_todo(calculadora)
+        elif tecla in {"s", "S"}:
             subtotalizar(calculadora)
         elif tecla in {"g", "G"}:
             gran_totalizar(calculadora)
@@ -167,12 +171,8 @@ def manejar_encendida_esperando_typing(calculadora, tecla):
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
         return
 
-    if tecla in {"C", "c"}:
-        limpiar(calculadora)
-        return
-
     raise ValueError(
-        "En encendida_esperando_typing solo se aceptan digitos, '.' o 'C'."
+        "En encendida_esperando_typing solo se aceptan digitos, '.' o '-'."
     )
 
 
@@ -199,10 +199,6 @@ def manejar_typing_operando(calculadora, tecla):
         else:
             calculadora["operando_actual"] += "."
         calculadora["display"] = calculadora["operando_actual"]
-        return
-
-    if tecla in {"C", "c"}:
-        limpiar(calculadora)
         return
 
     if es_operador_aditivo(tecla):
@@ -239,10 +235,6 @@ def manejar_operador_pendiente(calculadora, tecla):
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
         return
 
-    if tecla in {"C", "c"}:
-        limpiar(calculadora)
-        return
-
     if es_operador_aditivo(tecla) and es_operador_aditivo(calculadora["operador_pendiente"]):
         calculadora["operador_pendiente"] = tecla
         calculadora["operador_subtotal"] = tecla
@@ -273,10 +265,6 @@ def manejar_resultado_en_display(calculadora, tecla):
         calculadora["operando_actual"] = "0."
         calculadora["display"] = "0."
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
-        return
-
-    if tecla in {"C", "c"}:
-        limpiar(calculadora)
         return
 
     if es_operador_aditivo(tecla):
@@ -492,10 +480,35 @@ def sumar_a_gran_total(gran_total, subtotal):
     return formatear_decimal(Decimal(gran_total) + Decimal(subtotal))
 
 
-def limpiar(calculadora):
+def borrar_entrada(calculadora):
+    if calculadora["estado"] == ESTADO_TYPING_OPERANDO:
+        calculadora["operando_actual"] = ""
+        calculadora["display"] = "0"
+        if calculadora["operador_pendiente"] != "":
+            calculadora["estado"] = ESTADO_OPERADOR_PENDIENTE
+        else:
+            calculadora["estado"] = ESTADO_ENCENDIDA_ESPERANDO_TYPING
+    elif calculadora["estado"] == ESTADO_OPERADOR_PENDIENTE:
+        calculadora["operando_actual"] = ""
+        calculadora["display"] = "0"
+    elif calculadora["estado"] == ESTADO_RESULTADO_EN_DISPLAY:
+        reiniciar_operacion(calculadora)
+    else:
+        calculadora["display"] = "0"
+        calculadora["estado"] = ESTADO_ENCENDIDA_ESPERANDO_TYPING
+
+    registrar_cinta(calculadora, "E")
+    registrar_log(calculadora, "borrar_entrada")
+
+
+def borrar_todo(calculadora):
     reiniciar_operacion(calculadora)
-    registrar_cinta(calculadora, "C")
-    registrar_log(calculadora, "limpiar")
+    calculadora["gran_total"] = "0"
+    calculadora["ultimo_subtotal"] = ""
+    calculadora["ultimo_gran_total"] = ""
+    registrar_cinta(calculadora, "A")
+    registrar_cinta(calculadora, encabezado_cinta("nueva_calculadora"))
+    registrar_log(calculadora, "borrar_todo")
 
 
 def reiniciar_operacion(calculadora):
@@ -595,7 +608,9 @@ def ejecutar_terminal():
 
     print("Calculadora sumadora contable")
     print("Estado inicial: encendida_esperando_typing")
-    print("Usa teclas: 0-9 . + - * / = C s g")
+    print("Usa teclas: 0-9 . + - * / = e a s g")
+    print("e borra la entrada actual")
+    print("a borra todo y reinicia memorias")
     print("s subtotaliza y acumula al gran total")
     print("g imprime el gran total y reinicia en ceros")
     print("Cada tecla se procesa sin Enter")

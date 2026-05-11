@@ -20,11 +20,12 @@ const keypad = document.querySelector("[data-keypad]");
 
 let calculadora = cargarCalculadora();
 
+sincronizarViewport();
 render();
 registrarServiceWorker();
 blindarGestosIOS();
 
-keypad.addEventListener("click", (event) => {
+document.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-key]");
   if (!button) {
     return;
@@ -47,6 +48,20 @@ panelButtons.forEach((button) => {
     activarPanel(nombre);
   });
 });
+
+window.addEventListener("resize", sincronizarViewport);
+window.addEventListener("orientationchange", () => {
+  sincronizarViewport();
+  requestAnimationFrame(() => {
+    requestAnimationFrame(sincronizarViewport);
+  });
+  setTimeout(sincronizarViewport, 120);
+  setTimeout(sincronizarViewport, 320);
+});
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", sincronizarViewport);
+}
 
 function cargarCalculadora() {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -124,8 +139,12 @@ function mapearTecla(tecla) {
     Enter: "=",
     "=": "=",
     ".": ".",
-    c: "C",
-    C: "C",
+    e: "e",
+    E: "e",
+    a: "a",
+    A: "a",
+    Backspace: "e",
+    Escape: "a",
     s: "s",
     S: "s",
     g: "g",
@@ -188,4 +207,11 @@ function blindarGestosIOS() {
     },
     { passive: false },
   );
+}
+
+function sincronizarViewport() {
+  const ancho = window.visualViewport?.width || window.innerWidth;
+  const alto = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty("--app-vh", `${alto}px`);
+  document.documentElement.dataset.orientation = ancho > alto ? "landscape" : "portrait";
 }
