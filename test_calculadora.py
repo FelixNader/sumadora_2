@@ -403,6 +403,56 @@ class CalculadoraContableTest(unittest.TestCase):
         contenido_cinta = self.leer_archivo(self.ruta_cinta)
         self.assertIn("1,250.00 + 300.00 = 1,550.00", contenido_cinta)
 
+    def test_iva_suma_aplica_tasa_sobre_base(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "100i":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "116.00")
+        self.assertEqual(calculadora["ultimo_impuesto"], "16.00")
+
+    def test_iva_resta_recupera_base(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "116u":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "100.00")
+        self.assertEqual(calculadora["ultimo_impuesto"], "16.00")
+
+    def test_iva_resta_respeta_suma_pendiente(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "100u+100u=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "172.42")
+
+    def test_tasa_impuesto_se_puede_editar(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "re8=100i":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["tasa_impuesto"], "8")
+        self.assertEqual(calculadora["display"], "108.00")
+        self.assertEqual(calculadora["ultimo_impuesto"], "8.00")
+
+    def test_cinta_registra_iva_y_tasa(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "100i":
+            presionar_tecla(calculadora, tecla)
+
+        contenido_cinta = self.leer_archivo(self.ruta_cinta)
+        self.assertIn("IVA+ 100.00 @ 16.00% = 116.00 (IVA 16.00)", contenido_cinta)
+
 
 if __name__ == "__main__":
     unittest.main()

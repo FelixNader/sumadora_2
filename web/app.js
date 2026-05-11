@@ -20,6 +20,7 @@ const panelButtons = document.querySelectorAll("[data-panel]");
 const panelNodes = document.querySelectorAll("[data-panel-body]");
 const keypad = document.querySelector("[data-keypad]");
 const modeButtons = document.querySelectorAll("[data-decimal-mode]");
+const taxRateButton = document.querySelector("[data-tax-rate]");
 
 let calculadora = cargarCalculadora();
 
@@ -110,11 +111,15 @@ function render() {
     ? formatearValorVisible(calculadora, calculadora.ultimo_subtotal)
     : "-";
   granTotalNode.textContent = formatearValorVisible(calculadora, calculadora.gran_total);
-  estadoNode.textContent = calculadora.estado;
+  estadoNode.textContent = calculadora.editando_tasa_impuesto
+    ? "editando_tasa"
+    : calculadora.estado;
   modeButtons.forEach((button) => {
     button.dataset.active =
       button.dataset.decimalMode === calculadora.modo_decimal ? "true" : "false";
   });
+  taxRateButton.textContent = `IVA ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`;
+  taxRateButton.dataset.active = calculadora.editando_tasa_impuesto ? "true" : "false";
 
   cintaNode.textContent = calculadora.cinta_entries.join("\n") || "Sin cinta aun.";
   logNode.textContent = calculadora.log_entries.join("\n") || "Sin log aun.";
@@ -162,6 +167,12 @@ function mapearTecla(tecla) {
     T: "t",
     c: "c",
     C: "c",
+    i: "i",
+    I: "i",
+    u: "u",
+    U: "u",
+    r: "r",
+    R: "r",
     s: "s",
     S: "s",
     g: "g",

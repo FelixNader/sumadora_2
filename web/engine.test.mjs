@@ -78,4 +78,38 @@ for (const caso of casos) {
   );
 }
 
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "100i") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.display, "116.00", "iva suma display");
+  assert.equal(calculadora.ultimo_impuesto, "16.00", "iva suma impuesto");
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "re8=100i") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.tasa_impuesto, "8", "tasa editada");
+  assert.equal(calculadora.display, "108.00", "display tasa editada");
+  assert.equal(
+    calculadora.cinta_entries.at(-1),
+    "IVA+ 100.00 @ 8.00% = 108.00 (IVA 8.00)",
+    "cinta iva con tasa editada",
+  );
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "100u+100u=") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.display, "172.42", "iva resta en suma encadenada");
+}
+
 console.log("engine ok");

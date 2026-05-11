@@ -34,6 +34,7 @@ TECLAS_MODO_DECIMAL = {
     "c": MODO_DECIMAL_CUATRO,
     "C": MODO_DECIMAL_CUATRO,
 }
+TECLAS_IMPUESTO = {"i", "I", "u", "U", "r", "R"}
 
 
 def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
@@ -49,6 +50,10 @@ def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
         "ultimo_subtotal": "",
         "ultimo_gran_total": "",
         "modo_decimal": MODO_DECIMAL_DOS,
+        "tasa_impuesto": "16",
+        "editando_tasa_impuesto": False,
+        "buffer_tasa_impuesto": "",
+        "ultimo_impuesto": "",
         "ruta_log": ruta_log,
         "ruta_cinta": ruta_cinta,
     }
@@ -89,12 +94,20 @@ def presionar_tecla(calculadora, tecla):
     estado_antes = describir_estado(calculadora)
 
     try:
-        if tecla in {"e", "E"}:
+        if calculadora["editando_tasa_impuesto"]:
+            manejar_captura_tasa_impuesto(calculadora, tecla)
+        elif tecla in {"e", "E"}:
             borrar_entrada(calculadora)
         elif tecla in {"a", "A"}:
             borrar_todo(calculadora)
         elif tecla in TECLAS_MODO_DECIMAL:
             cambiar_modo_decimal(calculadora, TECLAS_MODO_DECIMAL[tecla])
+        elif tecla in {"r", "R"}:
+            iniciar_captura_tasa_impuesto(calculadora)
+        elif tecla in {"i", "I"}:
+            sumar_impuesto(calculadora)
+        elif tecla in {"u", "U"}:
+            restar_impuesto(calculadora)
         elif tecla in {"s", "S"}:
             subtotalizar(calculadora)
         elif tecla in {"g", "G"}:
@@ -226,9 +239,48 @@ def formatear_valor_visible(calculadora, valor, forzar_fijo=True):
 
 
 def obtener_display_visible(calculadora):
+    if calculadora["editando_tasa_impuesto"]:
+        return "TASA " + formatear_operando_visible(
+            calculadora["buffer_tasa_impuesto"] or "0"
+        ) + "%"
     if calculadora["estado"] == ESTADO_TYPING_OPERANDO and calculadora["operando_actual"] != "":
         return formatear_operando_visible(calculadora["operando_actual"])
     return formatear_valor_visible(calculadora, calculadora["display"] or "0")
+
+
+def obtener_tasa_impuesto_decimal(calculadora):
+    return Decimal(calculadora["tasa_impuesto"]) / Decimal("100")
+
+
+def obtener_valor_actual_para_impuesto(calculadora):
+    if calculadora["estado"] == ESTADO_TYPING_OPERANDO:
+        if es_operando_incompleto(calculadora["operando_actual"]):
+            raise ValueError("Falta completar el operando negativo.")
+        if calculadora["operando_actual"] != "":
+            return calculadora["operando_actual"]
+    return obtener_subtotal_actual(calculadora, registrar=False)
+
+
+def fijar_resultado(calculadora, resultado):
+    calculadora["display"] = resultado
+    calculadora["operando_actual"] = ""
+    calculadora["acumulado"] = resultado
+    calculadora["acumulado_multiplicativo"] = ""
+    calculadora["operador_pendiente"] = ""
+    calculadora["operador_subtotal"] = "+"
+    calculadora["estado"] = ESTADO_RESULTADO_EN_DISPLAY
+
+
+def aplicar_resultado_impuesto(calculadora, resultado):
+    if (
+        calculadora["estado"] == ESTADO_TYPING_OPERANDO
+        and calculadora["operador_pendiente"] != ""
+    ):
+        calculadora["operando_actual"] = resultado
+        calculadora["display"] = resultado
+        return
+
+    fijar_resultado(calculadora, resultado)
 
 
 def resolver_operacion(calculadora, izquierda, operador, derecha):
@@ -468,6 +520,60 @@ def gran_totalizar(calculadora):
     registrar_cinta(calculadora, encabezado_cinta("nueva_calculadora"))
 
 
+def sumar_impuesto(calculadora):
+    base = obtener_valor_actual_para_impuesto(calculadora)
+    factor = Decimal("1") + obtener_tasa_impuesto_decimal(calculadora)
+    total = aplicar_modo_decimal(calculadora, Decimal(base) * factor)
+    impuesto = aplicar_modo_decimal(calculadora, Decimal(total) - Decimal(base))
+    calculadora["ultimo_impuesto"] = impuesto
+    aplicar_resultado_impuesto(calculadora, total)
+    registrar_cinta(
+        calculadora,
+        "IVA+ "
+        + formatear_valor_visible(calculadora, base)
+        + " @ "
+        + formatear_valor_visible(calculadora, calculadora["tasa_impuesto"])
+        + "% = "
+        + formatear_valor_visible(calculadora, total)
+        + " (IVA "
+        + formatear_valor_visible(calculadora, impuesto)
+        + ")",
+    )
+    registrar_log(
+        calculadora,
+        "impuesto_suma",
+        "base=" + base + " tasa=" + calculadora["tasa_impuesto"]
+        + " impuesto=" + impuesto + " total=" + total,
+    )
+
+
+def restar_impuesto(calculadora):
+    total = obtener_valor_actual_para_impuesto(calculadora)
+    factor = Decimal("1") + obtener_tasa_impuesto_decimal(calculadora)
+    base = aplicar_modo_decimal(calculadora, Decimal(total) / factor)
+    impuesto = aplicar_modo_decimal(calculadora, Decimal(total) - Decimal(base))
+    calculadora["ultimo_impuesto"] = impuesto
+    aplicar_resultado_impuesto(calculadora, base)
+    registrar_cinta(
+        calculadora,
+        "IVA- "
+        + formatear_valor_visible(calculadora, total)
+        + " @ "
+        + formatear_valor_visible(calculadora, calculadora["tasa_impuesto"])
+        + "% = "
+        + formatear_valor_visible(calculadora, base)
+        + " (IVA "
+        + formatear_valor_visible(calculadora, impuesto)
+        + ")",
+    )
+    registrar_log(
+        calculadora,
+        "impuesto_resta",
+        "total=" + total + " tasa=" + calculadora["tasa_impuesto"]
+        + " impuesto=" + impuesto + " base=" + base,
+    )
+
+
 def obtener_subtotal_actual(calculadora, registrar=False):
     if calculadora["estado"] == ESTADO_ENCENDIDA_ESPERANDO_TYPING:
         if calculadora["acumulado"] != "":
@@ -595,6 +701,75 @@ def cambiar_modo_decimal(calculadora, modo_decimal):
     registrar_log(calculadora, "modo_decimal", "modo_decimal=" + modo_decimal)
 
 
+def iniciar_captura_tasa_impuesto(calculadora):
+    calculadora["editando_tasa_impuesto"] = True
+    calculadora["buffer_tasa_impuesto"] = calculadora["tasa_impuesto"]
+    registrar_log(
+        calculadora,
+        "tasa_impuesto_editar",
+        "tasa_impuesto=" + calculadora["tasa_impuesto"],
+    )
+
+
+def manejar_captura_tasa_impuesto(calculadora, tecla):
+    if tecla in {"a", "A"}:
+        calculadora["editando_tasa_impuesto"] = False
+        calculadora["buffer_tasa_impuesto"] = ""
+        borrar_todo(calculadora)
+        return
+
+    if tecla in {"r", "R"}:
+        calculadora["editando_tasa_impuesto"] = False
+        calculadora["buffer_tasa_impuesto"] = ""
+        registrar_log(calculadora, "tasa_impuesto_cancelar")
+        return
+
+    if tecla in {"e", "E"}:
+        calculadora["buffer_tasa_impuesto"] = "0"
+        return
+
+    if tecla.isdigit():
+        if calculadora["buffer_tasa_impuesto"] in {"", "0"}:
+            calculadora["buffer_tasa_impuesto"] = tecla
+        else:
+            calculadora["buffer_tasa_impuesto"] += tecla
+        return
+
+    if tecla == ".":
+        if "." in calculadora["buffer_tasa_impuesto"]:
+            raise ValueError("La tasa de impuesto ya tiene punto decimal.")
+        if calculadora["buffer_tasa_impuesto"] == "":
+            calculadora["buffer_tasa_impuesto"] = "0."
+        else:
+            calculadora["buffer_tasa_impuesto"] += "."
+        return
+
+    if tecla == "=":
+        buffer = calculadora["buffer_tasa_impuesto"] or "0"
+        if buffer.endswith("."):
+            buffer += "0"
+        tasa = Decimal(buffer)
+        if tasa < 0:
+            raise ValueError("La tasa de impuesto no puede ser negativa.")
+        calculadora["tasa_impuesto"] = formatear_decimal(tasa)
+        calculadora["editando_tasa_impuesto"] = False
+        calculadora["buffer_tasa_impuesto"] = ""
+        registrar_cinta(
+            calculadora,
+            "TASA IMPUESTO = "
+            + formatear_valor_visible(calculadora, calculadora["tasa_impuesto"])
+            + "%",
+        )
+        registrar_log(
+            calculadora,
+            "tasa_impuesto",
+            "tasa_impuesto=" + calculadora["tasa_impuesto"],
+        )
+        return
+
+    raise ValueError("Mientras editas tasa solo se aceptan digitos, '.', '=', 'e' o 'r'.")
+
+
 def borrar_entrada(calculadora):
     if calculadora["estado"] == ESTADO_TYPING_OPERANDO:
         calculadora["operando_actual"] = ""
@@ -621,6 +796,9 @@ def borrar_todo(calculadora):
     calculadora["gran_total"] = "0"
     calculadora["ultimo_subtotal"] = ""
     calculadora["ultimo_gran_total"] = ""
+    calculadora["ultimo_impuesto"] = ""
+    calculadora["editando_tasa_impuesto"] = False
+    calculadora["buffer_tasa_impuesto"] = ""
     registrar_cinta(calculadora, "A")
     registrar_cinta(calculadora, encabezado_cinta("nueva_calculadora"))
     registrar_log(calculadora, "borrar_todo")
@@ -640,6 +818,10 @@ def mostrar_estado(calculadora):
     print()
     print("Estado:", calculadora["estado"])
     print("Modo decimal:", calculadora["modo_decimal"])
+    print(
+        "Tasa impuesto:",
+        formatear_valor_visible(calculadora, calculadora["tasa_impuesto"]) + "%",
+    )
     print("Display:", obtener_display_visible(calculadora))
     print(
         "Acumulado:",
@@ -655,6 +837,12 @@ def mostrar_estado(calculadora):
     )
     print("Operador pendiente:", calculadora["operador_pendiente"] or "-")
     print("Gran total:", formatear_valor_visible(calculadora, calculadora["gran_total"]))
+    print(
+        "Ultimo impuesto:",
+        formatear_valor_visible(calculadora, calculadora["ultimo_impuesto"])
+        if calculadora["ultimo_impuesto"] != ""
+        else "-",
+    )
 
 
 def leer_tecla():
@@ -691,6 +879,8 @@ def describir_estado(calculadora):
         + ",operador_subtotal=" + calculadora["operador_subtotal"]
         + ",gran_total=" + calculadora["gran_total"]
         + ",modo_decimal=" + calculadora["modo_decimal"]
+        + ",tasa_impuesto=" + calculadora["tasa_impuesto"]
+        + ",editando_tasa_impuesto=" + str(calculadora["editando_tasa_impuesto"])
     )
 
 
@@ -741,10 +931,12 @@ def ejecutar_terminal():
 
     print("Calculadora sumadora contable")
     print("Estado inicial: encendida_esperando_typing")
-    print("Usa teclas: 0-9 . + - * / = e a s g f d t c")
+    print("Usa teclas: 0-9 . + - * / = e a s g f d t c i u r")
     print("e borra la entrada actual")
     print("a borra todo y reinicia memorias")
     print("f flotante, d 2 decimales, t 3 decimales, c 4 decimales")
+    print("i suma impuesto, u deduce impuesto, r edita tasa")
+    print("En tasa: digitos y '.' capturan, '=' confirma, 'e' limpia, 'r' cancela")
     print("s subtotaliza y acumula al gran total")
     print("g imprime el gran total y reinicia en ceros")
     print("Cada tecla se procesa sin Enter")

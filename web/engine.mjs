@@ -33,6 +33,10 @@ export function nuevaCalculadora() {
     ultimo_subtotal: "",
     ultimo_gran_total: "",
     modo_decimal: MODO_DECIMAL_DOS,
+    tasa_impuesto: "16",
+    editando_tasa_impuesto: false,
+    buffer_tasa_impuesto: "",
+    ultimo_impuesto: "",
     log_entries: [],
     cinta_entries: [],
   };
@@ -75,12 +79,20 @@ export function presionarTecla(calculadora, tecla) {
   const estadoAntes = describirEstado(calculadora);
 
   try {
-    if (tecla === "e" || tecla === "E") {
+    if (calculadora.editando_tasa_impuesto) {
+      manejarCapturaTasaImpuesto(calculadora, tecla);
+    } else if (tecla === "e" || tecla === "E") {
       borrarEntrada(calculadora);
     } else if (tecla === "a" || tecla === "A") {
       borrarTodo(calculadora);
     } else if (Object.hasOwn(TECLAS_MODO_DECIMAL, tecla)) {
       cambiarModoDecimal(calculadora, TECLAS_MODO_DECIMAL[tecla]);
+    } else if (tecla === "r" || tecla === "R") {
+      iniciarCapturaTasaImpuesto(calculadora);
+    } else if (tecla === "i" || tecla === "I") {
+      sumarImpuesto(calculadora);
+    } else if (tecla === "u" || tecla === "U") {
+      restarImpuesto(calculadora);
     } else if (tecla === "s" || tecla === "S") {
       subtotalizar(calculadora);
     } else if (tecla === "g" || tecla === "G") {
@@ -213,6 +225,9 @@ export function formatearValorVisible(calculadora, valor, forceFixed = true) {
 }
 
 export function obtenerDisplayVisible(calculadora) {
+  if (calculadora.editando_tasa_impuesto) {
+    return `TASA ${formatTypedOperand(calculadora.buffer_tasa_impuesto || "0")}%`;
+  }
   if (
     calculadora.estado === ESTADO_TYPING_OPERANDO &&
     calculadora.operando_actual !== ""
@@ -220,6 +235,45 @@ export function obtenerDisplayVisible(calculadora) {
     return formatTypedOperand(calculadora.operando_actual);
   }
   return formatearValorVisible(calculadora, calculadora.display || "0");
+}
+
+function obtenerTasaImpuestoDecimal(calculadora) {
+  return divideDecimals(parseDecimal(calculadora.tasa_impuesto), parseDecimal("100"), 12n);
+}
+
+function obtenerValorActualParaImpuesto(calculadora) {
+  if (calculadora.estado === ESTADO_TYPING_OPERANDO) {
+    if (esOperandoIncompleto(calculadora.operando_actual)) {
+      throw new Error("Falta completar el operando negativo.");
+    }
+    if (calculadora.operando_actual !== "") {
+      return calculadora.operando_actual;
+    }
+  }
+  return obtenerSubtotalActual(calculadora, false);
+}
+
+function fijarResultado(calculadora, resultado) {
+  calculadora.display = resultado;
+  calculadora.operando_actual = "";
+  calculadora.acumulado = resultado;
+  calculadora.acumulado_multiplicativo = "";
+  calculadora.operador_pendiente = "";
+  calculadora.operador_subtotal = "+";
+  calculadora.estado = ESTADO_RESULTADO_EN_DISPLAY;
+}
+
+function aplicarResultadoImpuesto(calculadora, resultado) {
+  if (
+    calculadora.estado === ESTADO_TYPING_OPERANDO &&
+    calculadora.operador_pendiente !== ""
+  ) {
+    calculadora.operando_actual = resultado;
+    calculadora.display = resultado;
+    return;
+  }
+
+  fijarResultado(calculadora, resultado);
 }
 
 function manejarEncendidaEsperandoTyping(calculadora, tecla) {
@@ -460,6 +514,60 @@ function granTotalizar(calculadora) {
   registrarCinta(calculadora, encabezadoCinta("nueva_calculadora"));
 }
 
+function sumarImpuesto(calculadora) {
+  const base = obtenerValorActualParaImpuesto(calculadora);
+  const factor = addDecimals(parseDecimal("1"), obtenerTasaImpuestoDecimal(calculadora));
+  const total = applyModeDecimal(calculadora, multiplyDecimals(parseDecimal(base), factor));
+  const impuesto = applyModeDecimal(
+    calculadora,
+    subtractDecimals(parseDecimal(total), parseDecimal(base)),
+  );
+  calculadora.ultimo_impuesto = impuesto;
+  aplicarResultadoImpuesto(calculadora, total);
+  registrarCinta(
+    calculadora,
+    `IVA+ ${formatearValorVisible(calculadora, base)} @ ${formatearValorVisible(
+      calculadora,
+      calculadora.tasa_impuesto,
+    )}% = ${formatearValorVisible(calculadora, total)} (IVA ${formatearValorVisible(
+      calculadora,
+      impuesto,
+    )})`,
+  );
+  registrarLog(
+    calculadora,
+    "impuesto_suma",
+    `base=${base} tasa=${calculadora.tasa_impuesto} impuesto=${impuesto} total=${total}`,
+  );
+}
+
+function restarImpuesto(calculadora) {
+  const total = obtenerValorActualParaImpuesto(calculadora);
+  const factor = addDecimals(parseDecimal("1"), obtenerTasaImpuestoDecimal(calculadora));
+  const base = applyModeDecimal(calculadora, divideDecimals(parseDecimal(total), factor, PRECISION_DIVISION));
+  const impuesto = applyModeDecimal(
+    calculadora,
+    subtractDecimals(parseDecimal(total), parseDecimal(base)),
+  );
+  calculadora.ultimo_impuesto = impuesto;
+  aplicarResultadoImpuesto(calculadora, base);
+  registrarCinta(
+    calculadora,
+    `IVA- ${formatearValorVisible(calculadora, total)} @ ${formatearValorVisible(
+      calculadora,
+      calculadora.tasa_impuesto,
+    )}% = ${formatearValorVisible(calculadora, base)} (IVA ${formatearValorVisible(
+      calculadora,
+      impuesto,
+    )})`,
+  );
+  registrarLog(
+    calculadora,
+    "impuesto_resta",
+    `total=${total} tasa=${calculadora.tasa_impuesto} impuesto=${impuesto} base=${base}`,
+  );
+}
+
 function obtenerSubtotalActual(calculadora, registrar = false) {
   if (calculadora.estado === ESTADO_ENCENDIDA_ESPERANDO_TYPING) {
     return calculadora.acumulado || "0";
@@ -657,6 +765,9 @@ function borrarTodo(calculadora) {
   calculadora.gran_total = "0";
   calculadora.ultimo_subtotal = "";
   calculadora.ultimo_gran_total = "";
+  calculadora.ultimo_impuesto = "";
+  calculadora.editando_tasa_impuesto = false;
+  calculadora.buffer_tasa_impuesto = "";
   registrarCinta(calculadora, "A");
   registrarCinta(calculadora, encabezadoCinta("nueva_calculadora"));
   registrarLog(calculadora, "borrar_todo");
@@ -666,6 +777,84 @@ function cambiarModoDecimal(calculadora, modoDecimal) {
   calculadora.modo_decimal = modoDecimal;
   registrarCinta(calculadora, `MODO DECIMAL = ${modoDecimal}`);
   registrarLog(calculadora, "modo_decimal", `modo_decimal=${modoDecimal}`);
+}
+
+function iniciarCapturaTasaImpuesto(calculadora) {
+  calculadora.editando_tasa_impuesto = true;
+  calculadora.buffer_tasa_impuesto = calculadora.tasa_impuesto;
+  registrarLog(
+    calculadora,
+    "tasa_impuesto_editar",
+    `tasa_impuesto=${calculadora.tasa_impuesto}`,
+  );
+}
+
+function manejarCapturaTasaImpuesto(calculadora, tecla) {
+  if (tecla === "a" || tecla === "A") {
+    calculadora.editando_tasa_impuesto = false;
+    calculadora.buffer_tasa_impuesto = "";
+    borrarTodo(calculadora);
+    return;
+  }
+
+  if (tecla === "r" || tecla === "R") {
+    calculadora.editando_tasa_impuesto = false;
+    calculadora.buffer_tasa_impuesto = "";
+    registrarLog(calculadora, "tasa_impuesto_cancelar");
+    return;
+  }
+
+  if (tecla === "e" || tecla === "E") {
+    calculadora.buffer_tasa_impuesto = "0";
+    return;
+  }
+
+  if (esDigito(tecla)) {
+    if (calculadora.buffer_tasa_impuesto === "" || calculadora.buffer_tasa_impuesto === "0") {
+      calculadora.buffer_tasa_impuesto = tecla;
+    } else {
+      calculadora.buffer_tasa_impuesto += tecla;
+    }
+    return;
+  }
+
+  if (tecla === ".") {
+    if (calculadora.buffer_tasa_impuesto.includes(".")) {
+      throw new Error("La tasa de impuesto ya tiene punto decimal.");
+    }
+    if (calculadora.buffer_tasa_impuesto === "") {
+      calculadora.buffer_tasa_impuesto = "0.";
+    } else {
+      calculadora.buffer_tasa_impuesto += ".";
+    }
+    return;
+  }
+
+  if (tecla === "=") {
+    let buffer = calculadora.buffer_tasa_impuesto || "0";
+    if (buffer.endsWith(".")) {
+      buffer += "0";
+    }
+    const tasa = parseDecimal(buffer);
+    if (tasa.sign < 0n) {
+      throw new Error("La tasa de impuesto no puede ser negativa.");
+    }
+    calculadora.tasa_impuesto = decimalToString(tasa);
+    calculadora.editando_tasa_impuesto = false;
+    calculadora.buffer_tasa_impuesto = "";
+    registrarCinta(
+      calculadora,
+      `TASA IMPUESTO = ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`,
+    );
+    registrarLog(
+      calculadora,
+      "tasa_impuesto",
+      `tasa_impuesto=${calculadora.tasa_impuesto}`,
+    );
+    return;
+  }
+
+  throw new Error("Mientras editas tasa solo se aceptan digitos, '.', '=', 'e' o 'r'.");
 }
 
 function reiniciarOperacion(calculadora) {
@@ -689,6 +878,8 @@ function describirEstado(calculadora) {
     `operador_subtotal=${calculadora.operador_subtotal}`,
     `gran_total=${calculadora.gran_total}`,
     `modo_decimal=${calculadora.modo_decimal}`,
+    `tasa_impuesto=${calculadora.tasa_impuesto}`,
+    `editando_tasa_impuesto=${calculadora.editando_tasa_impuesto}`,
   ].join(",");
 }
 

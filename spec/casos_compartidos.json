@@ -60,6 +60,26 @@
     "estado_final": "resultado_en_display"
   },
   {
+    "secuencia": "100i",
+    "display_final": "116.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "116u",
+    "display_final": "100.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "100u+100u=",
+    "display_final": "172.42",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "re8=100i",
+    "display_final": "108.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
     "secuencia": "2+3s4+1sg",
     "display_final": "0",
     "estado_final": "encendida_esperando_typing"
