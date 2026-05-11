@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { encender, nuevaCalculadora, presionarTecla } from "./engine.mjs";
+import {
+  encender,
+  formatearValorVisible,
+  nuevaCalculadora,
+  obtenerDisplayVisible,
+  presionarTecla,
+} from "./engine.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rutaCasos = path.resolve(__dirname, "../spec/casos_compartidos.json");
@@ -41,6 +47,35 @@ for (const caso of casos) {
   assert.equal(calculadora.gran_total, "0", "a gran_total");
   assert.equal(calculadora.ultimo_subtotal, "", "a ultimo_subtotal");
   assert.equal(calculadora.ultimo_gran_total, "", "a ultimo_gran_total");
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "t1/3=") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.modo_decimal, "3", "modo decimal 3");
+  assert.equal(calculadora.display, "0.333", "display 3 decimales");
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "1250+300=") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(obtenerDisplayVisible(calculadora), "1,550.00", "display con miles");
+  assert.equal(
+    calculadora.cinta_entries.at(-1),
+    "1,250.00 + 300.00 = 1,550.00",
+    "cinta con miles",
+  );
+  assert.equal(
+    formatearValorVisible(calculadora, calculadora.gran_total),
+    "0.00",
+    "gran total visible",
+  );
 }
 
 console.log("engine ok");

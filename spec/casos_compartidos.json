@@ -1,42 +1,62 @@
 [
   {
     "secuencia": "2+3=",
-    "display_final": "5",
+    "display_final": "5.00",
     "estado_final": "resultado_en_display"
   },
   {
     "secuencia": "12+3e4=",
-    "display_final": "16",
+    "display_final": "16.00",
     "estado_final": "resultado_en_display"
   },
   {
     "secuencia": "50+50+2*50=",
-    "display_final": "200",
+    "display_final": "200.00",
     "estado_final": "resultado_en_display"
   },
   {
     "secuencia": "100-2*50=",
-    "display_final": "0",
+    "display_final": "0.00",
     "estado_final": "resultado_en_display"
   },
   {
     "secuencia": "5*-2=",
-    "display_final": "-10",
+    "display_final": "-10.00",
     "estado_final": "resultado_en_display"
   },
   {
     "secuencia": "5--2=",
-    "display_final": "7",
+    "display_final": "7.00",
     "estado_final": "resultado_en_display"
   },
   {
     "secuencia": "100+50/2*4=",
-    "display_final": "200",
+    "display_final": "200.00",
     "estado_final": "resultado_en_display"
   },
   {
     "secuencia": "-5-10=",
-    "display_final": "-15",
+    "display_final": "-15.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "d1/3=",
+    "display_final": "0.33",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "t1/3=",
+    "display_final": "0.333",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "c1/3=",
+    "display_final": "0.3333",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "f1/3=",
+    "display_final": "0.3333333333333333333333333333",
     "estado_final": "resultado_en_display"
   },
   {

@@ -2,6 +2,8 @@ import {
   nuevaCalculadora,
   restaurarCalculadora,
   encender,
+  formatearValorVisible,
+  obtenerDisplayVisible,
   presionarTecla,
   ESTADO_ENCENDIDA_ESPERANDO_TYPING,
 } from "./engine.mjs";
@@ -17,6 +19,7 @@ const logNode = document.querySelector("[data-log]");
 const panelButtons = document.querySelectorAll("[data-panel]");
 const panelNodes = document.querySelectorAll("[data-panel-body]");
 const keypad = document.querySelector("[data-keypad]");
+const modeButtons = document.querySelectorAll("[data-decimal-mode]");
 
 let calculadora = cargarCalculadora();
 
@@ -102,10 +105,16 @@ function procesarTecla(tecla) {
 }
 
 function render() {
-  displayNode.textContent = calculadora.display || "0";
-  subtotalNode.textContent = calculadora.ultimo_subtotal || "-";
-  granTotalNode.textContent = calculadora.gran_total;
+  displayNode.textContent = obtenerDisplayVisible(calculadora);
+  subtotalNode.textContent = calculadora.ultimo_subtotal
+    ? formatearValorVisible(calculadora, calculadora.ultimo_subtotal)
+    : "-";
+  granTotalNode.textContent = formatearValorVisible(calculadora, calculadora.gran_total);
   estadoNode.textContent = calculadora.estado;
+  modeButtons.forEach((button) => {
+    button.dataset.active =
+      button.dataset.decimalMode === calculadora.modo_decimal ? "true" : "false";
+  });
 
   cintaNode.textContent = calculadora.cinta_entries.join("\n") || "Sin cinta aun.";
   logNode.textContent = calculadora.log_entries.join("\n") || "Sin log aun.";
@@ -145,6 +154,14 @@ function mapearTecla(tecla) {
     A: "a",
     Backspace: "e",
     Escape: "a",
+    f: "f",
+    F: "f",
+    d: "d",
+    D: "d",
+    t: "t",
+    T: "t",
+    c: "c",
+    C: "c",
     s: "s",
     S: "s",
     g: "g",

@@ -2,6 +2,7 @@ import os
 import sys
 from datetime import datetime
 from decimal import Decimal
+from decimal import ROUND_HALF_UP
 
 try:
     import termios
@@ -19,6 +20,20 @@ ESTADO_RESULTADO_EN_DISPLAY = "resultado_en_display"
 
 ARCHIVO_LOG_DETALLADO = "calculadora.log"
 ARCHIVO_CINTA = "cinta.txt"
+MODO_DECIMAL_FLOTANTE = "F"
+MODO_DECIMAL_DOS = "2"
+MODO_DECIMAL_TRES = "3"
+MODO_DECIMAL_CUATRO = "4"
+TECLAS_MODO_DECIMAL = {
+    "f": MODO_DECIMAL_FLOTANTE,
+    "F": MODO_DECIMAL_FLOTANTE,
+    "d": MODO_DECIMAL_DOS,
+    "D": MODO_DECIMAL_DOS,
+    "t": MODO_DECIMAL_TRES,
+    "T": MODO_DECIMAL_TRES,
+    "c": MODO_DECIMAL_CUATRO,
+    "C": MODO_DECIMAL_CUATRO,
+}
 
 
 def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
@@ -33,6 +48,7 @@ def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
         "gran_total": "0",
         "ultimo_subtotal": "",
         "ultimo_gran_total": "",
+        "modo_decimal": MODO_DECIMAL_DOS,
         "ruta_log": ruta_log,
         "ruta_cinta": ruta_cinta,
     }
@@ -77,6 +93,8 @@ def presionar_tecla(calculadora, tecla):
             borrar_entrada(calculadora)
         elif tecla in {"a", "A"}:
             borrar_todo(calculadora)
+        elif tecla in TECLAS_MODO_DECIMAL:
+            cambiar_modo_decimal(calculadora, TECLAS_MODO_DECIMAL[tecla])
         elif tecla in {"s", "S"}:
             subtotalizar(calculadora)
         elif tecla in {"g", "G"}:
@@ -131,23 +149,105 @@ def formatear_decimal(valor):
     return texto
 
 
-def resolver_operacion(izquierda, operador, derecha):
+def obtener_plantilla_decimal(modo_decimal):
+    if modo_decimal == MODO_DECIMAL_DOS:
+        return Decimal("0.01")
+    if modo_decimal == MODO_DECIMAL_TRES:
+        return Decimal("0.001")
+    if modo_decimal == MODO_DECIMAL_CUATRO:
+        return Decimal("0.0001")
+    return None
+
+
+def aplicar_modo_decimal(calculadora, valor):
+    valor_decimal = Decimal(valor)
+    plantilla = obtener_plantilla_decimal(calculadora["modo_decimal"])
+    if plantilla is None:
+        return formatear_decimal(valor_decimal)
+    return format(valor_decimal.quantize(plantilla, rounding=ROUND_HALF_UP), "f")
+
+
+def formatear_miles_parte_entera(texto):
+    if texto == "":
+        return "0"
+
+    signo = ""
+    if texto.startswith("-"):
+        signo = "-"
+        texto = texto[1:]
+
+    grupos = []
+    while len(texto) > 3:
+        grupos.append(texto[-3:])
+        texto = texto[:-3]
+    grupos.append(texto or "0")
+    return signo + ",".join(reversed(grupos))
+
+
+def formatear_operando_visible(texto):
+    if texto in {"", "0"}:
+        return "0"
+    if texto == "-":
+        return "-"
+
+    signo = ""
+    if texto.startswith("-"):
+        signo = "-"
+        texto = texto[1:]
+
+    if "." in texto:
+        entero, fraccion = texto.split(".", 1)
+        entero_visible = formatear_miles_parte_entera(signo + (entero or "0"))
+        return entero_visible + "." + fraccion
+
+    return formatear_miles_parte_entera(signo + texto)
+
+
+def formatear_valor_visible(calculadora, valor, forzar_fijo=True):
+    texto = valor
+    if texto == "":
+        texto = "0"
+
+    if forzar_fijo:
+        texto = aplicar_modo_decimal(calculadora, texto)
+    else:
+        texto = formatear_decimal(Decimal(texto))
+
+    signo = ""
+    if texto.startswith("-"):
+        signo = "-"
+        texto = texto[1:]
+
+    if "." in texto:
+        entero, fraccion = texto.split(".", 1)
+        return formatear_miles_parte_entera(signo + entero) + "." + fraccion
+
+    return formatear_miles_parte_entera(signo + texto)
+
+
+def obtener_display_visible(calculadora):
+    if calculadora["estado"] == ESTADO_TYPING_OPERANDO and calculadora["operando_actual"] != "":
+        return formatear_operando_visible(calculadora["operando_actual"])
+    return formatear_valor_visible(calculadora, calculadora["display"] or "0")
+
+
+def resolver_operacion(calculadora, izquierda, operador, derecha):
     valor_izquierdo = Decimal(izquierda)
     valor_derecho = Decimal(derecha)
 
     if operador == "+":
-        return formatear_decimal(valor_izquierdo + valor_derecho)
+        return aplicar_modo_decimal(calculadora, valor_izquierdo + valor_derecho)
 
     if operador == "-":
-        return formatear_decimal(valor_izquierdo - valor_derecho)
+        return aplicar_modo_decimal(calculadora, valor_izquierdo - valor_derecho)
 
     if operador == "*":
-        return formatear_decimal(valor_izquierdo * valor_derecho)
+        return aplicar_modo_decimal(calculadora, valor_izquierdo * valor_derecho)
 
     if operador == "/":
         if valor_derecho == 0:
             raise ValueError("No se puede dividir entre cero.")
-        return formatear_decimal(valor_izquierdo / valor_derecho)
+        return aplicar_modo_decimal(calculadora, valor_izquierdo / valor_derecho)
 
     raise ValueError("Operador no soportado.")
 
@@ -295,7 +395,7 @@ def preparar_o_encadenar_adicion(calculadora, operador):
     termino = resolver_termino_actual(calculadora, registrar=True)
 
     if calculadora["acumulado"] == "":
-        nuevo_subtotal = termino
+        nuevo_subtotal = aplicar_modo_decimal(calculadora, termino)
     else:
         nuevo_subtotal = resolver_y_registrar(
             calculadora,
@@ -339,10 +439,13 @@ def cerrar_operacion(calculadora):
 
 def subtotalizar(calculadora):
     subtotal = obtener_subtotal_actual(calculadora, registrar=True)
-    gran_total = sumar_a_gran_total(calculadora["gran_total"], subtotal)
+    gran_total = sumar_a_gran_total(calculadora, calculadora["gran_total"], subtotal)
     calculadora["ultimo_subtotal"] = subtotal
     calculadora["gran_total"] = gran_total
-    registrar_cinta(calculadora, "SUBTOTAL = " + subtotal)
+    registrar_cinta(
+        calculadora,
+        "SUBTOTAL = " + formatear_valor_visible(calculadora, subtotal),
+    )
     registrar_log(
         calculadora,
         "subtotal",
@@ -354,7 +457,10 @@ def subtotalizar(calculadora):
 def gran_totalizar(calculadora):
     gran_total = calculadora["gran_total"]
     calculadora["ultimo_gran_total"] = gran_total
-    registrar_cinta(calculadora, "GRAN TOTAL = " + gran_total)
+    registrar_cinta(
+        calculadora,
+        "GRAN TOTAL = " + formatear_valor_visible(calculadora, gran_total),
+    )
     registrar_log(calculadora, "gran_total", "gran_total=" + gran_total)
     reiniciar_operacion(calculadora)
     calculadora["gran_total"] = "0"
@@ -388,6 +494,7 @@ def obtener_subtotal_actual(calculadora, registrar=False):
                     termino,
                 )
             return resolver_operacion(
+                calculadora,
                 calculadora["acumulado"],
                 calculadora["operador_subtotal"],
                 termino,
@@ -405,6 +512,7 @@ def obtener_subtotal_actual(calculadora, registrar=False):
                 termino,
             )
         return resolver_operacion(
+            calculadora,
             calculadora["acumulado"],
             calculadora["operador_subtotal"],
             termino,
@@ -439,6 +547,7 @@ def resolver_termino_actual(calculadora, registrar=False):
             )
         else:
             resultado = resolver_operacion(
+                calculadora,
                 izquierda,
                 calculadora["operador_pendiente"],
                 calculadora["operando_actual"],
@@ -465,7 +574,7 @@ def resolver_termino_actual(calculadora, registrar=False):
 
 
 def resolver_y_registrar(calculadora, izquierda, operador, derecha):
-    resultado = resolver_operacion(izquierda, operador, derecha)
+    resultado = resolver_operacion(calculadora, izquierda, operador, derecha)
     registrar_operacion_en_cinta(calculadora, izquierda, operador, derecha, resultado)
     registrar_log(
         calculadora,
@@ -476,8 +585,14 @@ def resolver_y_registrar(calculadora, izquierda, operador, derecha):
     return resultado
 
 
-def sumar_a_gran_total(gran_total, subtotal):
-    return formatear_decimal(Decimal(gran_total) + Decimal(subtotal))
+def sumar_a_gran_total(calculadora, gran_total, subtotal):
+    return aplicar_modo_decimal(calculadora, Decimal(gran_total) + Decimal(subtotal))
+
+
+def cambiar_modo_decimal(calculadora, modo_decimal):
+    calculadora["modo_decimal"] = modo_decimal
+    registrar_cinta(calculadora, "MODO DECIMAL = " + modo_decimal)
+    registrar_log(calculadora, "modo_decimal", "modo_decimal=" + modo_decimal)
 
 
 def borrar_entrada(calculadora):
@@ -524,11 +639,22 @@ def reiniciar_operacion(calculadora):
 def mostrar_estado(calculadora):
     print()
     print("Estado:", calculadora["estado"])
-    print("Display:", calculadora["display"])
-    print("Acumulado:", calculadora["acumulado"] or "-")
-    print("Acumulado multiplicativo:", calculadora["acumulado_multiplicativo"] or "-")
+    print("Modo decimal:", calculadora["modo_decimal"])
+    print("Display:", obtener_display_visible(calculadora))
+    print(
+        "Acumulado:",
+        formatear_valor_visible(calculadora, calculadora["acumulado"])
+        if calculadora["acumulado"] != ""
+        else "-",
+    )
+    print(
+        "Acumulado multiplicativo:",
+        formatear_valor_visible(calculadora, calculadora["acumulado_multiplicativo"], False)
+        if calculadora["acumulado_multiplicativo"] != ""
+        else "-",
+    )
     print("Operador pendiente:", calculadora["operador_pendiente"] or "-")
-    print("Gran total:", calculadora["gran_total"])
+    print("Gran total:", formatear_valor_visible(calculadora, calculadora["gran_total"]))
 
 
 def leer_tecla():
@@ -564,6 +690,7 @@ def describir_estado(calculadora):
         + ",operador_pendiente=" + calculadora["operador_pendiente"]
         + ",operador_subtotal=" + calculadora["operador_subtotal"]
         + ",gran_total=" + calculadora["gran_total"]
+        + ",modo_decimal=" + calculadora["modo_decimal"]
     )
 
 
@@ -589,7 +716,13 @@ def registrar_cinta(calculadora, linea):
 def registrar_operacion_en_cinta(calculadora, izquierda, operador, derecha, resultado):
     registrar_cinta(
         calculadora,
-        izquierda + " " + operador + " " + derecha + " = " + resultado,
+        formatear_valor_visible(calculadora, izquierda)
+        + " "
+        + operador
+        + " "
+        + formatear_valor_visible(calculadora, derecha)
+        + " = "
+        + formatear_valor_visible(calculadora, resultado),
     )
 
 
@@ -608,9 +741,10 @@ def ejecutar_terminal():
 
     print("Calculadora sumadora contable")
     print("Estado inicial: encendida_esperando_typing")
-    print("Usa teclas: 0-9 . + - * / = e a s g")
+    print("Usa teclas: 0-9 . + - * / = e a s g f d t c")
     print("e borra la entrada actual")
     print("a borra todo y reinicia memorias")
+    print("f flotante, d 2 decimales, t 3 decimales, c 4 decimales")
     print("s subtotaliza y acumula al gran total")
     print("g imprime el gran total y reinicia en ceros")
     print("Cada tecla se procesa sin Enter")

@@ -103,7 +103,7 @@ class CalculadoraContableTest(unittest.TestCase):
         presionar_tecla(calculadora, "+")
 
         self.assertEqual(calculadora["estado"], ESTADO_OPERADOR_PENDIENTE)
-        self.assertEqual(calculadora["acumulado"], "7")
+        self.assertEqual(calculadora["acumulado"], "7.00")
         self.assertEqual(calculadora["operador_pendiente"], "+")
 
     def test_suma_basica(self):
@@ -116,7 +116,7 @@ class CalculadoraContableTest(unittest.TestCase):
         presionar_tecla(calculadora, "=")
 
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
-        self.assertEqual(calculadora["display"], "5")
+        self.assertEqual(calculadora["display"], "5.00")
 
     def test_resta_basica(self):
         calculadora = self.crear_calculadora()
@@ -127,7 +127,7 @@ class CalculadoraContableTest(unittest.TestCase):
         presionar_tecla(calculadora, "4")
         presionar_tecla(calculadora, "=")
 
-        self.assertEqual(calculadora["display"], "5")
+        self.assertEqual(calculadora["display"], "5.00")
 
     def test_multiplicacion_basica(self):
         calculadora = self.crear_calculadora()
@@ -138,7 +138,7 @@ class CalculadoraContableTest(unittest.TestCase):
         presionar_tecla(calculadora, "7")
         presionar_tecla(calculadora, "=")
 
-        self.assertEqual(calculadora["display"], "42")
+        self.assertEqual(calculadora["display"], "42.00")
 
     def test_division_basica(self):
         calculadora = self.crear_calculadora()
@@ -149,7 +149,7 @@ class CalculadoraContableTest(unittest.TestCase):
         presionar_tecla(calculadora, "4")
         presionar_tecla(calculadora, "=")
 
-        self.assertEqual(calculadora["display"], "2")
+        self.assertEqual(calculadora["display"], "2.00")
 
     def test_division_entre_cero_falla(self):
         calculadora = self.crear_calculadora()
@@ -191,7 +191,7 @@ class CalculadoraContableTest(unittest.TestCase):
         contenido_cinta = self.leer_archivo(self.ruta_cinta)
 
         self.assertIn("encendida", contenido_cinta)
-        self.assertIn("2 + 3 = 5", contenido_cinta)
+        self.assertIn("2.00 + 3.00 = 5.00", contenido_cinta)
 
     def test_subtotal_suma_al_gran_total_y_reinicia_operacion(self):
         calculadora = self.crear_calculadora()
@@ -204,8 +204,8 @@ class CalculadoraContableTest(unittest.TestCase):
 
         self.assertEqual(calculadora["estado"], ESTADO_ENCENDIDA_ESPERANDO_TYPING)
         self.assertEqual(calculadora["display"], "0")
-        self.assertEqual(calculadora["ultimo_subtotal"], "5")
-        self.assertEqual(calculadora["gran_total"], "5")
+        self.assertEqual(calculadora["ultimo_subtotal"], "5.00")
+        self.assertEqual(calculadora["gran_total"], "5.00")
 
     def test_subtotales_son_independientes_y_acumulan_gran_total(self):
         calculadora = self.crear_calculadora()
@@ -214,7 +214,7 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "2+3s4+1s":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["gran_total"], "10")
+        self.assertEqual(calculadora["gran_total"], "10.00")
         self.assertEqual(calculadora["display"], "0")
         self.assertEqual(calculadora["estado"], ESTADO_ENCENDIDA_ESPERANDO_TYPING)
 
@@ -225,14 +225,14 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "2+3s4+1sg":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["ultimo_gran_total"], "10")
+        self.assertEqual(calculadora["ultimo_gran_total"], "10.00")
         self.assertEqual(calculadora["gran_total"], "0")
         self.assertEqual(calculadora["display"], "0")
         self.assertEqual(calculadora["estado"], ESTADO_ENCENDIDA_ESPERANDO_TYPING)
 
         contenido_cinta = self.leer_archivo(self.ruta_cinta)
-        self.assertIn("SUBTOTAL = 5", contenido_cinta)
-        self.assertIn("GRAN TOTAL = 10", contenido_cinta)
+        self.assertIn("SUBTOTAL = 5.00", contenido_cinta)
+        self.assertIn("GRAN TOTAL = 10.00", contenido_cinta)
 
     def test_multiplicacion_despues_de_suma_no_suma_el_factor_antes_de_tiempo(self):
         calculadora = self.crear_calculadora()
@@ -242,7 +242,7 @@ class CalculadoraContableTest(unittest.TestCase):
             presionar_tecla(calculadora, tecla)
 
         self.assertEqual(calculadora["display"], "2")
-        self.assertEqual(calculadora["acumulado"], "100")
+        self.assertEqual(calculadora["acumulado"], "100.00")
         self.assertEqual(calculadora["acumulado_multiplicativo"], "2")
         self.assertEqual(calculadora["operador_pendiente"], "*")
 
@@ -253,7 +253,7 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "50+50+2*50=":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["display"], "200")
+        self.assertEqual(calculadora["display"], "200.00")
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
 
     def test_multiplicacion_despues_de_resta_no_resta_el_factor_antes_de_tiempo(self):
@@ -264,7 +264,7 @@ class CalculadoraContableTest(unittest.TestCase):
             presionar_tecla(calculadora, tecla)
 
         self.assertEqual(calculadora["display"], "2")
-        self.assertEqual(calculadora["acumulado"], "100")
+        self.assertEqual(calculadora["acumulado"], "100.00")
         self.assertEqual(calculadora["acumulado_multiplicativo"], "2")
         self.assertEqual(calculadora["operador_pendiente"], "*")
         self.assertEqual(calculadora["operador_subtotal"], "-")
@@ -276,7 +276,7 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "100-2*50=":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["display"], "0")
+        self.assertEqual(calculadora["display"], "0.00")
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
 
     def test_division_se_integra_al_subtotal_despues_de_suma(self):
@@ -286,7 +286,7 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "100+50/2=":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["display"], "125")
+        self.assertEqual(calculadora["display"], "125.00")
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
 
     def test_division_se_descuenta_del_subtotal_despues_de_resta(self):
@@ -296,7 +296,7 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "100-50/2=":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["display"], "75")
+        self.assertEqual(calculadora["display"], "75.00")
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
 
     def test_division_y_multiplicacion_encadenadas_forman_un_mismo_termino(self):
@@ -306,7 +306,7 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "100+50/2*4=":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["display"], "200")
+        self.assertEqual(calculadora["display"], "200.00")
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
 
     def test_numero_negativo_desde_el_arranque_se_captura_como_operando(self):
@@ -327,7 +327,7 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "-5-10=":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["display"], "-15")
+        self.assertEqual(calculadora["display"], "-15.00")
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
 
     def test_multiplicacion_con_segundo_operando_negativo(self):
@@ -337,7 +337,7 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "5*-2=":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["display"], "-10")
+        self.assertEqual(calculadora["display"], "-10.00")
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
 
     def test_division_con_segundo_operando_negativo(self):
@@ -347,7 +347,7 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "5/-2=":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["display"], "-2.5")
+        self.assertEqual(calculadora["display"], "-2.50")
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
 
     def test_resta_de_operando_negativo(self):
@@ -357,7 +357,7 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "5--2=":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["display"], "7")
+        self.assertEqual(calculadora["display"], "7.00")
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
 
     def test_suma_de_operando_negativo(self):
@@ -367,8 +367,41 @@ class CalculadoraContableTest(unittest.TestCase):
         for tecla in "5+-2=":
             presionar_tecla(calculadora, tecla)
 
-        self.assertEqual(calculadora["display"], "3")
+        self.assertEqual(calculadora["display"], "3.00")
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
+    def test_selector_decimal_cambia_precision(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "t1/3=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["modo_decimal"], "3")
+        self.assertEqual(calculadora["display"], "0.333")
+
+    def test_modo_flotante_conserva_precision_al_dividir(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "f1/3=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["modo_decimal"], "F")
+        self.assertEqual(
+            calculadora["display"],
+            "0.3333333333333333333333333333",
+        )
+
+    def test_cinta_formatea_miles_y_decimales(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "1250+300=":
+            presionar_tecla(calculadora, tecla)
+
+        contenido_cinta = self.leer_archivo(self.ruta_cinta)
+        self.assertIn("1,250.00 + 300.00 = 1,550.00", contenido_cinta)
 
 
 if __name__ == "__main__":

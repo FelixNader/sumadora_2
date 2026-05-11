@@ -3,8 +3,22 @@ export const ESTADO_ENCENDIDA_ESPERANDO_TYPING = "encendida_esperando_typing";
 export const ESTADO_TYPING_OPERANDO = "typing_operando";
 export const ESTADO_OPERADOR_PENDIENTE = "operador_pendiente";
 export const ESTADO_RESULTADO_EN_DISPLAY = "resultado_en_display";
+export const MODO_DECIMAL_FLOTANTE = "F";
+export const MODO_DECIMAL_DOS = "2";
+export const MODO_DECIMAL_TRES = "3";
+export const MODO_DECIMAL_CUATRO = "4";
 
 const PRECISION_DIVISION = 28n;
+const TECLAS_MODO_DECIMAL = {
+  f: MODO_DECIMAL_FLOTANTE,
+  F: MODO_DECIMAL_FLOTANTE,
+  d: MODO_DECIMAL_DOS,
+  D: MODO_DECIMAL_DOS,
+  t: MODO_DECIMAL_TRES,
+  T: MODO_DECIMAL_TRES,
+  c: MODO_DECIMAL_CUATRO,
+  C: MODO_DECIMAL_CUATRO,
+};
 
 export function nuevaCalculadora() {
   return {
@@ -18,6 +32,7 @@ export function nuevaCalculadora() {
     gran_total: "0",
     ultimo_subtotal: "",
     ultimo_gran_total: "",
+    modo_decimal: MODO_DECIMAL_DOS,
     log_entries: [],
     cinta_entries: [],
   };
@@ -64,6 +79,8 @@ export function presionarTecla(calculadora, tecla) {
       borrarEntrada(calculadora);
     } else if (tecla === "a" || tecla === "A") {
       borrarTodo(calculadora);
+    } else if (Object.hasOwn(TECLAS_MODO_DECIMAL, tecla)) {
+      cambiarModoDecimal(calculadora, TECLAS_MODO_DECIMAL[tecla]);
     } else if (tecla === "s" || tecla === "S") {
       subtotalizar(calculadora);
     } else if (tecla === "g" || tecla === "G") {
@@ -105,6 +122,104 @@ function esOperadorMultiplicativo(tecla) {
 
 function esOperandoIncompleto(texto) {
   return texto === "-";
+}
+
+function scaleForMode(modoDecimal) {
+  if (modoDecimal === MODO_DECIMAL_DOS) {
+    return 2;
+  }
+  if (modoDecimal === MODO_DECIMAL_TRES) {
+    return 3;
+  }
+  if (modoDecimal === MODO_DECIMAL_CUATRO) {
+    return 4;
+  }
+  return null;
+}
+
+function applyModeDecimal(calculadora, value) {
+  const decimal = typeof value === "string" ? parseDecimal(value) : value;
+  const fixedScale = scaleForMode(calculadora.modo_decimal);
+  if (fixedScale === null) {
+    return decimalToString(decimal);
+  }
+  return decimalToFixedString(roundDecimal(decimal, fixedScale), fixedScale);
+}
+
+function formatThousandsInteger(texto) {
+  if (texto === "") {
+    return "0";
+  }
+
+  let sign = "";
+  let digits = texto;
+  if (digits.startsWith("-")) {
+    sign = "-";
+    digits = digits.slice(1);
+  }
+
+  const grupos = [];
+  while (digits.length > 3) {
+    grupos.push(digits.slice(-3));
+    digits = digits.slice(0, -3);
+  }
+  grupos.push(digits || "0");
+  return `${sign}${grupos.reverse().join(",")}`;
+}
+
+function formatTypedOperand(texto) {
+  if (texto === "" || texto === "0") {
+    return "0";
+  }
+  if (texto === "-") {
+    return "-";
+  }
+
+  let sign = "";
+  let normalizado = texto;
+  if (normalizado.startsWith("-")) {
+    sign = "-";
+    normalizado = normalizado.slice(1);
+  }
+
+  if (normalizado.includes(".")) {
+    const [entero, fraccion] = normalizado.split(".");
+    return `${formatThousandsInteger(`${sign}${entero || "0"}`)}.${fraccion}`;
+  }
+
+  return formatThousandsInteger(`${sign}${normalizado}`);
+}
+
+export function formatearValorVisible(calculadora, valor, forceFixed = true) {
+  let texto = valor || "0";
+  if (forceFixed) {
+    texto = applyModeDecimal(calculadora, texto);
+  } else {
+    texto = decimalToString(parseDecimal(texto));
+  }
+
+  let sign = "";
+  if (texto.startsWith("-")) {
+    sign = "-";
+    texto = texto.slice(1);
+  }
+
+  if (texto.includes(".")) {
+    const [entero, fraccion] = texto.split(".");
+    return `${formatThousandsInteger(`${sign}${entero}`)}.${fraccion}`;
+  }
+
+  return formatThousandsInteger(`${sign}${texto}`);
+}
+
+export function obtenerDisplayVisible(calculadora) {
+  if (
+    calculadora.estado === ESTADO_TYPING_OPERANDO &&
+    calculadora.operando_actual !== ""
+  ) {
+    return formatTypedOperand(calculadora.operando_actual);
+  }
+  return formatearValorVisible(calculadora, calculadora.display || "0");
 }
 
 function manejarEncendidaEsperandoTyping(calculadora, tecla) {
@@ -280,6 +395,8 @@ function prepararOEncadenarAdicion(calculadora, operador) {
       calculadora.operador_subtotal,
       termino,
     );
+  } else {
+    nuevoSubtotal = applyModeDecimal(calculadora, termino);
   }
 
   calculadora.acumulado = nuevoSubtotal;
@@ -321,10 +438,10 @@ function cerrarOperacion(calculadora) {
 
 function subtotalizar(calculadora) {
   const subtotal = obtenerSubtotalActual(calculadora, true);
-  const granTotal = sumarAGranTotal(calculadora.gran_total, subtotal);
+  const granTotal = sumarAGranTotal(calculadora, calculadora.gran_total, subtotal);
   calculadora.ultimo_subtotal = subtotal;
   calculadora.gran_total = granTotal;
-  registrarCinta(calculadora, `SUBTOTAL = ${subtotal}`);
+  registrarCinta(calculadora, `SUBTOTAL = ${formatearValorVisible(calculadora, subtotal)}`);
   registrarLog(calculadora, "subtotal", `subtotal=${subtotal} gran_total=${granTotal}`);
   reiniciarOperacion(calculadora);
 }
@@ -332,7 +449,10 @@ function subtotalizar(calculadora) {
 function granTotalizar(calculadora) {
   const granTotal = calculadora.gran_total;
   calculadora.ultimo_gran_total = granTotal;
-  registrarCinta(calculadora, `GRAN TOTAL = ${granTotal}`);
+  registrarCinta(
+    calculadora,
+    `GRAN TOTAL = ${formatearValorVisible(calculadora, granTotal)}`,
+  );
   registrarLog(calculadora, "gran_total", `gran_total=${granTotal}`);
   reiniciarOperacion(calculadora);
   calculadora.gran_total = "0";
@@ -367,6 +487,7 @@ function obtenerSubtotalActual(calculadora, registrar = false) {
         );
       }
       return resolverOperacion(
+        calculadora,
         calculadora.acumulado,
         calculadora.operador_subtotal,
         termino,
@@ -388,6 +509,7 @@ function obtenerSubtotalActual(calculadora, registrar = false) {
       );
     }
     return resolverOperacion(
+      calculadora,
       calculadora.acumulado,
       calculadora.operador_subtotal,
       termino,
@@ -430,6 +552,7 @@ function resolverTerminoActual(calculadora, registrar = false) {
           calculadora.operando_actual,
         )
       : resolverOperacion(
+          calculadora,
           izquierda,
           calculadora.operador_pendiente,
           calculadora.operando_actual,
@@ -461,8 +584,14 @@ function resolverTerminoActual(calculadora, registrar = false) {
 }
 
 function resolverYRegistrar(calculadora, izquierda, operador, derecha) {
-  const resultado = resolverOperacion(izquierda, operador, derecha);
-  registrarCinta(calculadora, `${izquierda} ${operador} ${derecha} = ${resultado}`);
+  const resultado = resolverOperacion(calculadora, izquierda, operador, derecha);
+  registrarCinta(
+    calculadora,
+    `${formatearValorVisible(calculadora, izquierda)} ${operador} ${formatearValorVisible(
+      calculadora,
+      derecha,
+    )} = ${formatearValorVisible(calculadora, resultado)}`,
+  );
   registrarLog(
     calculadora,
     "resolver",
@@ -471,31 +600,34 @@ function resolverYRegistrar(calculadora, izquierda, operador, derecha) {
   return resultado;
 }
 
-function resolverOperacion(izquierda, operador, derecha) {
+function resolverOperacion(calculadora, izquierda, operador, derecha) {
   const a = parseDecimal(izquierda);
   const b = parseDecimal(derecha);
 
   if (operador === "+") {
-    return decimalToString(addDecimals(a, b));
+    return applyModeDecimal(calculadora, addDecimals(a, b));
   }
 
   if (operador === "-") {
-    return decimalToString(subtractDecimals(a, b));
+    return applyModeDecimal(calculadora, subtractDecimals(a, b));
   }
 
   if (operador === "*") {
-    return decimalToString(multiplyDecimals(a, b));
+    return applyModeDecimal(calculadora, multiplyDecimals(a, b));
   }
 
   if (operador === "/") {
-    return decimalToString(divideDecimals(a, b, PRECISION_DIVISION));
+    return applyModeDecimal(calculadora, divideDecimals(a, b, PRECISION_DIVISION));
   }
 
   throw new Error("Operador no soportado.");
 }
 
-function sumarAGranTotal(granTotal, subtotal) {
-  return decimalToString(addDecimals(parseDecimal(granTotal), parseDecimal(subtotal)));
+function sumarAGranTotal(calculadora, granTotal, subtotal) {
+  return applyModeDecimal(
+    calculadora,
+    addDecimals(parseDecimal(granTotal), parseDecimal(subtotal)),
+  );
 }
 
 function borrarEntrada(calculadora) {
@@ -530,6 +662,12 @@ function borrarTodo(calculadora) {
   registrarLog(calculadora, "borrar_todo");
 }
 
+function cambiarModoDecimal(calculadora, modoDecimal) {
+  calculadora.modo_decimal = modoDecimal;
+  registrarCinta(calculadora, `MODO DECIMAL = ${modoDecimal}`);
+  registrarLog(calculadora, "modo_decimal", `modo_decimal=${modoDecimal}`);
+}
+
 function reiniciarOperacion(calculadora) {
   calculadora.estado = ESTADO_ENCENDIDA_ESPERANDO_TYPING;
   calculadora.display = "0";
@@ -550,6 +688,7 @@ function describirEstado(calculadora) {
     `operador_pendiente=${calculadora.operador_pendiente}`,
     `operador_subtotal=${calculadora.operador_subtotal}`,
     `gran_total=${calculadora.gran_total}`,
+    `modo_decimal=${calculadora.modo_decimal}`,
   ].join(",");
 }
 
@@ -651,6 +790,53 @@ function decimalToString(decimal) {
     return `${sign}${enteros}`;
   }
   return `${sign}${enteros}.${fraccion}`;
+}
+
+function decimalToFixedString(decimal, fixedScale) {
+  const normalizado = normalizeDecimal(decimal);
+  const sign = normalizado.value === 0n ? "" : normalizado.sign < 0n ? "-" : "";
+  let digits = normalizado.value.toString();
+
+  if (fixedScale === 0) {
+    return `${sign}${digits}`;
+  }
+
+  if (normalizado.scale < fixedScale) {
+    digits = digits.padEnd(digits.length + (fixedScale - normalizado.scale), "0");
+  }
+
+  if (digits.length <= fixedScale) {
+    digits = digits.padStart(fixedScale + 1, "0");
+  }
+
+  const split = digits.length - fixedScale;
+  const enteros = digits.slice(0, split);
+  const fraccion = digits.slice(split);
+  return `${sign}${enteros}.${fraccion}`;
+}
+
+function roundDecimal(decimal, targetScale) {
+  const normalizado = normalizeDecimal(decimal);
+  if (normalizado.scale <= targetScale) {
+    return {
+      sign: normalizado.sign,
+      value: normalizado.value,
+      scale: normalizado.scale,
+    };
+  }
+
+  const factor = tenPow(BigInt(normalizado.scale - targetScale));
+  let quotient = normalizado.value / factor;
+  const remainder = normalizado.value % factor;
+  if (remainder * 2n >= factor) {
+    quotient += 1n;
+  }
+
+  return {
+    sign: normalizado.sign,
+    value: quotient,
+    scale: targetScale,
+  };
 }
 
 function alignDecimals(a, b) {
