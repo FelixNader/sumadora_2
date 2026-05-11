@@ -19,6 +19,12 @@
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  overscroll-behavior: none;
 }
 
 body {
@@ -26,6 +32,7 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+  -webkit-text-size-adjust: 100%;
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.45), transparent 30%),
     linear-gradient(180deg, var(--bg), var(--bg-shadow));
@@ -35,6 +42,7 @@ body {
 .app-shell {
   width: min(980px, 100%);
   margin: 0 auto;
+  min-height: 100dvh;
   padding: 1.25rem 1rem max(2rem, env(safe-area-inset-bottom));
   display: grid;
   gap: 1rem;
@@ -151,6 +159,7 @@ body {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
+  touch-action: manipulation;
 }
 
 .key {
@@ -158,6 +167,9 @@ body {
   border-radius: 18px;
   min-height: 4.2rem;
   aspect-ratio: 1 / 1;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
   padding: 0.4rem;
   background: linear-gradient(180deg, var(--button), #decdb3);
   color: var(--button-text);
@@ -239,6 +251,8 @@ body {
   min-height: 260px;
   max-height: 45vh;
   overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 1rem;
   border-radius: 20px;
   background:
@@ -255,9 +269,11 @@ body {
 @media (max-width: 640px) {
   body {
     overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .app-shell {
+    min-height: 100dvh;
     padding:
       max(0.75rem, env(safe-area-inset-top))
       0.75rem
@@ -356,6 +372,8 @@ body {
   }
 
   .paper-card {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
     padding: 0.7rem;
     border-radius: 22px;
   }
@@ -370,8 +388,9 @@ body {
   }
 
   .paper-output {
-    min-height: 180px;
-    max-height: 26vh;
+    min-height: 0;
+    height: 100%;
+    max-height: none;
     padding: 0.85rem;
     border-radius: 16px;
     font-size: 0.8rem;

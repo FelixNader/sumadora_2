@@ -22,6 +22,7 @@ let calculadora = cargarCalculadora();
 
 render();
 registrarServiceWorker();
+blindarGestosIOS();
 
 keypad.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-key]");
@@ -147,4 +148,44 @@ function registrarServiceWorker() {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js").catch(() => {});
   });
+}
+
+function blindarGestosIOS() {
+  let ultimoTouchEnd = 0;
+
+  keypad.addEventListener(
+    "touchend",
+    (event) => {
+      const ahora = Date.now();
+      if (ahora - ultimoTouchEnd < 320) {
+        event.preventDefault();
+      }
+      ultimoTouchEnd = ahora;
+    },
+    { passive: false },
+  );
+
+  keypad.addEventListener(
+    "gesturestart",
+    (event) => {
+      event.preventDefault();
+    },
+    { passive: false },
+  );
+
+  keypad.addEventListener(
+    "gesturechange",
+    (event) => {
+      event.preventDefault();
+    },
+    { passive: false },
+  );
+
+  keypad.addEventListener(
+    "dblclick",
+    (event) => {
+      event.preventDefault();
+    },
+    { passive: false },
+  );
 }
