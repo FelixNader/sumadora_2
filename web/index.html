@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#d9ceb8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Sumadora Contable</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="calculator-card">
+        <header class="calculator-header">
+          <div>
+            <p class="kicker">Registradora Ochentera</p>
+            <h1>Sumadora Contable</h1>
+          </div>
+          <div class="status-pill">
+            <span>Estado</span>
+            <strong data-estado>encendida</strong>
+          </div>
+        </header>
+
+        <section class="display-wrap">
+          <div class="metrics">
+            <div>
+              <span>Ultimo subtotal</span>
+              <strong data-subtotal>-</strong>
+            </div>
+            <div>
+              <span>Gran total</span>
+              <strong data-gran-total>0</strong>
+            </div>
+          </div>
+          <div class="display-glass">
+            <div class="display-text" data-display data-mode="listo">0</div>
+          </div>
+        </section>
+
+        <section class="keypad" data-keypad>
+          <button data-key="C" class="key utility">C</button>
+          <button data-key="s" class="key utility">S</button>
+          <button data-key="g" class="key utility">G</button>
+          <button data-key="/" class="key accent">/</button>
+
+          <button data-key="7" class="key">7</button>
+          <button data-key="8" class="key">8</button>
+          <button data-key="9" class="key">9</button>
+          <button data-key="*" class="key accent">*</button>
+
+          <button data-key="4" class="key">4</button>
+          <button data-key="5" class="key">5</button>
+          <button data-key="6" class="key">6</button>
+          <button data-key="-" class="key accent">-</button>
+
+          <button data-key="1" class="key">1</button>
+          <button data-key="2" class="key">2</button>
+          <button data-key="3" class="key">3</button>
+          <button data-key="+" class="key accent">+</button>
+
+          <button data-key="0" class="key wide">0</button>
+          <button data-key="." class="key">.</button>
+          <button data-key="=" class="key accent tall">=</button>
+        </section>
+      </section>
+
+      <section class="paper-card">
+        <div class="panel-switch">
+          <button data-panel="cinta" data-active="true">Cinta</button>
+          <button data-panel="log" data-active="false">Log</button>
+        </div>
+        <pre class="paper-output" data-panel-body="cinta" data-cinta></pre>
+        <pre class="paper-output" data-panel-body="log" data-log hidden></pre>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+  </html>
