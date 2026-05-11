@@ -453,6 +453,63 @@ class CalculadoraContableTest(unittest.TestCase):
         contenido_cinta = self.leer_archivo(self.ruta_cinta)
         self.assertIn("IVA+ 100.00 @ 16.00% = 116.00 (IVA 16.00)", contenido_cinta)
 
+    def test_porcentaje_sin_operador_convierte_a_fraccion(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "15p":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "0.15")
+        self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
+    def test_porcentaje_con_suma_calcula_recargo(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "200+10p=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "220.00")
+
+    def test_porcentaje_con_resta_calcula_descuento(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "200-10p=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "180.00")
+
+    def test_porcentaje_con_multiplicacion_convierte_segundo_operando(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "200*10p=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "20.00")
+
+    def test_porcentaje_con_division_convierte_segundo_operando(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "200/10p=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "2000.00")
+
+    def test_cinta_registra_porcentaje(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "200+10p=":
+            presionar_tecla(calculadora, tecla)
+
+        contenido_cinta = self.leer_archivo(self.ruta_cinta)
+        self.assertIn("PORC 10.00% DE 200.00 = 20.00", contenido_cinta)
+        self.assertIn("200.00 + 10.00% DE 200.00 = 220.00", contenido_cinta)
+
 
 if __name__ == "__main__":
     unittest.main()

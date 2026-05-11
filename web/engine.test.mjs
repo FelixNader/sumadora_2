@@ -112,4 +112,23 @@ for (const caso of casos) {
   assert.equal(calculadora.display, "172.42", "iva resta en suma encadenada");
 }
 
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "200+10p=") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.display, "220.00", "porcentaje suma");
+  assert.equal(
+    calculadora.cinta_entries.at(-2),
+    "PORC 10.00% DE 200.00 = 20.00",
+    "cinta porcentaje",
+  );
+  assert.equal(
+    calculadora.cinta_entries.at(-1),
+    "200.00 + 10.00% DE 200.00 = 220.00",
+    "cinta operacion con porcentaje",
+  );
+}
+
 console.log("engine ok");

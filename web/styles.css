@@ -184,6 +184,17 @@ body {
     0 8px 14px rgba(163, 79, 28, 0.18);
 }
 
+.tax-percent {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  background: linear-gradient(180deg, #fff4d9, #e4bf73);
+  color: #6a4b1d;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 4px 0 #a07a2f,
+    0 8px 14px rgba(130, 96, 35, 0.16);
+}
+
 .tax-rate {
   min-height: 2.75rem;
   padding-inline: 0.9rem;
@@ -454,6 +465,12 @@ body {
     font-size: 0.9rem;
   }
 
+  .tax-percent {
+    min-width: 2.45rem;
+    min-height: 2.45rem;
+    font-size: 0.96rem;
+  }
+
   .tax-rate {
     min-height: 2.45rem;
     font-size: 0.9rem;
@@ -673,6 +690,16 @@ body {
       inset 0 1px 0 rgba(255, 255, 255, 0.25),
       0 3px 0 #9f5e24,
       0 5px 8px rgba(163, 79, 28, 0.14);
+  }
+
+  html[data-orientation="landscape"] .tax-percent {
+    min-width: 2rem;
+    min-height: 2rem;
+    font-size: 0.78rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      0 3px 0 #a07a2f,
+      0 5px 8px rgba(130, 96, 35, 0.12);
   }
 
   html[data-orientation="landscape"] .tax-rate {

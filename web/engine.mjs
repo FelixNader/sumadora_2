@@ -37,6 +37,7 @@ export function nuevaCalculadora() {
     editando_tasa_impuesto: false,
     buffer_tasa_impuesto: "",
     ultimo_impuesto: "",
+    detalle_operando_cinta: "",
     log_entries: [],
     cinta_entries: [],
   };
@@ -93,6 +94,8 @@ export function presionarTecla(calculadora, tecla) {
       sumarImpuesto(calculadora);
     } else if (tecla === "u" || tecla === "U") {
       restarImpuesto(calculadora);
+    } else if (tecla === "p" || tecla === "P") {
+      aplicarPorcentaje(calculadora);
     } else if (tecla === "s" || tecla === "S") {
       subtotalizar(calculadora);
     } else if (tecla === "g" || tecla === "G") {
@@ -263,7 +266,7 @@ function fijarResultado(calculadora, resultado) {
   calculadora.estado = ESTADO_RESULTADO_EN_DISPLAY;
 }
 
-function aplicarResultadoImpuesto(calculadora, resultado) {
+function aplicarResultadoTransformacion(calculadora, resultado) {
   if (
     calculadora.estado === ESTADO_TYPING_OPERANDO &&
     calculadora.operador_pendiente !== ""
@@ -285,6 +288,7 @@ function manejarEncendidaEsperandoTyping(calculadora, tecla) {
   }
 
   if (esDigito(tecla)) {
+    calculadora.detalle_operando_cinta = "";
     calculadora.operando_actual = tecla;
     calculadora.display = tecla;
     calculadora.estado = ESTADO_TYPING_OPERANDO;
@@ -292,6 +296,7 @@ function manejarEncendidaEsperandoTyping(calculadora, tecla) {
   }
 
   if (tecla === ".") {
+    calculadora.detalle_operando_cinta = "";
     calculadora.operando_actual = "0.";
     calculadora.display = "0.";
     calculadora.estado = ESTADO_TYPING_OPERANDO;
@@ -305,6 +310,7 @@ function manejarEncendidaEsperandoTyping(calculadora, tecla) {
 
 function manejarTypingOperando(calculadora, tecla) {
   if (esDigito(tecla)) {
+    calculadora.detalle_operando_cinta = "";
     if (calculadora.operando_actual === "-") {
       calculadora.operando_actual = `-${tecla}`;
     } else if (calculadora.operando_actual === "0") {
@@ -319,6 +325,7 @@ function manejarTypingOperando(calculadora, tecla) {
   }
 
   if (tecla === ".") {
+    calculadora.detalle_operando_cinta = "";
     if (calculadora.operando_actual.includes(".")) {
       throw new Error("El operando actual ya tiene punto decimal.");
     }
@@ -353,6 +360,7 @@ function manejarTypingOperando(calculadora, tecla) {
 
 function manejarOperadorPendiente(calculadora, tecla) {
   if (tecla === "-") {
+    calculadora.detalle_operando_cinta = "";
     calculadora.operando_actual = "-";
     calculadora.display = "-";
     calculadora.estado = ESTADO_TYPING_OPERANDO;
@@ -360,6 +368,7 @@ function manejarOperadorPendiente(calculadora, tecla) {
   }
 
   if (esDigito(tecla)) {
+    calculadora.detalle_operando_cinta = "";
     calculadora.operando_actual = tecla;
     calculadora.display = tecla;
     calculadora.estado = ESTADO_TYPING_OPERANDO;
@@ -367,6 +376,7 @@ function manejarOperadorPendiente(calculadora, tecla) {
   }
 
   if (tecla === ".") {
+    calculadora.detalle_operando_cinta = "";
     calculadora.operando_actual = "0.";
     calculadora.display = "0.";
     calculadora.estado = ESTADO_TYPING_OPERANDO;
@@ -397,6 +407,7 @@ function manejarOperadorPendiente(calculadora, tecla) {
 function manejarResultadoEnDisplay(calculadora, tecla) {
   if (esDigito(tecla)) {
     reiniciarOperacion(calculadora);
+    calculadora.detalle_operando_cinta = "";
     calculadora.operando_actual = tecla;
     calculadora.display = tecla;
     calculadora.estado = ESTADO_TYPING_OPERANDO;
@@ -405,6 +416,7 @@ function manejarResultadoEnDisplay(calculadora, tecla) {
 
   if (tecla === ".") {
     reiniciarOperacion(calculadora);
+    calculadora.detalle_operando_cinta = "";
     calculadora.operando_actual = "0.";
     calculadora.display = "0.";
     calculadora.estado = ESTADO_TYPING_OPERANDO;
@@ -523,7 +535,7 @@ function sumarImpuesto(calculadora) {
     subtractDecimals(parseDecimal(total), parseDecimal(base)),
   );
   calculadora.ultimo_impuesto = impuesto;
-  aplicarResultadoImpuesto(calculadora, total);
+  aplicarResultadoTransformacion(calculadora, total);
   registrarCinta(
     calculadora,
     `IVA+ ${formatearValorVisible(calculadora, base)} @ ${formatearValorVisible(
@@ -550,7 +562,7 @@ function restarImpuesto(calculadora) {
     subtractDecimals(parseDecimal(total), parseDecimal(base)),
   );
   calculadora.ultimo_impuesto = impuesto;
-  aplicarResultadoImpuesto(calculadora, base);
+  aplicarResultadoTransformacion(calculadora, base);
   registrarCinta(
     calculadora,
     `IVA- ${formatearValorVisible(calculadora, total)} @ ${formatearValorVisible(
@@ -565,6 +577,78 @@ function restarImpuesto(calculadora) {
     calculadora,
     "impuesto_resta",
     `total=${total} tasa=${calculadora.tasa_impuesto} impuesto=${impuesto} base=${base}`,
+  );
+}
+
+function aplicarPorcentaje(calculadora) {
+  if (calculadora.estado === ESTADO_OPERADOR_PENDIENTE) {
+    throw new Error("Falta capturar el operando para aplicar porcentaje.");
+  }
+
+  let operando;
+  if (calculadora.estado === ESTADO_TYPING_OPERANDO) {
+    if (esOperandoIncompleto(calculadora.operando_actual)) {
+      throw new Error("Falta completar el operando negativo.");
+    }
+    if (calculadora.operando_actual === "") {
+      throw new Error("Falta capturar el operando para aplicar porcentaje.");
+    }
+    operando = calculadora.operando_actual;
+  } else {
+    operando = obtenerSubtotalActual(calculadora, false);
+  }
+
+  let base = "";
+  let resultado;
+  let detalleCinta;
+
+  if (
+    calculadora.estado === ESTADO_TYPING_OPERANDO &&
+    esOperadorAditivo(calculadora.operador_pendiente) &&
+    calculadora.acumulado !== ""
+  ) {
+    base = calculadora.acumulado;
+    resultado = applyModeDecimal(
+      calculadora,
+      divideDecimals(
+        multiplyDecimals(parseDecimal(base), parseDecimal(operando)),
+        parseDecimal("100"),
+        PRECISION_DIVISION,
+      ),
+    );
+    detalleCinta = `PORC ${formatearValorVisible(calculadora, operando)}% DE ${formatearValorVisible(
+      calculadora,
+      base,
+    )} = ${formatearValorVisible(calculadora, resultado)}`;
+    calculadora.detalle_operando_cinta = `${formatearValorVisible(
+      calculadora,
+      operando,
+    )}% DE ${formatearValorVisible(calculadora, base)}`;
+  } else {
+    resultado = applyModeDecimal(
+      calculadora,
+      divideDecimals(parseDecimal(operando), parseDecimal("100"), PRECISION_DIVISION),
+    );
+    detalleCinta = `PORC ${formatearValorVisible(calculadora, operando)}% = ${formatearValorVisible(
+      calculadora,
+      resultado,
+    )}`;
+    if (
+      calculadora.estado === ESTADO_TYPING_OPERANDO &&
+      (calculadora.operador_pendiente === "*" || calculadora.operador_pendiente === "/")
+    ) {
+      calculadora.detalle_operando_cinta = `${formatearValorVisible(calculadora, operando)}%`;
+    } else {
+      calculadora.detalle_operando_cinta = "";
+    }
+  }
+
+  aplicarResultadoTransformacion(calculadora, resultado);
+  registrarCinta(calculadora, detalleCinta);
+  registrarLog(
+    calculadora,
+    "porcentaje",
+    `operando=${operando} base=${base} resultado=${resultado}`,
   );
 }
 
@@ -693,12 +777,14 @@ function resolverTerminoActual(calculadora, registrar = false) {
 
 function resolverYRegistrar(calculadora, izquierda, operador, derecha) {
   const resultado = resolverOperacion(calculadora, izquierda, operador, derecha);
+  let derechaVisible = formatearValorVisible(calculadora, derecha);
+  if (calculadora.detalle_operando_cinta !== "") {
+    derechaVisible = calculadora.detalle_operando_cinta;
+    calculadora.detalle_operando_cinta = "";
+  }
   registrarCinta(
     calculadora,
-    `${formatearValorVisible(calculadora, izquierda)} ${operador} ${formatearValorVisible(
-      calculadora,
-      derecha,
-    )} = ${formatearValorVisible(calculadora, resultado)}`,
+    `${formatearValorVisible(calculadora, izquierda)} ${operador} ${derechaVisible} = ${formatearValorVisible(calculadora, resultado)}`,
   );
   registrarLog(
     calculadora,
@@ -758,6 +844,7 @@ function borrarEntrada(calculadora) {
 
   registrarCinta(calculadora, "E");
   registrarLog(calculadora, "borrar_entrada");
+  calculadora.detalle_operando_cinta = "";
 }
 
 function borrarTodo(calculadora) {
@@ -768,6 +855,7 @@ function borrarTodo(calculadora) {
   calculadora.ultimo_impuesto = "";
   calculadora.editando_tasa_impuesto = false;
   calculadora.buffer_tasa_impuesto = "";
+  calculadora.detalle_operando_cinta = "";
   registrarCinta(calculadora, "A");
   registrarCinta(calculadora, encabezadoCinta("nueva_calculadora"));
   registrarLog(calculadora, "borrar_todo");
@@ -865,6 +953,7 @@ function reiniciarOperacion(calculadora) {
   calculadora.acumulado_multiplicativo = "";
   calculadora.operador_pendiente = "";
   calculadora.operador_subtotal = "+";
+  calculadora.detalle_operando_cinta = "";
 }
 
 function describirEstado(calculadora) {

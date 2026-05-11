@@ -60,6 +60,31 @@
     "estado_final": "resultado_en_display"
   },
   {
+    "secuencia": "15p",
+    "display_final": "0.15",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "200+10p=",
+    "display_final": "220.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "200-10p=",
+    "display_final": "180.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "200*10p=",
+    "display_final": "20.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "200/10p=",
+    "display_final": "2000.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
     "secuencia": "100i",
     "display_final": "116.00",
     "estado_final": "resultado_en_display"
