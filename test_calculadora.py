@@ -262,6 +262,67 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["display"], "200")
         self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
 
+    def test_numero_negativo_desde_el_arranque_se_captura_como_operando(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        presionar_tecla(calculadora, "-")
+        presionar_tecla(calculadora, "5")
+
+        self.assertEqual(calculadora["display"], "-5")
+        self.assertEqual(calculadora["operando_actual"], "-5")
+        self.assertEqual(calculadora["estado"], ESTADO_TYPING_OPERANDO)
+
+    def test_resta_iniciando_con_numero_negativo(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "-5-10=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "-15")
+        self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
+    def test_multiplicacion_con_segundo_operando_negativo(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "5*-2=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "-10")
+        self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
+    def test_division_con_segundo_operando_negativo(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "5/-2=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "-2.5")
+        self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
+    def test_resta_de_operando_negativo(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "5--2=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "7")
+        self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
+    def test_suma_de_operando_negativo(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "5+-2=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "3")
+        self.assertEqual(calculadora["estado"], ESTADO_RESULTADO_EN_DISPLAY)
+
 
 if __name__ == "__main__":
     unittest.main()

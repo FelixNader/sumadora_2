@@ -116,6 +116,10 @@ def es_operador_multiplicativo(tecla):
     return tecla in {"*", "/"}
 
 
+def es_operando_incompleto(texto):
+    return texto == "-"
+
+
 def formatear_decimal(valor):
     texto = format(valor.normalize(), "f")
     if texto == "-0":
@@ -145,6 +149,12 @@ def resolver_operacion(izquierda, operador, derecha):
 
 
 def manejar_encendida_esperando_typing(calculadora, tecla):
+    if tecla == "-":
+        calculadora["operando_actual"] = "-"
+        calculadora["display"] = "-"
+        calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        return
+
     if tecla.isdigit():
         calculadora["operando_actual"] = tecla
         calculadora["display"] = tecla
@@ -168,8 +178,12 @@ def manejar_encendida_esperando_typing(calculadora, tecla):
 
 def manejar_typing_operando(calculadora, tecla):
     if tecla.isdigit():
-        if calculadora["operando_actual"] == "0":
+        if calculadora["operando_actual"] == "-":
+            calculadora["operando_actual"] = "-" + tecla
+        elif calculadora["operando_actual"] == "0":
             calculadora["operando_actual"] = tecla
+        elif calculadora["operando_actual"] == "-0":
+            calculadora["operando_actual"] = "-" + tecla
         else:
             calculadora["operando_actual"] += tecla
         calculadora["display"] = calculadora["operando_actual"]
@@ -178,7 +192,9 @@ def manejar_typing_operando(calculadora, tecla):
     if tecla == ".":
         if "." in calculadora["operando_actual"]:
             raise ValueError("El operando actual ya tiene punto decimal.")
-        if calculadora["operando_actual"] == "":
+        if calculadora["operando_actual"] == "-":
+            calculadora["operando_actual"] = "-0."
+        elif calculadora["operando_actual"] == "":
             calculadora["operando_actual"] = "0."
         else:
             calculadora["operando_actual"] += "."
@@ -205,6 +221,12 @@ def manejar_typing_operando(calculadora, tecla):
 
 
 def manejar_operador_pendiente(calculadora, tecla):
+    if tecla == "-":
+        calculadora["operando_actual"] = "-"
+        calculadora["display"] = "-"
+        calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        return
+
     if tecla.isdigit():
         calculadora["operando_actual"] = tecla
         calculadora["display"] = tecla
@@ -413,6 +435,9 @@ def resolver_termino_actual(calculadora, registrar=False):
                 return calculadora["acumulado_multiplicativo"]
             raise ValueError("Falta capturar el segundo operando.")
 
+        if es_operando_incompleto(calculadora["operando_actual"]):
+            raise ValueError("Falta completar el operando negativo.")
+
         izquierda = calculadora["acumulado_multiplicativo"]
         if izquierda == "":
             izquierda = calculadora["operando_actual"]
@@ -435,6 +460,9 @@ def resolver_termino_actual(calculadora, registrar=False):
         calculadora["operando_actual"] = ""
         calculadora["display"] = resultado
         return resultado
+
+    if es_operando_incompleto(calculadora["operando_actual"]):
+        raise ValueError("Falta completar el operando negativo.")
 
     if calculadora["operando_actual"] != "":
         return calculadora["operando_actual"]
