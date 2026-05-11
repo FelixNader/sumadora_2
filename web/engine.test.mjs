@@ -1,24 +1,21 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { encender, nuevaCalculadora, presionarTecla } from "./engine.mjs";
 
-const casos = [
-  ["2+3=", "5"],
-  ["50+50+2*50=", "200"],
-  ["100-2*50=", "0"],
-  ["5*-2=", "-10"],
-  ["5--2=", "7"],
-  ["100+50/2*4=", "200"],
-  ["-5-10=", "-15"],
-  ["2+3s4+1sg", "0"],
-];
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rutaCasos = path.resolve(__dirname, "../spec/casos_compartidos.json");
+const casos = JSON.parse(fs.readFileSync(rutaCasos, "utf-8"));
 
-for (const [secuencia, esperado] of casos) {
+for (const caso of casos) {
   const calculadora = nuevaCalculadora();
   encender(calculadora);
-  for (const tecla of secuencia) {
+  for (const tecla of caso.secuencia) {
     presionarTecla(calculadora, tecla);
   }
-  assert.equal(calculadora.display, esperado, secuencia);
+  assert.equal(calculadora.display, caso.display_final, caso.secuencia);
+  assert.equal(calculadora.estado, caso.estado_final, caso.secuencia);
 }
 
 console.log("engine ok");

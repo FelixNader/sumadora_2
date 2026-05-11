@@ -1,0 +1,42 @@
+[
+  {
+    "secuencia": "2+3=",
+    "display_final": "5",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "50+50+2*50=",
+    "display_final": "200",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "100-2*50=",
+    "display_final": "0",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "5*-2=",
+    "display_final": "-10",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "5--2=",
+    "display_final": "7",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "100+50/2*4=",
+    "display_final": "200",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "-5-10=",
+    "display_final": "-15",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "2+3s4+1sg",
+    "display_final": "0",
+    "estado_final": "encendida_esperando_typing"
+  }
+]

@@ -1,4 +1,5 @@
 import os
+import json
 import tempfile
 import unittest
 
@@ -30,6 +31,15 @@ class CalculadoraContableTest(unittest.TestCase):
         with open(ruta, "r", encoding="utf-8") as archivo:
             return archivo.read()
 
+    def leer_casos_compartidos(self):
+        ruta = os.path.join(
+            os.path.dirname(__file__),
+            "spec",
+            "casos_compartidos.json",
+        )
+        with open(ruta, "r", encoding="utf-8") as archivo:
+            return json.load(archivo)
+
     def test_encender_activa_estado_inicial(self):
         calculadora = self.crear_calculadora()
 
@@ -38,6 +48,18 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["estado"], ESTADO_ENCENDIDA_ESPERANDO_TYPING)
         self.assertEqual(calculadora["display"], "0")
         self.assertEqual(calculadora["gran_total"], "0")
+
+    def test_casos_compartidos_python_y_js(self):
+        for caso in self.leer_casos_compartidos():
+            with self.subTest(secuencia=caso["secuencia"]):
+                calculadora = self.crear_calculadora()
+                encender(calculadora)
+
+                for tecla in caso["secuencia"]:
+                    presionar_tecla(calculadora, tecla)
+
+                self.assertEqual(calculadora["display"], caso["display_final"])
+                self.assertEqual(calculadora["estado"], caso["estado_final"])
 
     def test_primer_digito_desde_esperando_typing_inicia_captura(self):
         calculadora = self.crear_calculadora()
