@@ -595,8 +595,23 @@ button {
   }
 
   .calculator-header {
-    flex-direction: column;
-    gap: 0.55rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .title-block h1 {
+    font-size: 1.25rem;
+  }
+
+  .kicker {
+    margin-bottom: 0.15rem;
+    font-size: 0.62rem;
+  }
+
+  .subtitle {
+    margin-top: 0.2rem;
+    font-size: 0.72rem;
   }
 
   .header-actions {
@@ -659,8 +674,33 @@ button {
 }
 
 @media (max-width: 480px) {
+  .kicker {
+    display: none;
+  }
+
   .subtitle {
     display: none;
+  }
+
+  .title-block h1 {
+    font-size: 1.1rem;
+  }
+
+  .calculator-header {
+    gap: 0.4rem;
+  }
+
+  .status-pill {
+    padding: 0.45rem 0.6rem;
+  }
+
+  .status-pill span {
+    font-size: 0.62rem;
+  }
+
+  .status-pill strong {
+    font-size: 0.8rem;
+    margin-top: 0.15rem;
   }
 
   .metrics {
