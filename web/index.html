@@ -113,46 +113,55 @@
           <button data-key="+" class="key accent">+</button>
         </section>
 
-        <section class="function-console">
-          <div class="deck-switch">
-            <button data-deck="fiscal" data-active="true" type="button">Fiscal</button>
-            <button data-deck="negocio" data-active="false" type="button">Negocio</button>
-            <button data-deck="cambio" data-active="false" type="button">Cambio</button>
-          </div>
+        <button class="sheet-trigger" type="button" data-sheet-trigger aria-label="Abrir funciones">
+          <span>Funciones</span>
+          <span class="sheet-trigger-icon">▲</span>
+        </button>
 
-          <div class="deck-panels">
-            <section class="deck-panel" data-deck-body="fiscal">
-              <div class="panel-kicker">Impuestos y conversion directa</div>
-              <div class="button-rack fiscal-rack">
-                <button data-key="p" class="mini-key tax-key tax-percent" type="button">%</button>
-                <button data-key="i" class="mini-key tax-key tax-action" type="button">IVA+</button>
-                <button data-key="u" class="mini-key tax-key tax-action" type="button">IVA-</button>
-                <button data-key="r" class="mini-key tax-key tax-rate" type="button" data-tax-rate>IVA 16.00%</button>
-                <button data-key="y" class="mini-key convert-key convert-action" type="button">CONV</button>
-                <button data-key="w" class="mini-key convert-key convert-rate" type="button" data-conversion-rate>RATE 1.00</button>
-              </div>
-            </section>
+        <div class="function-sheet" data-function-sheet>
+          <div class="sheet-backdrop" data-sheet-backdrop></div>
+          <section class="function-console">
+            <div class="sheet-handle"></div>
+            <div class="deck-switch">
+              <button data-deck="fiscal" data-active="true" type="button">Fiscal</button>
+              <button data-deck="negocio" data-active="false" type="button">Negocio</button>
+              <button data-deck="cambio" data-active="false" type="button">Cambio</button>
+            </div>
 
-            <section class="deck-panel" data-deck-body="negocio" hidden>
-              <div class="panel-kicker">Margen comercial</div>
-              <div class="button-rack business-rack">
-                <button data-key="k" class="mini-key business-key" type="button">COST</button>
-                <button data-key="l" class="mini-key business-key" type="button">SELL</button>
-                <button data-key="h" class="mini-key business-key" type="button">MAR</button>
-              </div>
-            </section>
+            <div class="deck-panels">
+              <section class="deck-panel" data-deck-body="fiscal">
+                <div class="panel-kicker">Impuestos y conversion directa</div>
+                <div class="button-rack fiscal-rack">
+                  <button data-key="p" class="mini-key tax-key tax-percent" type="button">%</button>
+                  <button data-key="i" class="mini-key tax-key tax-action" type="button">IVA+</button>
+                  <button data-key="u" class="mini-key tax-key tax-action" type="button">IVA-</button>
+                  <button data-key="r" class="mini-key tax-key tax-rate" type="button" data-tax-rate>IVA 16.00%</button>
+                  <button data-key="y" class="mini-key convert-key convert-action" type="button">CONV</button>
+                  <button data-key="w" class="mini-key convert-key convert-rate" type="button" data-conversion-rate>RATE 1.00</button>
+                </div>
+              </section>
 
-            <section class="deck-panel" data-deck-body="cambio" hidden>
-              <div class="panel-kicker">Cobro seguro en USD</div>
-              <div class="button-rack tourist-rack">
-                <button data-key="o" class="mini-key tourist-key tourist-rate" type="button" data-out-rate>OUT 0.00</button>
-                <button data-key="b" class="mini-key tourist-key tourist-rate" type="button" data-spread-rate>SPD 0.00</button>
-                <button data-key="j" class="mini-key tourist-key tourist-action" type="button">PUB</button>
-                <button data-key="z" class="mini-key tourist-key tourist-action" type="button">USD</button>
-              </div>
-            </section>
-          </div>
-        </section>
+              <section class="deck-panel" data-deck-body="negocio" hidden>
+                <div class="panel-kicker">Margen comercial</div>
+                <div class="button-rack business-rack">
+                  <button data-key="k" class="mini-key business-key" type="button">COST</button>
+                  <button data-key="l" class="mini-key business-key" type="button">SELL</button>
+                  <button data-key="h" class="mini-key business-key" type="button">MAR</button>
+                </div>
+              </section>
+
+              <section class="deck-panel" data-deck-body="cambio" hidden>
+                <div class="panel-kicker">Cobro seguro en USD</div>
+                <div class="button-rack tourist-rack">
+                  <button data-key="o" class="mini-key tourist-key tourist-rate" type="button" data-out-rate>OUT 0.00</button>
+                  <button data-key="b" class="mini-key tourist-key tourist-rate" type="button" data-spread-rate>SPD 0.00</button>
+                  <button data-key="j" class="mini-key tourist-key tourist-action" type="button">PUB</button>
+                  <button data-key="z" class="mini-key tourist-key tourist-action" type="button">USD</button>
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
       </section>
 
       <section class="paper-card">

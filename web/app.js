@@ -80,6 +80,42 @@ if (metricsToggle && metricsContainer) {
   });
 }
 
+const functionSheet = document.querySelector("[data-function-sheet]");
+const sheetTrigger = document.querySelector("[data-sheet-trigger]");
+const sheetBackdrop = document.querySelector("[data-sheet-backdrop]");
+
+if (functionSheet && sheetTrigger) {
+  sheetTrigger.addEventListener("click", () => {
+    abrirSheet(true);
+  });
+
+  if (sheetBackdrop) {
+    sheetBackdrop.addEventListener("click", () => {
+      abrirSheet(false);
+    });
+  }
+
+  let touchStartY = 0;
+  functionSheet.addEventListener("touchstart", (e) => {
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  functionSheet.addEventListener("touchmove", (e) => {
+    const deltaY = e.touches[0].clientY - touchStartY;
+    if (deltaY > 60) {
+      abrirSheet(false);
+    }
+  }, { passive: true });
+}
+
+function abrirSheet(open) {
+  if (!functionSheet) return;
+  functionSheet.dataset.open = open ? "true" : "false";
+  if (sheetTrigger) {
+    sheetTrigger.querySelector(".sheet-trigger-icon").textContent = open ? "▼" : "▲";
+  }
+}
+
 window.addEventListener("resize", sincronizarViewport);
 window.addEventListener("orientationchange", () => {
   sincronizarViewport();
