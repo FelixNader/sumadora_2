@@ -15,12 +15,12 @@
     <main class="app-shell">
       <section class="calculator-card">
         <header class="calculator-header">
-          <div>
+          <div class="title-block">
             <p class="kicker">Registradora Ochentera</p>
             <h1>Sumadora Contable</h1>
+            <p class="subtitle">Motor de mostrador con cinta, negocio y cambio.</p>
           </div>
           <div class="header-actions">
-            <button data-key="a" class="mini-key utility" type="button">A</button>
             <div class="status-pill">
               <span>Estado</span>
               <strong data-estado>encendida</strong>
@@ -29,82 +29,133 @@
         </header>
 
         <section class="display-wrap">
-          <div class="mode-switch">
-            <button data-key="f" data-decimal-mode="F" class="mini-key mode-key" type="button">F</button>
-            <button data-key="d" data-decimal-mode="2" class="mini-key mode-key" type="button">2</button>
-            <button data-key="t" data-decimal-mode="3" class="mini-key mode-key" type="button">3</button>
-            <button data-key="c" data-decimal-mode="4" class="mini-key mode-key" type="button">4</button>
+          <div class="display-topline">
+            <div class="info-chips">
+              <span class="chip chip-mode" data-meta-mode>DEC 2</span>
+              <span class="chip chip-tax" data-meta-tax>IVA 16.00%</span>
+              <span class="chip chip-rate" data-meta-rate>RATE 1.00</span>
+              <span class="chip chip-pub" data-meta-pub>PUB -</span>
+            </div>
           </div>
-          <div class="memory-strip">
-            <button data-key="n" class="mini-key memory-key" type="button">M+</button>
-            <button data-key="v" class="mini-key memory-key" type="button">M-</button>
-            <button data-key="m" class="mini-key memory-key" type="button">MR</button>
-            <button data-key="x" class="mini-key memory-key" type="button">MC</button>
-          </div>
-          <div class="business-strip">
-            <button data-key="k" class="mini-key business-key" type="button">COST</button>
-            <button data-key="l" class="mini-key business-key" type="button">SELL</button>
-            <button data-key="h" class="mini-key business-key" type="button">MAR</button>
-          </div>
-          <div class="tax-strip">
-            <button data-key="p" class="mini-key tax-key tax-percent" type="button">%</button>
-            <button data-key="i" class="mini-key tax-key tax-action" type="button">IVA+</button>
-            <button data-key="u" class="mini-key tax-key tax-action" type="button">IVA-</button>
-            <button data-key="r" class="mini-key tax-key tax-rate" type="button" data-tax-rate>IVA 16.00%</button>
-          </div>
-          <div class="convert-strip">
-            <button data-key="y" class="mini-key convert-key convert-action" type="button">CONV</button>
-            <button data-key="w" class="mini-key convert-key convert-rate" type="button" data-conversion-rate>RATE 1.00</button>
-          </div>
-          <div class="tourist-strip">
-            <button data-key="j" class="mini-key tourist-key tourist-action" type="button">PUB</button>
-            <button data-key="z" class="mini-key tourist-key tourist-action" type="button">USD</button>
-            <button data-key="o" class="mini-key tourist-key tourist-rate" type="button" data-out-rate>OUT 0.00</button>
-            <button data-key="b" class="mini-key tourist-key tourist-rate" type="button" data-spread-rate>SPD 0.00</button>
-          </div>
+
           <div class="metrics">
-            <div>
+            <div class="metric-card">
               <span>Ultimo subtotal</span>
               <strong data-subtotal>-</strong>
             </div>
-            <div>
+            <div class="metric-card">
               <span>Gran total</span>
               <strong data-gran-total>0</strong>
             </div>
-            <div>
+            <div class="metric-card">
               <span>Memoria</span>
               <strong data-memoria>0</strong>
             </div>
+            <div class="metric-card">
+              <span>Tipo publicado</span>
+              <strong data-pub>-</strong>
+            </div>
           </div>
+
           <div class="display-glass">
+            <div class="display-caption">Importe activo</div>
             <div class="display-text" data-display data-mode="listo">0</div>
+          </div>
+
+          <div class="quick-core">
+            <div class="stack-block">
+              <span class="stack-label">Precision</span>
+              <div class="mode-switch">
+                <button data-key="f" data-decimal-mode="F" class="mini-key mode-key" type="button">F</button>
+                <button data-key="d" data-decimal-mode="2" class="mini-key mode-key" type="button">2</button>
+                <button data-key="t" data-decimal-mode="3" class="mini-key mode-key" type="button">3</button>
+                <button data-key="c" data-decimal-mode="4" class="mini-key mode-key" type="button">4</button>
+              </div>
+            </div>
+            <div class="stack-block">
+              <span class="stack-label">Memoria</span>
+              <div class="memory-strip">
+                <button data-key="n" class="mini-key memory-key" type="button">M+</button>
+                <button data-key="v" class="mini-key memory-key" type="button">M-</button>
+                <button data-key="m" class="mini-key memory-key" type="button">MR</button>
+                <button data-key="x" class="mini-key memory-key" type="button">MC</button>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section class="keypad" data-keypad>
-          <button data-key="e" class="key utility">E</button>
-          <button data-key="s" class="key utility">S</button>
-          <button data-key="g" class="key utility">G</button>
-          <button data-key="/" class="key accent">/</button>
+        <section class="keypad-shell">
+          <div class="keypad-frame">
+            <div class="keypad-caption">Teclado principal</div>
+            <div class="utility-strip">
+              <button data-key="a" class="mini-key utility compact-utility" type="button">A</button>
+              <button data-key="e" class="mini-key utility compact-utility" type="button">E</button>
+              <button data-key="s" class="mini-key utility compact-utility" type="button">S</button>
+              <button data-key="g" class="mini-key utility compact-utility" type="button">G</button>
+            </div>
+            <section class="keypad" data-keypad>
+              <button data-key="7" class="key">7</button>
+              <button data-key="8" class="key">8</button>
+              <button data-key="9" class="key">9</button>
+              <button data-key="/" class="key accent">/</button>
 
-          <button data-key="7" class="key">7</button>
-          <button data-key="8" class="key">8</button>
-          <button data-key="9" class="key">9</button>
-          <button data-key="*" class="key accent">*</button>
+              <button data-key="4" class="key">4</button>
+              <button data-key="5" class="key">5</button>
+              <button data-key="6" class="key">6</button>
+              <button data-key="*" class="key accent">*</button>
 
-          <button data-key="4" class="key">4</button>
-          <button data-key="5" class="key">5</button>
-          <button data-key="6" class="key">6</button>
-          <button data-key="-" class="key accent">-</button>
+              <button data-key="1" class="key">1</button>
+              <button data-key="2" class="key">2</button>
+              <button data-key="3" class="key">3</button>
+              <button data-key="-" class="key accent">-</button>
 
-          <button data-key="1" class="key">1</button>
-          <button data-key="2" class="key">2</button>
-          <button data-key="3" class="key">3</button>
-          <button data-key="+" class="key accent">+</button>
+              <button data-key="0" class="key">0</button>
+              <button data-key="." class="key">.</button>
+              <button data-key="=" class="key accent">=</button>
+              <button data-key="+" class="key accent">+</button>
+            </section>
+          </div>
+        </section>
 
-          <button data-key="0" class="key wide">0</button>
-          <button data-key="." class="key">.</button>
-          <button data-key="=" class="key accent tall">=</button>
+        <section class="function-console">
+          <div class="deck-switch">
+            <button data-deck="fiscal" data-active="true" type="button">Fiscal</button>
+            <button data-deck="negocio" data-active="false" type="button">Negocio</button>
+            <button data-deck="cambio" data-active="false" type="button">Cambio</button>
+          </div>
+
+          <div class="deck-panels">
+            <section class="deck-panel" data-deck-body="fiscal">
+              <div class="panel-kicker">Impuestos y conversion directa</div>
+              <div class="button-rack fiscal-rack">
+                <button data-key="p" class="mini-key tax-key tax-percent" type="button">%</button>
+                <button data-key="i" class="mini-key tax-key tax-action" type="button">IVA+</button>
+                <button data-key="u" class="mini-key tax-key tax-action" type="button">IVA-</button>
+                <button data-key="r" class="mini-key tax-key tax-rate" type="button" data-tax-rate>IVA 16.00%</button>
+                <button data-key="y" class="mini-key convert-key convert-action" type="button">CONV</button>
+                <button data-key="w" class="mini-key convert-key convert-rate" type="button" data-conversion-rate>RATE 1.00</button>
+              </div>
+            </section>
+
+            <section class="deck-panel" data-deck-body="negocio" hidden>
+              <div class="panel-kicker">Margen comercial</div>
+              <div class="button-rack business-rack">
+                <button data-key="k" class="mini-key business-key" type="button">COST</button>
+                <button data-key="l" class="mini-key business-key" type="button">SELL</button>
+                <button data-key="h" class="mini-key business-key" type="button">MAR</button>
+              </div>
+            </section>
+
+            <section class="deck-panel" data-deck-body="cambio" hidden>
+              <div class="panel-kicker">Cobro seguro en USD</div>
+              <div class="button-rack tourist-rack">
+                <button data-key="o" class="mini-key tourist-key tourist-rate" type="button" data-out-rate>OUT 0.00</button>
+                <button data-key="b" class="mini-key tourist-key tourist-rate" type="button" data-spread-rate>SPD 0.00</button>
+                <button data-key="j" class="mini-key tourist-key tourist-action" type="button">PUB</button>
+                <button data-key="z" class="mini-key tourist-key tourist-action" type="button">USD</button>
+              </div>
+            </section>
+          </div>
         </section>
       </section>
 

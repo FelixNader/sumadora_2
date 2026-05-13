@@ -14,17 +14,24 @@ const displayNode = document.querySelector("[data-display]");
 const subtotalNode = document.querySelector("[data-subtotal]");
 const granTotalNode = document.querySelector("[data-gran-total]");
 const memoriaNode = document.querySelector("[data-memoria]");
+const pubNode = document.querySelector("[data-pub]");
 const estadoNode = document.querySelector("[data-estado]");
 const cintaNode = document.querySelector("[data-cinta]");
 const logNode = document.querySelector("[data-log]");
 const panelButtons = document.querySelectorAll("[data-panel]");
 const panelNodes = document.querySelectorAll("[data-panel-body]");
+const deckButtons = document.querySelectorAll("[data-deck]");
+const deckNodes = document.querySelectorAll("[data-deck-body]");
 const keypad = document.querySelector("[data-keypad]");
 const modeButtons = document.querySelectorAll("[data-decimal-mode]");
 const taxRateButton = document.querySelector("[data-tax-rate]");
 const conversionRateButton = document.querySelector("[data-conversion-rate]");
 const outRateButton = document.querySelector("[data-out-rate]");
 const spreadRateButton = document.querySelector("[data-spread-rate]");
+const metaModeNode = document.querySelector("[data-meta-mode]");
+const metaTaxNode = document.querySelector("[data-meta-tax]");
+const metaRateNode = document.querySelector("[data-meta-rate]");
+const metaPubNode = document.querySelector("[data-meta-pub]");
 
 let calculadora = cargarCalculadora();
 
@@ -54,6 +61,13 @@ panelButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const nombre = button.dataset.panel;
     activarPanel(nombre);
+  });
+});
+
+deckButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const nombre = button.dataset.deck;
+    activarDeck(nombre);
   });
 });
 
@@ -116,6 +130,9 @@ function render() {
     : "-";
   granTotalNode.textContent = formatearValorVisible(calculadora, calculadora.gran_total);
   memoriaNode.textContent = formatearValorVisible(calculadora, calculadora.memoria);
+  pubNode.textContent = calculadora.tasa_publicada_segura
+    ? formatearValorVisible(calculadora, calculadora.tasa_publicada_segura)
+    : "-";
   estadoNode.textContent = calculadora.editando_tasa_impuesto
     ? "editando_tasa"
     : calculadora.editando_tasa_conversion
@@ -124,11 +141,20 @@ function render() {
         ? "editando_out"
         : calculadora.editando_spread_seguro
           ? "editando_spd"
-      : calculadora.estado;
+          : calculadora.estado;
   modeButtons.forEach((button) => {
     button.dataset.active =
       button.dataset.decimalMode === calculadora.modo_decimal ? "true" : "false";
   });
+  metaModeNode.textContent = `DEC ${calculadora.modo_decimal}`;
+  metaTaxNode.textContent = `IVA ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`;
+  metaRateNode.textContent = `RATE ${formatearValorVisible(
+    calculadora,
+    calculadora.tasa_conversion,
+  )}`;
+  metaPubNode.textContent = calculadora.tasa_publicada_segura
+    ? `PUB ${formatearValorVisible(calculadora, calculadora.tasa_publicada_segura)}`
+    : "PUB -";
   taxRateButton.textContent = `IVA ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`;
   taxRateButton.dataset.active = calculadora.editando_tasa_impuesto ? "true" : "false";
   conversionRateButton.textContent = `RATE ${formatearValorVisible(
@@ -160,6 +186,15 @@ function activarPanel(nombre) {
   });
   panelNodes.forEach((panel) => {
     panel.hidden = panel.dataset.panelBody !== nombre;
+  });
+}
+
+function activarDeck(nombre) {
+  deckButtons.forEach((button) => {
+    button.dataset.active = button.dataset.deck === nombre ? "true" : "false";
+  });
+  deckNodes.forEach((panel) => {
+    panel.hidden = panel.dataset.deckBody !== nombre;
   });
 }
 
