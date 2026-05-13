@@ -23,6 +23,8 @@ const panelNodes = document.querySelectorAll("[data-panel-body]");
 const deckButtons = document.querySelectorAll("[data-deck]");
 const deckNodes = document.querySelectorAll("[data-deck-body]");
 const keypad = document.querySelector("[data-keypad]");
+const metricsToggle = document.querySelector(".metrics-toggle");
+const metricsContainer = document.querySelector(".metrics");
 const modeButtons = document.querySelectorAll("[data-decimal-mode]");
 const taxRateButton = document.querySelector("[data-tax-rate]");
 const conversionRateButton = document.querySelector("[data-conversion-rate]");
@@ -70,6 +72,13 @@ deckButtons.forEach((button) => {
     activarDeck(nombre);
   });
 });
+
+if (metricsToggle && metricsContainer) {
+  metricsToggle.addEventListener("click", () => {
+    const expanded = metricsContainer.classList.toggle("metrics-visible");
+    metricsToggle.setAttribute("aria-expanded", String(expanded));
+  });
+}
 
 window.addEventListener("resize", sincronizarViewport);
 window.addEventListener("orientationchange", () => {

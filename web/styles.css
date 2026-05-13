@@ -183,6 +183,27 @@ button {
   gap: 0.45rem;
 }
 
+.metrics-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid rgba(106, 78, 47, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.2s;
+}
+
+.metrics-toggle[aria-expanded="true"] {
+  transform: rotate(180deg);
+}
+
 .chip {
   padding: 0.4rem 0.7rem;
   border-radius: 999px;
@@ -568,6 +589,18 @@ button {
 
   .quick-core {
     grid-template-columns: 1fr;
+  }
+
+  .metrics-toggle {
+    display: flex;
+  }
+
+  .metrics {
+    display: none;
+  }
+
+  .metrics.metrics-visible {
+    display: grid;
   }
 }
 
