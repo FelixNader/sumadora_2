@@ -37,6 +37,7 @@ export function nuevaCalculadora() {
     editando_tasa_impuesto: false,
     buffer_tasa_impuesto: "",
     ultimo_impuesto: "",
+    memoria: "0",
     detalle_operando_cinta: "",
     log_entries: [],
     cinta_entries: [],
@@ -96,6 +97,14 @@ export function presionarTecla(calculadora, tecla) {
       restarImpuesto(calculadora);
     } else if (tecla === "p" || tecla === "P") {
       aplicarPorcentaje(calculadora);
+    } else if (tecla === "m" || tecla === "M") {
+      leerMemoria(calculadora);
+    } else if (tecla === "n" || tecla === "N") {
+      sumarAMemoria(calculadora);
+    } else if (tecla === "v" || tecla === "V") {
+      restarDeMemoria(calculadora);
+    } else if (tecla === "x" || tecla === "X") {
+      limpiarMemoria(calculadora);
     } else if (tecla === "s" || tecla === "S") {
       subtotalizar(calculadora);
     } else if (tecla === "g" || tecla === "G") {
@@ -256,6 +265,18 @@ function obtenerValorActualParaImpuesto(calculadora) {
   return obtenerSubtotalActual(calculadora, false);
 }
 
+function obtenerValorActualParaMemoria(calculadora) {
+  if (calculadora.estado === ESTADO_TYPING_OPERANDO) {
+    if (esOperandoIncompleto(calculadora.operando_actual)) {
+      throw new Error("Falta completar el operando negativo.");
+    }
+    if (calculadora.operando_actual !== "") {
+      return calculadora.operando_actual;
+    }
+  }
+  return obtenerSubtotalActual(calculadora, false);
+}
+
 function fijarResultado(calculadora, resultado) {
   calculadora.display = resultado;
   calculadora.operando_actual = "";
@@ -277,6 +298,26 @@ function aplicarResultadoTransformacion(calculadora, resultado) {
   }
 
   fijarResultado(calculadora, resultado);
+}
+
+function aplicarRecallMemoria(calculadora, valor) {
+  if (calculadora.estado === ESTADO_OPERADOR_PENDIENTE) {
+    calculadora.operando_actual = valor;
+    calculadora.display = valor;
+    calculadora.estado = ESTADO_TYPING_OPERANDO;
+    return;
+  }
+
+  if (
+    calculadora.estado === ESTADO_TYPING_OPERANDO &&
+    calculadora.operador_pendiente !== ""
+  ) {
+    calculadora.operando_actual = valor;
+    calculadora.display = valor;
+    return;
+  }
+
+  fijarResultado(calculadora, valor);
 }
 
 function manejarEncendidaEsperandoTyping(calculadora, tecla) {
@@ -652,6 +693,61 @@ function aplicarPorcentaje(calculadora) {
   );
 }
 
+function sumarAMemoria(calculadora) {
+  const valor = obtenerValorActualParaMemoria(calculadora);
+  const memoriaNueva = applyModeDecimal(
+    calculadora,
+    addDecimals(parseDecimal(calculadora.memoria), parseDecimal(valor)),
+  );
+  calculadora.memoria = memoriaNueva;
+  registrarCinta(
+    calculadora,
+    `M+ ${formatearValorVisible(calculadora, valor)} => ${formatearValorVisible(
+      calculadora,
+      memoriaNueva,
+    )}`,
+  );
+  registrarLog(
+    calculadora,
+    "memoria_suma",
+    `valor=${valor} memoria=${memoriaNueva}`,
+  );
+}
+
+function restarDeMemoria(calculadora) {
+  const valor = obtenerValorActualParaMemoria(calculadora);
+  const memoriaNueva = applyModeDecimal(
+    calculadora,
+    subtractDecimals(parseDecimal(calculadora.memoria), parseDecimal(valor)),
+  );
+  calculadora.memoria = memoriaNueva;
+  registrarCinta(
+    calculadora,
+    `M- ${formatearValorVisible(calculadora, valor)} => ${formatearValorVisible(
+      calculadora,
+      memoriaNueva,
+    )}`,
+  );
+  registrarLog(
+    calculadora,
+    "memoria_resta",
+    `valor=${valor} memoria=${memoriaNueva}`,
+  );
+}
+
+function leerMemoria(calculadora) {
+  const valor = applyModeDecimal(calculadora, calculadora.memoria);
+  aplicarRecallMemoria(calculadora, valor);
+  registrarCinta(calculadora, `MR = ${formatearValorVisible(calculadora, valor)}`);
+  registrarLog(calculadora, "memoria_leer", `memoria=${valor}`);
+}
+
+function limpiarMemoria(calculadora) {
+  calculadora.memoria = "0";
+  registrarCinta(calculadora, "MC");
+  registrarLog(calculadora, "memoria_limpiar");
+}
+
 function obtenerSubtotalActual(calculadora, registrar = false) {
   if (calculadora.estado === ESTADO_ENCENDIDA_ESPERANDO_TYPING) {
     return calculadora.acumulado || "0";
@@ -853,6 +949,7 @@ function borrarTodo(calculadora) {
   calculadora.ultimo_subtotal = "";
   calculadora.ultimo_gran_total = "";
   calculadora.ultimo_impuesto = "";
+  calculadora.memoria = "0";
   calculadora.editando_tasa_impuesto = false;
   calculadora.buffer_tasa_impuesto = "";
   calculadora.detalle_operando_cinta = "";
@@ -967,6 +1064,7 @@ function describirEstado(calculadora) {
     `operador_subtotal=${calculadora.operador_subtotal}`,
     `gran_total=${calculadora.gran_total}`,
     `modo_decimal=${calculadora.modo_decimal}`,
+    `memoria=${calculadora.memoria}`,
     `tasa_impuesto=${calculadora.tasa_impuesto}`,
     `editando_tasa_impuesto=${calculadora.editando_tasa_impuesto}`,
   ].join(",");

@@ -13,6 +13,7 @@ const STORAGE_KEY = "sumadora-contable-state-v1";
 const displayNode = document.querySelector("[data-display]");
 const subtotalNode = document.querySelector("[data-subtotal]");
 const granTotalNode = document.querySelector("[data-gran-total]");
+const memoriaNode = document.querySelector("[data-memoria]");
 const estadoNode = document.querySelector("[data-estado]");
 const cintaNode = document.querySelector("[data-cinta]");
 const logNode = document.querySelector("[data-log]");
@@ -111,6 +112,7 @@ function render() {
     ? formatearValorVisible(calculadora, calculadora.ultimo_subtotal)
     : "-";
   granTotalNode.textContent = formatearValorVisible(calculadora, calculadora.gran_total);
+  memoriaNode.textContent = formatearValorVisible(calculadora, calculadora.memoria);
   estadoNode.textContent = calculadora.editando_tasa_impuesto
     ? "editando_tasa"
     : calculadora.estado;
@@ -176,6 +178,14 @@ function mapearTecla(tecla) {
     "%": "p",
     p: "p",
     P: "p",
+    m: "m",
+    M: "m",
+    n: "n",
+    N: "n",
+    v: "v",
+    V: "v",
+    x: "x",
+    X: "x",
     s: "s",
     S: "s",
     g: "g",

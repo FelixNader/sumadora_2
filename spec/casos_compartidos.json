@@ -100,6 +100,26 @@
     "estado_final": "resultado_en_display"
   },
   {
+    "secuencia": "10nem",
+    "display_final": "10.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "5ne2+m=",
+    "display_final": "7.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "10ne5vm",
+    "display_final": "5.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "10nxem",
+    "display_final": "0.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
     "secuencia": "re8=100i",
     "display_final": "108.00",
     "estado_final": "resultado_en_display"

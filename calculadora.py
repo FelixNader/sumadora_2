@@ -55,6 +55,7 @@ def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
         "editando_tasa_impuesto": False,
         "buffer_tasa_impuesto": "",
         "ultimo_impuesto": "",
+        "memoria": "0",
         "detalle_operando_cinta": "",
         "ruta_log": ruta_log,
         "ruta_cinta": ruta_cinta,
@@ -113,6 +114,14 @@ def presionar_tecla(calculadora, tecla):
             restar_impuesto(calculadora)
         elif tecla in TECLAS_PORCENTAJE:
             aplicar_porcentaje(calculadora)
+        elif tecla in {"m", "M"}:
+            leer_memoria(calculadora)
+        elif tecla in {"n", "N"}:
+            sumar_a_memoria(calculadora)
+        elif tecla in {"v", "V"}:
+            restar_de_memoria(calculadora)
+        elif tecla in {"x", "X"}:
+            limpiar_memoria(calculadora)
         elif tecla in {"s", "S"}:
             subtotalizar(calculadora)
         elif tecla in {"g", "G"}:
@@ -266,6 +275,15 @@ def obtener_valor_actual_para_impuesto(calculadora):
     return obtener_subtotal_actual(calculadora, registrar=False)
 
 
+def obtener_valor_actual_para_memoria(calculadora):
+    if calculadora["estado"] == ESTADO_TYPING_OPERANDO:
+        if es_operando_incompleto(calculadora["operando_actual"]):
+            raise ValueError("Falta completar el operando negativo.")
+        if calculadora["operando_actual"] != "":
+            return calculadora["operando_actual"]
+    return obtener_subtotal_actual(calculadora, registrar=False)
+
+
 def fijar_resultado(calculadora, resultado):
     calculadora["display"] = resultado
     calculadora["operando_actual"] = ""
@@ -286,6 +304,21 @@ def aplicar_resultado_transformacion(calculadora, resultado):
         return
 
     fijar_resultado(calculadora, resultado)
+
+
+def aplicar_recall_memoria(calculadora, valor):
+    if calculadora["estado"] == ESTADO_OPERADOR_PENDIENTE:
+        calculadora["operando_actual"] = valor
+        calculadora["display"] = valor
+        calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        return
+
+    if calculadora["estado"] == ESTADO_TYPING_OPERANDO and calculadora["operador_pendiente"] != "":
+        calculadora["operando_actual"] = valor
+        calculadora["display"] = valor
+        return
+
+    fijar_resultado(calculadora, valor)
 
 
 def resolver_operacion(calculadora, izquierda, operador, derecha):
@@ -649,6 +682,64 @@ def aplicar_porcentaje(calculadora):
     )
 
 
+def sumar_a_memoria(calculadora):
+    valor = obtener_valor_actual_para_memoria(calculadora)
+    memoria_nueva = aplicar_modo_decimal(
+        calculadora,
+        Decimal(calculadora["memoria"]) + Decimal(valor),
+    )
+    calculadora["memoria"] = memoria_nueva
+    registrar_cinta(
+        calculadora,
+        "M+ "
+        + formatear_valor_visible(calculadora, valor)
+        + " => "
+        + formatear_valor_visible(calculadora, memoria_nueva),
+    )
+    registrar_log(
+        calculadora,
+        "memoria_suma",
+        "valor=" + valor + " memoria=" + memoria_nueva,
+    )
+
+
+def restar_de_memoria(calculadora):
+    valor = obtener_valor_actual_para_memoria(calculadora)
+    memoria_nueva = aplicar_modo_decimal(
+        calculadora,
+        Decimal(calculadora["memoria"]) - Decimal(valor),
+    )
+    calculadora["memoria"] = memoria_nueva
+    registrar_cinta(
+        calculadora,
+        "M- "
+        + formatear_valor_visible(calculadora, valor)
+        + " => "
+        + formatear_valor_visible(calculadora, memoria_nueva),
+    )
+    registrar_log(
+        calculadora,
+        "memoria_resta",
+        "valor=" + valor + " memoria=" + memoria_nueva,
+    )
+
+
+def leer_memoria(calculadora):
+    valor = aplicar_modo_decimal(calculadora, calculadora["memoria"])
+    aplicar_recall_memoria(calculadora, valor)
+    registrar_cinta(
+        calculadora,
+        "MR = " + formatear_valor_visible(calculadora, valor),
+    )
+    registrar_log(calculadora, "memoria_leer", "memoria=" + valor)
+
+
+def limpiar_memoria(calculadora):
+    calculadora["memoria"] = "0"
+    registrar_cinta(calculadora, "MC")
+    registrar_log(calculadora, "memoria_limpiar")
+
+
 def obtener_subtotal_actual(calculadora, registrar=False):
     if calculadora["estado"] == ESTADO_ENCENDIDA_ESPERANDO_TYPING:
         if calculadora["acumulado"] != "":
@@ -873,6 +964,7 @@ def borrar_todo(calculadora):
     calculadora["ultimo_subtotal"] = ""
     calculadora["ultimo_gran_total"] = ""
     calculadora["ultimo_impuesto"] = ""
+    calculadora["memoria"] = "0"
     calculadora["editando_tasa_impuesto"] = False
     calculadora["buffer_tasa_impuesto"] = ""
     calculadora["detalle_operando_cinta"] = ""
@@ -896,6 +988,7 @@ def mostrar_estado(calculadora):
     print()
     print("Estado:", calculadora["estado"])
     print("Modo decimal:", calculadora["modo_decimal"])
+    print("Memoria:", formatear_valor_visible(calculadora, calculadora["memoria"]))
     print(
         "Tasa impuesto:",
         formatear_valor_visible(calculadora, calculadora["tasa_impuesto"]) + "%",
@@ -957,6 +1050,7 @@ def describir_estado(calculadora):
         + ",operador_subtotal=" + calculadora["operador_subtotal"]
         + ",gran_total=" + calculadora["gran_total"]
         + ",modo_decimal=" + calculadora["modo_decimal"]
+        + ",memoria=" + calculadora["memoria"]
         + ",tasa_impuesto=" + calculadora["tasa_impuesto"]
         + ",editando_tasa_impuesto=" + str(calculadora["editando_tasa_impuesto"])
     )
@@ -1014,12 +1108,13 @@ def ejecutar_terminal():
 
     print("Calculadora sumadora contable")
     print("Estado inicial: encendida_esperando_typing")
-    print("Usa teclas: 0-9 . + - * / = e a s g f d t c i u r p")
+    print("Usa teclas: 0-9 . + - * / = e a s g f d t c i u r p m n v x")
     print("e borra la entrada actual")
     print("a borra todo y reinicia memorias")
     print("f flotante, d 2 decimales, t 3 decimales, c 4 decimales")
     print("i suma impuesto, u deduce impuesto, r edita tasa")
     print("p aplica porcentaje")
+    print("m memoria read, n memoria+, v memoria-, x memoria clean")
     print("En tasa: digitos y '.' capturan, '=' confirma, 'e' limpia, 'r' cancela")
     print("s subtotaliza y acumula al gran total")
     print("g imprime el gran total y reinicia en ceros")

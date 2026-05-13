@@ -510,6 +510,55 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertIn("PORC 10.00% DE 200.00 = 20.00", contenido_cinta)
         self.assertIn("200.00 + 10.00% DE 200.00 = 220.00", contenido_cinta)
 
+    def test_memoria_suma_y_lee(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "10nem":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["memoria"], "10.00")
+        self.assertEqual(calculadora["display"], "10.00")
+
+    def test_memoria_read_entra_como_operando_pendiente(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "5ne2+m=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "7.00")
+
+    def test_memoria_resta_y_recall(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "10ne5vm":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["memoria"], "5.00")
+        self.assertEqual(calculadora["display"], "5.00")
+
+    def test_memoria_clean_borra_solo_memoria(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "10nxem":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["memoria"], "0")
+        self.assertEqual(calculadora["display"], "0.00")
+
+    def test_cinta_registra_memoria(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "10n":
+            presionar_tecla(calculadora, tecla)
+
+        contenido_cinta = self.leer_archivo(self.ruta_cinta)
+        self.assertIn("M+ 10.00 => 10.00", contenido_cinta)
+
 
 if __name__ == "__main__":
     unittest.main()

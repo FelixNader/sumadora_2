@@ -131,4 +131,33 @@ for (const caso of casos) {
   );
 }
 
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "10nem") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.memoria, "10.00", "memoria suma");
+  assert.equal(calculadora.display, "10.00", "memoria read");
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "5ne2+m=") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.display, "7.00", "mr como operando pendiente");
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "10nxem") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.memoria, "0", "mc limpia memoria");
+  assert.equal(calculadora.display, "0.00", "mr despues de mc");
+}
+
 console.log("engine ok");

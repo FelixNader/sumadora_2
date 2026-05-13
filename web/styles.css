@@ -141,6 +141,13 @@ body {
   margin-bottom: 0.8rem;
 }
 
+.memory-strip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
 .mode-key {
   min-width: 2.75rem;
   min-height: 2.75rem;
@@ -160,6 +167,18 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
     0 4px 0 var(--accent-shadow),
     0 8px 14px rgba(163, 79, 28, 0.18);
+}
+
+.memory-key {
+  min-width: 3.1rem;
+  min-height: 2.75rem;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #dbe7ef, #aebfcc);
+  color: #22384b;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 4px 0 #74889a,
+    0 8px 14px rgba(69, 86, 104, 0.16);
 }
 
 .tax-strip {
@@ -209,7 +228,7 @@ body {
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
   margin-bottom: 0.85rem;
 }
@@ -448,6 +467,11 @@ body {
     margin-bottom: 0.65rem;
   }
 
+  .memory-strip {
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+  }
+
   .tax-strip {
     gap: 0.35rem;
     margin-bottom: 0.65rem;
@@ -457,6 +481,12 @@ body {
     min-width: 2.45rem;
     min-height: 2.45rem;
     font-size: 0.92rem;
+  }
+
+  .memory-key {
+    min-width: 2.8rem;
+    min-height: 2.45rem;
+    font-size: 0.86rem;
   }
 
   .tax-action {
@@ -478,7 +508,7 @@ body {
   }
 
   .metrics {
-    gap: 0.55rem;
+    gap: 0.45rem;
     margin-bottom: 0.7rem;
   }
 
@@ -666,6 +696,11 @@ body {
     margin-bottom: 0.3rem;
   }
 
+  html[data-orientation="landscape"] .memory-strip {
+    gap: 0.25rem;
+    margin-bottom: 0.3rem;
+  }
+
   html[data-orientation="landscape"] .tax-strip {
     gap: 0.25rem;
     margin-bottom: 0.3rem;
@@ -680,6 +715,16 @@ body {
       inset 0 1px 0 rgba(255, 255, 255, 0.8),
       0 3px 0 rgba(93, 71, 48, 0.2),
       0 5px 8px rgba(89, 63, 37, 0.1);
+  }
+
+  html[data-orientation="landscape"] .memory-key {
+    min-width: 2.2rem;
+    min-height: 2rem;
+    font-size: 0.64rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      0 3px 0 #74889a,
+      0 5px 8px rgba(69, 86, 104, 0.12);
   }
 
   html[data-orientation="landscape"] .tax-action {
