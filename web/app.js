@@ -34,6 +34,10 @@ const metaModeNode = document.querySelector("[data-meta-mode]");
 const metaTaxNode = document.querySelector("[data-meta-tax]");
 const metaRateNode = document.querySelector("[data-meta-rate]");
 const metaPubNode = document.querySelector("[data-meta-pub]");
+const paperSheet = document.querySelector("[data-paper-sheet]");
+const paperTrigger = document.querySelector("[data-paper-trigger]");
+const paperBackdrop = document.querySelector("[data-paper-backdrop]");
+const paperCountNode = document.querySelector("[data-paper-count]");
 
 let calculadora = cargarCalculadora();
 
@@ -114,6 +118,35 @@ function abrirSheet(open) {
   if (sheetTrigger) {
     sheetTrigger.querySelector(".sheet-trigger-icon").textContent = open ? "▼" : "▲";
   }
+}
+
+if (paperSheet && paperTrigger) {
+  paperTrigger.addEventListener("click", () => {
+    abrirPaperSheet(true);
+  });
+
+  if (paperBackdrop) {
+    paperBackdrop.addEventListener("click", () => {
+      abrirPaperSheet(false);
+    });
+  }
+
+  let paperTouchStartY = 0;
+  paperSheet.addEventListener("touchstart", (e) => {
+    paperTouchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  paperSheet.addEventListener("touchmove", (e) => {
+    const deltaY = e.touches[0].clientY - paperTouchStartY;
+    if (deltaY > 60) {
+      abrirPaperSheet(false);
+    }
+  }, { passive: true });
+}
+
+function abrirPaperSheet(open) {
+  if (!paperSheet) return;
+  paperSheet.dataset.open = open ? "true" : "false";
 }
 
 window.addEventListener("resize", sincronizarViewport);
@@ -217,6 +250,11 @@ function render() {
 
   cintaNode.textContent = calculadora.cinta_entries.join("\n") || "Sin cinta aun.";
   logNode.textContent = calculadora.log_entries.join("\n") || "Sin log aun.";
+
+  if (paperCountNode) {
+    const count = calculadora.cinta_entries.filter((e) => e.trim()).length;
+    paperCountNode.textContent = String(count);
+  }
 
   if (calculadora.estado === ESTADO_ENCENDIDA_ESPERANDO_TYPING) {
     displayNode.dataset.mode = "listo";

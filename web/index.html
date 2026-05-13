@@ -164,14 +164,23 @@
         </div>
       </section>
 
-      <section class="paper-card">
-        <div class="panel-switch">
-          <button data-panel="cinta" data-active="true">Cinta</button>
-          <button data-panel="log" data-active="false">Log</button>
-        </div>
-        <pre class="paper-output" data-panel-body="cinta" data-cinta></pre>
-        <pre class="paper-output" data-panel-body="log" data-log hidden></pre>
-      </section>
+      <div class="paper-sheet" data-paper-sheet>
+        <div class="sheet-backdrop" data-paper-backdrop></div>
+        <section class="paper-card">
+          <div class="sheet-handle"></div>
+          <div class="panel-switch">
+            <button data-panel="cinta" data-active="true">Cinta</button>
+            <button data-panel="log" data-active="false">Log</button>
+          </div>
+          <pre class="paper-output" data-panel-body="cinta" data-cinta></pre>
+          <pre class="paper-output" data-panel-body="log" data-log hidden></pre>
+        </section>
+      </div>
+
+      <button class="paper-trigger" type="button" data-paper-trigger aria-label="Abrir cinta">
+        <span>Cinta</span>
+        <span class="paper-trigger-count" data-paper-count>0</span>
+      </button>
     </main>
 
     <script type="module" src="./app.js"></script>
