@@ -36,6 +36,7 @@ TECLAS_MODO_DECIMAL = {
 }
 TECLAS_IMPUESTO = {"i", "I", "u", "U", "r", "R"}
 TECLAS_PORCENTAJE = {"p", "P"}
+TECLAS_COMERCIALES = {"k", "K", "l", "L", "h", "H"}
 
 
 def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
@@ -56,6 +57,10 @@ def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
         "buffer_tasa_impuesto": "",
         "ultimo_impuesto": "",
         "memoria": "0",
+        "valor_cost": "",
+        "valor_sell": "",
+        "valor_mar": "",
+        "valor_disponible_para_funcion": False,
         "detalle_operando_cinta": "",
         "ruta_log": ruta_log,
         "ruta_cinta": ruta_cinta,
@@ -114,6 +119,12 @@ def presionar_tecla(calculadora, tecla):
             restar_impuesto(calculadora)
         elif tecla in TECLAS_PORCENTAJE:
             aplicar_porcentaje(calculadora)
+        elif tecla in {"k", "K"}:
+            manejar_funcion_comercial(calculadora, "cost")
+        elif tecla in {"l", "L"}:
+            manejar_funcion_comercial(calculadora, "sell")
+        elif tecla in {"h", "H"}:
+            manejar_funcion_comercial(calculadora, "mar")
         elif tecla in {"m", "M"}:
             leer_memoria(calculadora)
         elif tecla in {"n", "N"}:
@@ -284,6 +295,19 @@ def obtener_valor_actual_para_memoria(calculadora):
     return obtener_subtotal_actual(calculadora, registrar=False)
 
 
+def obtener_valor_actual_para_funcion_comercial(calculadora):
+    if calculadora["estado"] == ESTADO_TYPING_OPERANDO:
+        if es_operando_incompleto(calculadora["operando_actual"]):
+            raise ValueError("Falta completar el operando negativo.")
+        if calculadora["operando_actual"] != "":
+            return calculadora["operando_actual"]
+
+    if calculadora["display"] != "":
+        return calculadora["display"]
+
+    return "0"
+
+
 def fijar_resultado(calculadora, resultado):
     calculadora["display"] = resultado
     calculadora["operando_actual"] = ""
@@ -292,6 +316,7 @@ def fijar_resultado(calculadora, resultado):
     calculadora["operador_pendiente"] = ""
     calculadora["operador_subtotal"] = "+"
     calculadora["estado"] = ESTADO_RESULTADO_EN_DISPLAY
+    calculadora["valor_disponible_para_funcion"] = True
 
 
 def aplicar_resultado_transformacion(calculadora, resultado):
@@ -311,11 +336,13 @@ def aplicar_recall_memoria(calculadora, valor):
         calculadora["operando_actual"] = valor
         calculadora["display"] = valor
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     if calculadora["estado"] == ESTADO_TYPING_OPERANDO and calculadora["operador_pendiente"] != "":
         calculadora["operando_actual"] = valor
         calculadora["display"] = valor
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     fijar_resultado(calculadora, valor)
@@ -347,6 +374,7 @@ def manejar_encendida_esperando_typing(calculadora, tecla):
         calculadora["operando_actual"] = "-"
         calculadora["display"] = "-"
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     if tecla.isdigit():
@@ -354,6 +382,7 @@ def manejar_encendida_esperando_typing(calculadora, tecla):
         calculadora["operando_actual"] = tecla
         calculadora["display"] = tecla
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     if tecla == ".":
@@ -361,6 +390,7 @@ def manejar_encendida_esperando_typing(calculadora, tecla):
         calculadora["operando_actual"] = "0."
         calculadora["display"] = "0."
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     raise ValueError(
@@ -380,6 +410,7 @@ def manejar_typing_operando(calculadora, tecla):
         else:
             calculadora["operando_actual"] += tecla
         calculadora["display"] = calculadora["operando_actual"]
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     if tecla == ".":
@@ -393,6 +424,7 @@ def manejar_typing_operando(calculadora, tecla):
         else:
             calculadora["operando_actual"] += "."
         calculadora["display"] = calculadora["operando_actual"]
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     if es_operador_aditivo(tecla):
@@ -416,6 +448,7 @@ def manejar_operador_pendiente(calculadora, tecla):
         calculadora["operando_actual"] = "-"
         calculadora["display"] = "-"
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     if tecla.isdigit():
@@ -423,6 +456,7 @@ def manejar_operador_pendiente(calculadora, tecla):
         calculadora["operando_actual"] = tecla
         calculadora["display"] = tecla
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     if tecla == ".":
@@ -430,6 +464,7 @@ def manejar_operador_pendiente(calculadora, tecla):
         calculadora["operando_actual"] = "0."
         calculadora["display"] = "0."
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     if es_operador_aditivo(tecla) and es_operador_aditivo(calculadora["operador_pendiente"]):
@@ -456,6 +491,7 @@ def manejar_resultado_en_display(calculadora, tecla):
         calculadora["operando_actual"] = tecla
         calculadora["display"] = tecla
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     if tecla == ".":
@@ -464,6 +500,7 @@ def manejar_resultado_en_display(calculadora, tecla):
         calculadora["operando_actual"] = "0."
         calculadora["display"] = "0."
         calculadora["estado"] = ESTADO_TYPING_OPERANDO
+        calculadora["valor_disponible_para_funcion"] = True
         return
 
     if es_operador_aditivo(tecla):
@@ -473,6 +510,7 @@ def manejar_resultado_en_display(calculadora, tecla):
         calculadora["operando_actual"] = ""
         calculadora["acumulado_multiplicativo"] = ""
         calculadora["estado"] = ESTADO_OPERADOR_PENDIENTE
+        calculadora["valor_disponible_para_funcion"] = False
         return
 
     if es_operador_multiplicativo(tecla):
@@ -482,6 +520,7 @@ def manejar_resultado_en_display(calculadora, tecla):
         calculadora["operador_pendiente"] = tecla
         calculadora["operando_actual"] = ""
         calculadora["estado"] = ESTADO_OPERADOR_PENDIENTE
+        calculadora["valor_disponible_para_funcion"] = False
         return
 
     if tecla == "=":
@@ -740,6 +779,139 @@ def limpiar_memoria(calculadora):
     registrar_log(calculadora, "memoria_limpiar")
 
 
+def manejar_funcion_comercial(calculadora, campo):
+    if calculadora["valor_disponible_para_funcion"]:
+        valor = aplicar_modo_decimal(
+            calculadora,
+            obtener_valor_actual_para_funcion_comercial(calculadora),
+        )
+        asignar_valor_funcion_comercial(calculadora, campo, valor)
+        fijar_resultado(calculadora, valor)
+        calculadora["valor_disponible_para_funcion"] = False
+        registrar_cinta(
+            calculadora,
+            etiqueta_funcion_comercial(campo) + " = " + formatear_valor_visible(calculadora, valor),
+        )
+        registrar_log(
+            calculadora,
+            "funcion_comercial_guardar",
+            "campo=" + campo + " valor=" + valor,
+        )
+        return
+
+    resultado = calcular_funcion_comercial(calculadora, campo)
+    asignar_valor_funcion_comercial(calculadora, campo, resultado)
+    fijar_resultado(calculadora, resultado)
+    calculadora["valor_disponible_para_funcion"] = False
+    registrar_cinta(
+        calculadora,
+        describir_calculo_funcion_comercial(calculadora, campo, resultado),
+    )
+    registrar_log(
+        calculadora,
+        "funcion_comercial_calcular",
+        "campo=" + campo + " resultado=" + resultado,
+    )
+
+
+def etiqueta_funcion_comercial(campo):
+    if campo == "cost":
+        return "COST"
+    if campo == "sell":
+        return "SELL"
+    if campo == "mar":
+        return "MAR"
+    raise ValueError("Campo comercial no soportado.")
+
+
+def asignar_valor_funcion_comercial(calculadora, campo, valor):
+    if campo == "cost":
+        calculadora["valor_cost"] = valor
+        return
+    if campo == "sell":
+        calculadora["valor_sell"] = valor
+        return
+    if campo == "mar":
+        calculadora["valor_mar"] = valor
+        return
+    raise ValueError("Campo comercial no soportado.")
+
+
+def calcular_funcion_comercial(calculadora, campo):
+    costo = calculadora["valor_cost"]
+    venta = calculadora["valor_sell"]
+    margen = calculadora["valor_mar"]
+
+    if campo == "cost":
+        if venta == "" or margen == "":
+            raise ValueError("Para calcular COST se requieren SELL y MAR.")
+        if Decimal(margen) >= Decimal("100"):
+            raise ValueError("El margen debe ser menor a 100.")
+        return aplicar_modo_decimal(
+            calculadora,
+            Decimal(venta) * (Decimal("1") - (Decimal(margen) / Decimal("100"))),
+        )
+
+    if campo == "sell":
+        if costo == "" or margen == "":
+            raise ValueError("Para calcular SELL se requieren COST y MAR.")
+        if Decimal(margen) >= Decimal("100"):
+            raise ValueError("El margen debe ser menor a 100.")
+        return aplicar_modo_decimal(
+            calculadora,
+            Decimal(costo) / (Decimal("1") - (Decimal(margen) / Decimal("100"))),
+        )
+
+    if campo == "mar":
+        if costo == "" or venta == "":
+            raise ValueError("Para calcular MAR se requieren COST y SELL.")
+        if Decimal(venta) == 0:
+            raise ValueError("SELL no puede ser cero para calcular MAR.")
+        return aplicar_modo_decimal(
+            calculadora,
+            ((Decimal(venta) - Decimal(costo)) / Decimal(venta)) * Decimal("100"),
+        )
+
+    raise ValueError("Campo comercial no soportado.")
+
+
+def describir_calculo_funcion_comercial(calculadora, campo, resultado):
+    if campo == "cost":
+        return (
+            "COST = "
+            + formatear_valor_visible(calculadora, resultado)
+            + " (SELL "
+            + formatear_valor_visible(calculadora, calculadora["valor_sell"])
+            + ", MAR "
+            + formatear_valor_visible(calculadora, calculadora["valor_mar"])
+            + "%)"
+        )
+
+    if campo == "sell":
+        return (
+            "SELL = "
+            + formatear_valor_visible(calculadora, resultado)
+            + " (COST "
+            + formatear_valor_visible(calculadora, calculadora["valor_cost"])
+            + ", MAR "
+            + formatear_valor_visible(calculadora, calculadora["valor_mar"])
+            + "%)"
+        )
+
+    if campo == "mar":
+        return (
+            "MAR = "
+            + formatear_valor_visible(calculadora, resultado)
+            + "% (COST "
+            + formatear_valor_visible(calculadora, calculadora["valor_cost"])
+            + ", SELL "
+            + formatear_valor_visible(calculadora, calculadora["valor_sell"])
+            + ")"
+        )
+
+    raise ValueError("Campo comercial no soportado.")
+
+
 def obtener_subtotal_actual(calculadora, registrar=False):
     if calculadora["estado"] == ESTADO_ENCENDIDA_ESPERANDO_TYPING:
         if calculadora["acumulado"] != "":
@@ -965,6 +1137,9 @@ def borrar_todo(calculadora):
     calculadora["ultimo_gran_total"] = ""
     calculadora["ultimo_impuesto"] = ""
     calculadora["memoria"] = "0"
+    calculadora["valor_cost"] = ""
+    calculadora["valor_sell"] = ""
+    calculadora["valor_mar"] = ""
     calculadora["editando_tasa_impuesto"] = False
     calculadora["buffer_tasa_impuesto"] = ""
     calculadora["detalle_operando_cinta"] = ""
@@ -982,6 +1157,7 @@ def reiniciar_operacion(calculadora):
     calculadora["operador_pendiente"] = ""
     calculadora["operador_subtotal"] = "+"
     calculadora["detalle_operando_cinta"] = ""
+    calculadora["valor_disponible_para_funcion"] = False
 
 
 def mostrar_estado(calculadora):
@@ -989,6 +1165,14 @@ def mostrar_estado(calculadora):
     print("Estado:", calculadora["estado"])
     print("Modo decimal:", calculadora["modo_decimal"])
     print("Memoria:", formatear_valor_visible(calculadora, calculadora["memoria"]))
+    print(
+        "COST/SELL/MAR:",
+        (formatear_valor_visible(calculadora, calculadora["valor_cost"]) if calculadora["valor_cost"] else "-"),
+        "/",
+        (formatear_valor_visible(calculadora, calculadora["valor_sell"]) if calculadora["valor_sell"] else "-"),
+        "/",
+        (formatear_valor_visible(calculadora, calculadora["valor_mar"]) if calculadora["valor_mar"] else "-"),
+    )
     print(
         "Tasa impuesto:",
         formatear_valor_visible(calculadora, calculadora["tasa_impuesto"]) + "%",
@@ -1051,6 +1235,9 @@ def describir_estado(calculadora):
         + ",gran_total=" + calculadora["gran_total"]
         + ",modo_decimal=" + calculadora["modo_decimal"]
         + ",memoria=" + calculadora["memoria"]
+        + ",valor_cost=" + calculadora["valor_cost"]
+        + ",valor_sell=" + calculadora["valor_sell"]
+        + ",valor_mar=" + calculadora["valor_mar"]
         + ",tasa_impuesto=" + calculadora["tasa_impuesto"]
         + ",editando_tasa_impuesto=" + str(calculadora["editando_tasa_impuesto"])
     )
@@ -1108,13 +1295,14 @@ def ejecutar_terminal():
 
     print("Calculadora sumadora contable")
     print("Estado inicial: encendida_esperando_typing")
-    print("Usa teclas: 0-9 . + - * / = e a s g f d t c i u r p m n v x")
+    print("Usa teclas: 0-9 . + - * / = e a s g f d t c i u r p m n v x k l h")
     print("e borra la entrada actual")
     print("a borra todo y reinicia memorias")
     print("f flotante, d 2 decimales, t 3 decimales, c 4 decimales")
     print("i suma impuesto, u deduce impuesto, r edita tasa")
     print("p aplica porcentaje")
     print("m memoria read, n memoria+, v memoria-, x memoria clean")
+    print("k cost, l sell, h mar")
     print("En tasa: digitos y '.' capturan, '=' confirma, 'e' limpia, 'r' cancela")
     print("s subtotaliza y acumula al gran total")
     print("g imprime el gran total y reinicia en ceros")

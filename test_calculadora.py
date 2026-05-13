@@ -559,6 +559,54 @@ class CalculadoraContableTest(unittest.TestCase):
         contenido_cinta = self.leer_archivo(self.ruta_cinta)
         self.assertIn("M+ 10.00 => 10.00", contenido_cinta)
 
+    def test_sell_se_calcula_desde_cost_y_mar(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "100k20hl":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["valor_cost"], "100.00")
+        self.assertEqual(calculadora["valor_mar"], "20.00")
+        self.assertEqual(calculadora["valor_sell"], "125.00")
+        self.assertEqual(calculadora["display"], "125.00")
+
+    def test_mar_se_calcula_desde_cost_y_sell(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "100k125lh":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["valor_cost"], "100.00")
+        self.assertEqual(calculadora["valor_sell"], "125.00")
+        self.assertEqual(calculadora["valor_mar"], "20.00")
+        self.assertEqual(calculadora["display"], "20.00")
+
+    def test_cost_se_calcula_desde_sell_y_mar(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "125l20hk":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["valor_sell"], "125.00")
+        self.assertEqual(calculadora["valor_mar"], "20.00")
+        self.assertEqual(calculadora["valor_cost"], "100.00")
+        self.assertEqual(calculadora["display"], "100.00")
+
+    def test_cinta_registra_calculo_comercial(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "100k20hl":
+            presionar_tecla(calculadora, tecla)
+
+        contenido_cinta = self.leer_archivo(self.ruta_cinta)
+        self.assertIn("COST = 100.00", contenido_cinta)
+        self.assertIn("MAR = 20.00", contenido_cinta)
+        self.assertIn("SELL = 125.00 (COST 100.00, MAR 20.00%)", contenido_cinta)
+
 
 if __name__ == "__main__":
     unittest.main()

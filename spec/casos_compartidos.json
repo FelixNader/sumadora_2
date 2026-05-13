@@ -125,6 +125,21 @@
     "estado_final": "resultado_en_display"
   },
   {
+    "secuencia": "100k20hl",
+    "display_final": "125.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "100k125lh",
+    "display_final": "20.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "125l20hk",
+    "display_final": "100.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
     "secuencia": "2+3s4+1sg",
     "display_final": "0",
     "estado_final": "encendida_esperando_typing"

@@ -160,4 +160,38 @@ for (const caso of casos) {
   assert.equal(calculadora.display, "0.00", "mr despues de mc");
 }
 
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "100k20hl") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.valor_cost, "100.00", "cost guardado");
+  assert.equal(calculadora.valor_mar, "20.00", "mar guardado");
+  assert.equal(calculadora.valor_sell, "125.00", "sell calculado");
+  assert.equal(
+    calculadora.cinta_entries.at(-1),
+    "SELL = 125.00 (COST 100.00, MAR 20.00%)",
+    "cinta sell calculado",
+  );
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "100k125lh") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.valor_mar, "20.00", "mar calculado");
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "125l20hk") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.valor_cost, "100.00", "cost calculado");
+}
+
 console.log("engine ok");

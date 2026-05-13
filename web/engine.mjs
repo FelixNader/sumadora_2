@@ -38,6 +38,10 @@ export function nuevaCalculadora() {
     buffer_tasa_impuesto: "",
     ultimo_impuesto: "",
     memoria: "0",
+    valor_cost: "",
+    valor_sell: "",
+    valor_mar: "",
+    valor_disponible_para_funcion: false,
     detalle_operando_cinta: "",
     log_entries: [],
     cinta_entries: [],
@@ -105,6 +109,12 @@ export function presionarTecla(calculadora, tecla) {
       restarDeMemoria(calculadora);
     } else if (tecla === "x" || tecla === "X") {
       limpiarMemoria(calculadora);
+    } else if (tecla === "k" || tecla === "K") {
+      manejarFuncionComercial(calculadora, "cost");
+    } else if (tecla === "l" || tecla === "L") {
+      manejarFuncionComercial(calculadora, "sell");
+    } else if (tecla === "h" || tecla === "H") {
+      manejarFuncionComercial(calculadora, "mar");
     } else if (tecla === "s" || tecla === "S") {
       subtotalizar(calculadora);
     } else if (tecla === "g" || tecla === "G") {
@@ -277,6 +287,23 @@ function obtenerValorActualParaMemoria(calculadora) {
   return obtenerSubtotalActual(calculadora, false);
 }
 
+function obtenerValorActualParaFuncionComercial(calculadora) {
+  if (calculadora.estado === ESTADO_TYPING_OPERANDO) {
+    if (esOperandoIncompleto(calculadora.operando_actual)) {
+      throw new Error("Falta completar el operando negativo.");
+    }
+    if (calculadora.operando_actual !== "") {
+      return calculadora.operando_actual;
+    }
+  }
+
+  if (calculadora.display !== "") {
+    return calculadora.display;
+  }
+
+  return "0";
+}
+
 function fijarResultado(calculadora, resultado) {
   calculadora.display = resultado;
   calculadora.operando_actual = "";
@@ -285,6 +312,7 @@ function fijarResultado(calculadora, resultado) {
   calculadora.operador_pendiente = "";
   calculadora.operador_subtotal = "+";
   calculadora.estado = ESTADO_RESULTADO_EN_DISPLAY;
+  calculadora.valor_disponible_para_funcion = true;
 }
 
 function aplicarResultadoTransformacion(calculadora, resultado) {
@@ -305,6 +333,7 @@ function aplicarRecallMemoria(calculadora, valor) {
     calculadora.operando_actual = valor;
     calculadora.display = valor;
     calculadora.estado = ESTADO_TYPING_OPERANDO;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -314,6 +343,7 @@ function aplicarRecallMemoria(calculadora, valor) {
   ) {
     calculadora.operando_actual = valor;
     calculadora.display = valor;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -325,6 +355,7 @@ function manejarEncendidaEsperandoTyping(calculadora, tecla) {
     calculadora.operando_actual = "-";
     calculadora.display = "-";
     calculadora.estado = ESTADO_TYPING_OPERANDO;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -333,6 +364,7 @@ function manejarEncendidaEsperandoTyping(calculadora, tecla) {
     calculadora.operando_actual = tecla;
     calculadora.display = tecla;
     calculadora.estado = ESTADO_TYPING_OPERANDO;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -341,6 +373,7 @@ function manejarEncendidaEsperandoTyping(calculadora, tecla) {
     calculadora.operando_actual = "0.";
     calculadora.display = "0.";
     calculadora.estado = ESTADO_TYPING_OPERANDO;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -362,6 +395,7 @@ function manejarTypingOperando(calculadora, tecla) {
       calculadora.operando_actual += tecla;
     }
     calculadora.display = calculadora.operando_actual;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -378,6 +412,7 @@ function manejarTypingOperando(calculadora, tecla) {
       calculadora.operando_actual += ".";
     }
     calculadora.display = calculadora.operando_actual;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -405,6 +440,7 @@ function manejarOperadorPendiente(calculadora, tecla) {
     calculadora.operando_actual = "-";
     calculadora.display = "-";
     calculadora.estado = ESTADO_TYPING_OPERANDO;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -413,6 +449,7 @@ function manejarOperadorPendiente(calculadora, tecla) {
     calculadora.operando_actual = tecla;
     calculadora.display = tecla;
     calculadora.estado = ESTADO_TYPING_OPERANDO;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -421,6 +458,7 @@ function manejarOperadorPendiente(calculadora, tecla) {
     calculadora.operando_actual = "0.";
     calculadora.display = "0.";
     calculadora.estado = ESTADO_TYPING_OPERANDO;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -452,6 +490,7 @@ function manejarResultadoEnDisplay(calculadora, tecla) {
     calculadora.operando_actual = tecla;
     calculadora.display = tecla;
     calculadora.estado = ESTADO_TYPING_OPERANDO;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -461,6 +500,7 @@ function manejarResultadoEnDisplay(calculadora, tecla) {
     calculadora.operando_actual = "0.";
     calculadora.display = "0.";
     calculadora.estado = ESTADO_TYPING_OPERANDO;
+    calculadora.valor_disponible_para_funcion = true;
     return;
   }
 
@@ -471,6 +511,7 @@ function manejarResultadoEnDisplay(calculadora, tecla) {
     calculadora.operando_actual = "";
     calculadora.acumulado_multiplicativo = "";
     calculadora.estado = ESTADO_OPERADOR_PENDIENTE;
+    calculadora.valor_disponible_para_funcion = false;
     return;
   }
 
@@ -481,6 +522,7 @@ function manejarResultadoEnDisplay(calculadora, tecla) {
     calculadora.operador_pendiente = tecla;
     calculadora.operando_actual = "";
     calculadora.estado = ESTADO_OPERADOR_PENDIENTE;
+    calculadora.valor_disponible_para_funcion = false;
     return;
   }
 
@@ -748,6 +790,149 @@ function limpiarMemoria(calculadora) {
   registrarLog(calculadora, "memoria_limpiar");
 }
 
+function manejarFuncionComercial(calculadora, campo) {
+  if (calculadora.valor_disponible_para_funcion) {
+    const valor = applyModeDecimal(
+      calculadora,
+      obtenerValorActualParaFuncionComercial(calculadora),
+    );
+    asignarValorFuncionComercial(calculadora, campo, valor);
+    fijarResultado(calculadora, valor);
+    calculadora.valor_disponible_para_funcion = false;
+    registrarCinta(
+      calculadora,
+      `${etiquetaFuncionComercial(campo)} = ${formatearValorVisible(calculadora, valor)}`,
+    );
+    registrarLog(
+      calculadora,
+      "funcion_comercial_guardar",
+      `campo=${campo} valor=${valor}`,
+    );
+    return;
+  }
+
+  const resultado = calcularFuncionComercial(calculadora, campo);
+  asignarValorFuncionComercial(calculadora, campo, resultado);
+  fijarResultado(calculadora, resultado);
+  calculadora.valor_disponible_para_funcion = false;
+  registrarCinta(
+    calculadora,
+    describirCalculoFuncionComercial(calculadora, campo, resultado),
+  );
+  registrarLog(
+    calculadora,
+    "funcion_comercial_calcular",
+    `campo=${campo} resultado=${resultado}`,
+  );
+}
+
+function etiquetaFuncionComercial(campo) {
+  if (campo === "cost") return "COST";
+  if (campo === "sell") return "SELL";
+  if (campo === "mar") return "MAR";
+  throw new Error("Campo comercial no soportado.");
+}
+
+function asignarValorFuncionComercial(calculadora, campo, valor) {
+  if (campo === "cost") {
+    calculadora.valor_cost = valor;
+    return;
+  }
+  if (campo === "sell") {
+    calculadora.valor_sell = valor;
+    return;
+  }
+  if (campo === "mar") {
+    calculadora.valor_mar = valor;
+    return;
+  }
+  throw new Error("Campo comercial no soportado.");
+}
+
+function calcularFuncionComercial(calculadora, campo) {
+  const costo = calculadora.valor_cost;
+  const venta = calculadora.valor_sell;
+  const margen = calculadora.valor_mar;
+
+  if (campo === "cost") {
+    if (venta === "" || margen === "") {
+      throw new Error("Para calcular COST se requieren SELL y MAR.");
+    }
+    const divisor = subtractDecimals(
+      parseDecimal("1"),
+      divideDecimals(parseDecimal(margen), parseDecimal("100"), PRECISION_DIVISION),
+    );
+    if (divisor.sign < 0n || divisor.value === 0n) {
+      throw new Error("El margen debe ser menor a 100.");
+    }
+    return applyModeDecimal(
+      calculadora,
+      multiplyDecimals(parseDecimal(venta), divisor),
+    );
+  }
+
+  if (campo === "sell") {
+    if (costo === "" || margen === "") {
+      throw new Error("Para calcular SELL se requieren COST y MAR.");
+    }
+    const divisor = subtractDecimals(
+      parseDecimal("1"),
+      divideDecimals(parseDecimal(margen), parseDecimal("100"), PRECISION_DIVISION),
+    );
+    if (divisor.sign < 0n || divisor.value === 0n) {
+      throw new Error("El margen debe ser menor a 100.");
+    }
+    return applyModeDecimal(
+      calculadora,
+      divideDecimals(parseDecimal(costo), divisor, PRECISION_DIVISION),
+    );
+  }
+
+  if (campo === "mar") {
+    if (costo === "" || venta === "") {
+      throw new Error("Para calcular MAR se requieren COST y SELL.");
+    }
+    if (parseDecimal(venta).value === 0n) {
+      throw new Error("SELL no puede ser cero para calcular MAR.");
+    }
+    return applyModeDecimal(
+      calculadora,
+      multiplyDecimals(
+        divideDecimals(
+          subtractDecimals(parseDecimal(venta), parseDecimal(costo)),
+          parseDecimal(venta),
+          PRECISION_DIVISION,
+        ),
+        parseDecimal("100"),
+      ),
+    );
+  }
+
+  throw new Error("Campo comercial no soportado.");
+}
+
+function describirCalculoFuncionComercial(calculadora, campo, resultado) {
+  if (campo === "cost") {
+    return `COST = ${formatearValorVisible(calculadora, resultado)} (SELL ${formatearValorVisible(
+      calculadora,
+      calculadora.valor_sell,
+    )}, MAR ${formatearValorVisible(calculadora, calculadora.valor_mar)}%)`;
+  }
+  if (campo === "sell") {
+    return `SELL = ${formatearValorVisible(calculadora, resultado)} (COST ${formatearValorVisible(
+      calculadora,
+      calculadora.valor_cost,
+    )}, MAR ${formatearValorVisible(calculadora, calculadora.valor_mar)}%)`;
+  }
+  if (campo === "mar") {
+    return `MAR = ${formatearValorVisible(calculadora, resultado)}% (COST ${formatearValorVisible(
+      calculadora,
+      calculadora.valor_cost,
+    )}, SELL ${formatearValorVisible(calculadora, calculadora.valor_sell)})`;
+  }
+  throw new Error("Campo comercial no soportado.");
+}
+
 function obtenerSubtotalActual(calculadora, registrar = false) {
   if (calculadora.estado === ESTADO_ENCENDIDA_ESPERANDO_TYPING) {
     return calculadora.acumulado || "0";
@@ -950,6 +1135,9 @@ function borrarTodo(calculadora) {
   calculadora.ultimo_gran_total = "";
   calculadora.ultimo_impuesto = "";
   calculadora.memoria = "0";
+  calculadora.valor_cost = "";
+  calculadora.valor_sell = "";
+  calculadora.valor_mar = "";
   calculadora.editando_tasa_impuesto = false;
   calculadora.buffer_tasa_impuesto = "";
   calculadora.detalle_operando_cinta = "";
@@ -1051,6 +1239,7 @@ function reiniciarOperacion(calculadora) {
   calculadora.operador_pendiente = "";
   calculadora.operador_subtotal = "+";
   calculadora.detalle_operando_cinta = "";
+  calculadora.valor_disponible_para_funcion = false;
 }
 
 function describirEstado(calculadora) {
@@ -1065,6 +1254,9 @@ function describirEstado(calculadora) {
     `gran_total=${calculadora.gran_total}`,
     `modo_decimal=${calculadora.modo_decimal}`,
     `memoria=${calculadora.memoria}`,
+    `valor_cost=${calculadora.valor_cost}`,
+    `valor_sell=${calculadora.valor_sell}`,
+    `valor_mar=${calculadora.valor_mar}`,
     `tasa_impuesto=${calculadora.tasa_impuesto}`,
     `editando_tasa_impuesto=${calculadora.editando_tasa_impuesto}`,
   ].join(",");
