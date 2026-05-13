@@ -1136,7 +1136,6 @@ def borrar_todo(calculadora):
     calculadora["ultimo_subtotal"] = ""
     calculadora["ultimo_gran_total"] = ""
     calculadora["ultimo_impuesto"] = ""
-    calculadora["memoria"] = "0"
     calculadora["valor_cost"] = ""
     calculadora["valor_sell"] = ""
     calculadora["valor_mar"] = ""
@@ -1297,7 +1296,7 @@ def ejecutar_terminal():
     print("Estado inicial: encendida_esperando_typing")
     print("Usa teclas: 0-9 . + - * / = e a s g f d t c i u r p m n v x k l h")
     print("e borra la entrada actual")
-    print("a borra todo y reinicia memorias")
+    print("a borra todo menos memoria")
     print("f flotante, d 2 decimales, t 3 decimales, c 4 decimales")
     print("i suma impuesto, u deduce impuesto, r edita tasa")
     print("p aplica porcentaje")

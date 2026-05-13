@@ -68,6 +68,18 @@ export function encender(calculadora) {
   registrarCinta(calculadora, encabezadoCinta("encendida"));
 }
 
+export function apagar(calculadora) {
+  registrarLog(calculadora, "apagar");
+  registrarCinta(calculadora, encabezadoCinta("apagada"));
+  calculadora.estado = ESTADO_APAGADA;
+  calculadora.display = "";
+  calculadora.operando_actual = "";
+  calculadora.acumulado = "";
+  calculadora.acumulado_multiplicativo = "";
+  calculadora.operador_pendiente = "";
+  calculadora.detalle_operando_cinta = "";
+}
+
 export function presionarTecla(calculadora, tecla) {
   if (tecla.length !== 1) {
     throw new Error("La tecla debe ser un unico caracter.");
@@ -1134,7 +1146,6 @@ function borrarTodo(calculadora) {
   calculadora.ultimo_subtotal = "";
   calculadora.ultimo_gran_total = "";
   calculadora.ultimo_impuesto = "";
-  calculadora.memoria = "0";
   calculadora.valor_cost = "";
   calculadora.valor_sell = "";
   calculadora.valor_mar = "";

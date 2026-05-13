@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  apagar,
   encender,
   formatearValorVisible,
   nuevaCalculadora,
@@ -39,7 +40,7 @@ for (const caso of casos) {
 {
   const calculadora = nuevaCalculadora();
   encender(calculadora);
-  for (const tecla of "2+3s4+1a") {
+  for (const tecla of "10n2+3s4+1a") {
     presionarTecla(calculadora, tecla);
   }
   assert.equal(calculadora.display, "0", "a display");
@@ -47,6 +48,7 @@ for (const caso of casos) {
   assert.equal(calculadora.gran_total, "0", "a gran_total");
   assert.equal(calculadora.ultimo_subtotal, "", "a ultimo_subtotal");
   assert.equal(calculadora.ultimo_gran_total, "", "a ultimo_gran_total");
+  assert.equal(calculadora.memoria, "10.00", "a conserva memoria");
 }
 
 {
@@ -158,6 +160,19 @@ for (const caso of casos) {
   }
   assert.equal(calculadora.memoria, "0", "mc limpia memoria");
   assert.equal(calculadora.display, "0.00", "mr despues de mc");
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "10n") {
+    presionarTecla(calculadora, tecla);
+  }
+  apagar(calculadora);
+  encender(calculadora);
+  assert.equal(calculadora.memoria, "10.00", "memoria persiste tras apagar");
+  assert.equal(calculadora.display, "0", "display reiniciado tras encender");
+  assert.equal(calculadora.estado, "encendida_esperando_typing", "estado tras encender");
 }
 
 {

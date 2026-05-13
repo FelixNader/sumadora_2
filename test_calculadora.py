@@ -7,6 +7,7 @@ from calculadora import ESTADO_ENCENDIDA_ESPERANDO_TYPING
 from calculadora import ESTADO_OPERADOR_PENDIENTE
 from calculadora import ESTADO_RESULTADO_EN_DISPLAY
 from calculadora import ESTADO_TYPING_OPERANDO
+from calculadora import apagar
 from calculadora import encender
 from calculadora import nueva_calculadora
 from calculadora import presionar_tecla
@@ -82,11 +83,11 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["operador_pendiente"], "+")
         self.assertEqual(calculadora["estado"], ESTADO_OPERADOR_PENDIENTE)
 
-    def test_a_reinicia_toda_la_calculadora_y_memorias(self):
+    def test_a_reinicia_calculadora_pero_conserva_memoria(self):
         calculadora = self.crear_calculadora()
         encender(calculadora)
 
-        for tecla in "2+3s4+1a":
+        for tecla in "10n2+3s4+1a":
             presionar_tecla(calculadora, tecla)
 
         self.assertEqual(calculadora["display"], "0")
@@ -94,6 +95,7 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertEqual(calculadora["gran_total"], "0")
         self.assertEqual(calculadora["ultimo_subtotal"], "")
         self.assertEqual(calculadora["ultimo_gran_total"], "")
+        self.assertEqual(calculadora["memoria"], "10.00")
 
     def test_operador_prepara_segundo_operando(self):
         calculadora = self.crear_calculadora()
@@ -548,6 +550,20 @@ class CalculadoraContableTest(unittest.TestCase):
 
         self.assertEqual(calculadora["memoria"], "0")
         self.assertEqual(calculadora["display"], "0.00")
+
+    def test_apagar_y_encender_conservan_memoria(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "10n":
+            presionar_tecla(calculadora, tecla)
+
+        apagar(calculadora)
+        encender(calculadora)
+
+        self.assertEqual(calculadora["memoria"], "10.00")
+        self.assertEqual(calculadora["display"], "0")
+        self.assertEqual(calculadora["estado"], ESTADO_ENCENDIDA_ESPERANDO_TYPING)
 
     def test_cinta_registra_memoria(self):
         calculadora = self.crear_calculadora()
