@@ -45,6 +45,7 @@ sincronizarViewport();
 render();
 registrarServiceWorker();
 blindarGestosIOS();
+configurarDobleTap();
 
 document.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-key]");
@@ -405,6 +406,40 @@ function blindarGestosIOS() {
     },
     { passive: false },
   );
+}
+
+function configurarDobleTap() {
+  if (!displayNode) return;
+
+  let ultimoTap = 0;
+  const DOBLE_TAP_MS = 300;
+
+  displayNode.addEventListener("touchstart", (event) => {
+    const ahora = Date.now();
+    if (ahora - ultimoTap < DOBLE_TAP_MS) {
+      event.preventDefault();
+      copiarAlPortapapeles();
+    }
+    ultimoTap = ahora;
+  }, { passive: false });
+}
+
+function copiarAlPortapapeles() {
+  const texto = displayNode.textContent.trim();
+  if (!texto || texto === "ERROR") return;
+
+  navigator.clipboard.writeText(texto).then(() => {
+    const caption = document.querySelector(".display-caption");
+    if (caption) {
+      const original = caption.textContent;
+      caption.textContent = "Copiado";
+      caption.style.color = "var(--screen-glow)";
+      setTimeout(() => {
+        caption.textContent = original;
+        caption.style.color = "";
+      }, 800);
+    }
+  }).catch(() => {});
 }
 
 function sincronizarViewport() {
