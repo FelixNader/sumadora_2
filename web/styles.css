@@ -214,6 +214,13 @@ body {
   margin-bottom: 0.8rem;
 }
 
+.tourist-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.8rem;
+}
+
 .tax-key {
   border-radius: 12px;
 }
@@ -273,6 +280,29 @@ body {
 .convert-rate[data-active="true"] {
   background: linear-gradient(180deg, #4d8da6, #346578);
   color: #f4fbff;
+}
+
+.tourist-action {
+  min-width: 3.9rem;
+  min-height: 2.75rem;
+  background: linear-gradient(180deg, #c6d48b, #8f9f44);
+  color: #f8fff0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 4px 0 #69772d,
+    0 8px 14px rgba(79, 92, 31, 0.18);
+}
+
+.tourist-rate {
+  min-height: 2.75rem;
+  padding-inline: 0.9rem;
+  background: rgba(248, 252, 234, 0.92);
+  color: #495127;
+}
+
+.tourist-rate[data-active="true"] {
+  background: linear-gradient(180deg, #8f9f44, #69772d);
+  color: #f8fff0;
 }
 
 .metrics {
@@ -536,6 +566,11 @@ body {
     margin-bottom: 0.65rem;
   }
 
+  .tourist-strip {
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+  }
+
   .mode-key {
     min-width: 2.45rem;
     min-height: 2.45rem;
@@ -581,6 +616,18 @@ body {
   .convert-rate {
     min-height: 2.45rem;
     font-size: 0.88rem;
+    padding-inline: 0.8rem;
+  }
+
+  .tourist-action {
+    min-width: 3.5rem;
+    min-height: 2.45rem;
+    font-size: 0.82rem;
+  }
+
+  .tourist-rate {
+    min-height: 2.45rem;
+    font-size: 0.82rem;
     padding-inline: 0.8rem;
   }
 
@@ -793,6 +840,11 @@ body {
     margin-bottom: 0.3rem;
   }
 
+  html[data-orientation="landscape"] .tourist-strip {
+    gap: 0.25rem;
+    margin-bottom: 0.3rem;
+  }
+
   html[data-orientation="landscape"] .mode-key {
     min-width: 2rem;
     min-height: 2rem;
@@ -864,6 +916,22 @@ body {
     min-height: 2rem;
     font-size: 0.66rem;
     padding-inline: 0.55rem;
+  }
+
+  html[data-orientation="landscape"] .tourist-action {
+    min-width: 2.8rem;
+    min-height: 2rem;
+    font-size: 0.62rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 3px 0 #69772d,
+      0 5px 8px rgba(79, 92, 31, 0.14);
+  }
+
+  html[data-orientation="landscape"] .tourist-rate {
+    min-height: 2rem;
+    font-size: 0.62rem;
+    padding-inline: 0.5rem;
   }
 
   html[data-orientation="landscape"] .metrics {

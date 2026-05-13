@@ -238,4 +238,34 @@ for (const caso of casos) {
   );
 }
 
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "o19.5=b0.4=j") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.tasa_out, "19.5", "out guardado");
+  assert.equal(calculadora.spread_seguro, "0.4", "spread guardado");
+  assert.equal(calculadora.tasa_publicada_segura, "19.10", "pub calculado");
+  assert.equal(
+    calculadora.cinta_entries.at(-1),
+    "PUB = 19.10 (OUT 19.50, SPD 0.40)",
+    "cinta pub",
+  );
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "o19.5=b0.4=1000z") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.display, "52.36", "usd a cobrar");
+  assert.equal(
+    calculadora.cinta_entries.at(-1),
+    "USD 1,000.00 @ PUB 19.10 = 52.36",
+    "cinta usd",
+  );
+}
+
 console.log("engine ok");

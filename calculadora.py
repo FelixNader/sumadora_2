@@ -59,6 +59,15 @@ def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
         "editando_tasa_conversion": False,
         "buffer_tasa_conversion": "",
         "reemplazar_buffer_tasa_conversion": False,
+        "tasa_out": "0",
+        "editando_tasa_out": False,
+        "buffer_tasa_out": "",
+        "reemplazar_buffer_tasa_out": False,
+        "spread_seguro": "0",
+        "editando_spread_seguro": False,
+        "buffer_spread_seguro": "",
+        "reemplazar_buffer_spread_seguro": False,
+        "tasa_publicada_segura": "",
         "ultimo_impuesto": "",
         "memoria": "0",
         "valor_cost": "",
@@ -111,6 +120,10 @@ def presionar_tecla(calculadora, tecla):
             manejar_captura_tasa_impuesto(calculadora, tecla)
         elif calculadora["editando_tasa_conversion"]:
             manejar_captura_tasa_conversion(calculadora, tecla)
+        elif calculadora["editando_tasa_out"]:
+            manejar_captura_tasa_out(calculadora, tecla)
+        elif calculadora["editando_spread_seguro"]:
+            manejar_captura_spread_seguro(calculadora, tecla)
         elif tecla in {"e", "E"}:
             borrar_entrada(calculadora)
         elif tecla in {"a", "A"}:
@@ -121,12 +134,20 @@ def presionar_tecla(calculadora, tecla):
             iniciar_captura_tasa_impuesto(calculadora)
         elif tecla in {"w", "W"}:
             iniciar_captura_tasa_conversion(calculadora)
+        elif tecla in {"o", "O"}:
+            iniciar_captura_tasa_out(calculadora)
+        elif tecla in {"b", "B"}:
+            iniciar_captura_spread_seguro(calculadora)
         elif tecla in {"i", "I"}:
             sumar_impuesto(calculadora)
         elif tecla in {"u", "U"}:
             restar_impuesto(calculadora)
         elif tecla in {"y", "Y"}:
             convertir_valor(calculadora)
+        elif tecla in {"j", "J"}:
+            publicar_tipo_seguro(calculadora)
+        elif tecla in {"z", "Z"}:
+            calcular_dolares_a_cobrar(calculadora)
         elif tecla in TECLAS_PORCENTAJE:
             aplicar_porcentaje(calculadora)
         elif tecla in {"k", "K"}:
@@ -282,6 +303,14 @@ def obtener_display_visible(calculadora):
         return "RATE " + formatear_operando_visible(
             calculadora["buffer_tasa_conversion"] or "0"
         )
+    if calculadora["editando_tasa_out"]:
+        return "OUT " + formatear_operando_visible(
+            calculadora["buffer_tasa_out"] or "0"
+        )
+    if calculadora["editando_spread_seguro"]:
+        return "SPD " + formatear_operando_visible(
+            calculadora["buffer_spread_seguro"] or "0"
+        )
     if calculadora["estado"] == ESTADO_TYPING_OPERANDO and calculadora["operando_actual"] != "":
         return formatear_operando_visible(calculadora["operando_actual"])
     return formatear_valor_visible(calculadora, calculadora["display"] or "0")
@@ -293,6 +322,13 @@ def obtener_tasa_impuesto_decimal(calculadora):
 
 def obtener_tasa_conversion_decimal(calculadora):
     return Decimal(calculadora["tasa_conversion"])
+
+
+def calcular_tasa_publicada_segura_decimal(calculadora):
+    publicada = Decimal(calculadora["tasa_out"]) - Decimal(calculadora["spread_seguro"])
+    if publicada <= 0:
+        raise ValueError("OUT debe ser mayor que SPD para publicar un tipo seguro.")
+    return publicada
 
 
 def obtener_valor_actual_para_impuesto(calculadora):
@@ -708,6 +744,64 @@ def convertir_valor(calculadora):
         "valor=" + valor
         + " tasa_conversion=" + calculadora["tasa_conversion"]
         + " convertido=" + convertido,
+    )
+
+
+def publicar_tipo_seguro(calculadora):
+    publicada = aplicar_modo_decimal(calculadora, calcular_tasa_publicada_segura_decimal(calculadora))
+    calculadora["tasa_publicada_segura"] = publicada
+    fijar_resultado(calculadora, publicada)
+    registrar_cinta(
+        calculadora,
+        "PUB = "
+        + formatear_valor_visible(calculadora, publicada)
+        + " (OUT "
+        + formatear_valor_visible(calculadora, calculadora["tasa_out"])
+        + ", SPD "
+        + formatear_valor_visible(calculadora, calculadora["spread_seguro"])
+        + ")",
+    )
+    registrar_log(
+        calculadora,
+        "tipo_publicado",
+        "out=" + calculadora["tasa_out"]
+        + " spread=" + calculadora["spread_seguro"]
+        + " publicado=" + publicada,
+    )
+
+
+def calcular_dolares_a_cobrar(calculadora):
+    valor = obtener_valor_actual_para_impuesto(calculadora)
+    publicada = aplicar_modo_decimal(calculadora, calcular_tasa_publicada_segura_decimal(calculadora))
+    calculadora["tasa_publicada_segura"] = publicada
+    dolares = aplicar_modo_decimal(
+        calculadora,
+        Decimal(valor) / Decimal(publicada),
+    )
+    aplicar_resultado_transformacion(calculadora, dolares)
+    if (
+        calculadora["estado"] == ESTADO_TYPING_OPERANDO
+        and calculadora["operador_pendiente"] != ""
+    ):
+        calculadora["detalle_operando_cinta"] = (
+            "USD "
+            + formatear_valor_visible(calculadora, valor)
+            + " @ PUB "
+            + formatear_valor_visible(calculadora, publicada)
+        )
+    registrar_cinta(
+        calculadora,
+        "USD "
+        + formatear_valor_visible(calculadora, valor)
+        + " @ PUB "
+        + formatear_valor_visible(calculadora, publicada)
+        + " = "
+        + formatear_valor_visible(calculadora, dolares),
+    )
+    registrar_log(
+        calculadora,
+        "usd_cobro",
+        "mxn=" + valor + " publicado=" + publicada + " usd=" + dolares,
     )
 
 
@@ -1238,6 +1332,162 @@ def manejar_captura_tasa_conversion(calculadora, tecla):
     raise ValueError("Mientras editas rate solo se aceptan digitos, '.', '=', 'e' o 'w'.")
 
 
+def iniciar_captura_tasa_out(calculadora):
+    calculadora["editando_tasa_out"] = True
+    calculadora["buffer_tasa_out"] = calculadora["tasa_out"]
+    calculadora["reemplazar_buffer_tasa_out"] = True
+    registrar_log(
+        calculadora,
+        "tasa_out_editar",
+        "tasa_out=" + calculadora["tasa_out"],
+    )
+
+
+def manejar_captura_tasa_out(calculadora, tecla):
+    if tecla in {"a", "A"}:
+        calculadora["editando_tasa_out"] = False
+        calculadora["buffer_tasa_out"] = ""
+        calculadora["reemplazar_buffer_tasa_out"] = False
+        borrar_todo(calculadora)
+        return
+
+    if tecla in {"o", "O"}:
+        calculadora["editando_tasa_out"] = False
+        calculadora["buffer_tasa_out"] = ""
+        calculadora["reemplazar_buffer_tasa_out"] = False
+        registrar_log(calculadora, "tasa_out_cancelar")
+        return
+
+    if tecla in {"e", "E"}:
+        calculadora["buffer_tasa_out"] = "0"
+        calculadora["reemplazar_buffer_tasa_out"] = False
+        return
+
+    if tecla.isdigit():
+        if calculadora["reemplazar_buffer_tasa_out"]:
+            calculadora["buffer_tasa_out"] = tecla
+            calculadora["reemplazar_buffer_tasa_out"] = False
+        elif calculadora["buffer_tasa_out"] in {"", "0"}:
+            calculadora["buffer_tasa_out"] = tecla
+        else:
+            calculadora["buffer_tasa_out"] += tecla
+        return
+
+    if tecla == ".":
+        if "." in calculadora["buffer_tasa_out"]:
+            raise ValueError("OUT ya tiene punto decimal.")
+        if calculadora["reemplazar_buffer_tasa_out"]:
+            calculadora["buffer_tasa_out"] = "0."
+            calculadora["reemplazar_buffer_tasa_out"] = False
+        elif calculadora["buffer_tasa_out"] == "":
+            calculadora["buffer_tasa_out"] = "0."
+        else:
+            calculadora["buffer_tasa_out"] += "."
+        return
+
+    if tecla == "=":
+        buffer = calculadora["buffer_tasa_out"] or "0"
+        if buffer.endswith("."):
+            buffer += "0"
+        tasa = Decimal(buffer)
+        if tasa < 0:
+            raise ValueError("OUT no puede ser negativo.")
+        calculadora["tasa_out"] = formatear_decimal(tasa)
+        calculadora["editando_tasa_out"] = False
+        calculadora["buffer_tasa_out"] = ""
+        calculadora["reemplazar_buffer_tasa_out"] = False
+        registrar_cinta(
+            calculadora,
+            "OUT = " + formatear_valor_visible(calculadora, calculadora["tasa_out"]),
+        )
+        registrar_log(
+            calculadora,
+            "tasa_out",
+            "tasa_out=" + calculadora["tasa_out"],
+        )
+        return
+
+    raise ValueError("Mientras editas OUT solo se aceptan digitos, '.', '=', 'e' u 'o'.")
+
+
+def iniciar_captura_spread_seguro(calculadora):
+    calculadora["editando_spread_seguro"] = True
+    calculadora["buffer_spread_seguro"] = calculadora["spread_seguro"]
+    calculadora["reemplazar_buffer_spread_seguro"] = True
+    registrar_log(
+        calculadora,
+        "spread_seguro_editar",
+        "spread_seguro=" + calculadora["spread_seguro"],
+    )
+
+
+def manejar_captura_spread_seguro(calculadora, tecla):
+    if tecla in {"a", "A"}:
+        calculadora["editando_spread_seguro"] = False
+        calculadora["buffer_spread_seguro"] = ""
+        calculadora["reemplazar_buffer_spread_seguro"] = False
+        borrar_todo(calculadora)
+        return
+
+    if tecla in {"b", "B"}:
+        calculadora["editando_spread_seguro"] = False
+        calculadora["buffer_spread_seguro"] = ""
+        calculadora["reemplazar_buffer_spread_seguro"] = False
+        registrar_log(calculadora, "spread_seguro_cancelar")
+        return
+
+    if tecla in {"e", "E"}:
+        calculadora["buffer_spread_seguro"] = "0"
+        calculadora["reemplazar_buffer_spread_seguro"] = False
+        return
+
+    if tecla.isdigit():
+        if calculadora["reemplazar_buffer_spread_seguro"]:
+            calculadora["buffer_spread_seguro"] = tecla
+            calculadora["reemplazar_buffer_spread_seguro"] = False
+        elif calculadora["buffer_spread_seguro"] in {"", "0"}:
+            calculadora["buffer_spread_seguro"] = tecla
+        else:
+            calculadora["buffer_spread_seguro"] += tecla
+        return
+
+    if tecla == ".":
+        if "." in calculadora["buffer_spread_seguro"]:
+            raise ValueError("SPD ya tiene punto decimal.")
+        if calculadora["reemplazar_buffer_spread_seguro"]:
+            calculadora["buffer_spread_seguro"] = "0."
+            calculadora["reemplazar_buffer_spread_seguro"] = False
+        elif calculadora["buffer_spread_seguro"] == "":
+            calculadora["buffer_spread_seguro"] = "0."
+        else:
+            calculadora["buffer_spread_seguro"] += "."
+        return
+
+    if tecla == "=":
+        buffer = calculadora["buffer_spread_seguro"] or "0"
+        if buffer.endswith("."):
+            buffer += "0"
+        tasa = Decimal(buffer)
+        if tasa < 0:
+            raise ValueError("SPD no puede ser negativo.")
+        calculadora["spread_seguro"] = formatear_decimal(tasa)
+        calculadora["editando_spread_seguro"] = False
+        calculadora["buffer_spread_seguro"] = ""
+        calculadora["reemplazar_buffer_spread_seguro"] = False
+        registrar_cinta(
+            calculadora,
+            "SPD = " + formatear_valor_visible(calculadora, calculadora["spread_seguro"]),
+        )
+        registrar_log(
+            calculadora,
+            "spread_seguro",
+            "spread_seguro=" + calculadora["spread_seguro"],
+        )
+        return
+
+    raise ValueError("Mientras editas SPD solo se aceptan digitos, '.', '=', 'e' o 'b'.")
+
+
 def borrar_entrada(calculadora):
     if calculadora["estado"] == ESTADO_TYPING_OPERANDO:
         calculadora["operando_actual"] = ""
@@ -1274,6 +1524,12 @@ def borrar_todo(calculadora):
     calculadora["editando_tasa_conversion"] = False
     calculadora["buffer_tasa_conversion"] = ""
     calculadora["reemplazar_buffer_tasa_conversion"] = False
+    calculadora["editando_tasa_out"] = False
+    calculadora["buffer_tasa_out"] = ""
+    calculadora["reemplazar_buffer_tasa_out"] = False
+    calculadora["editando_spread_seguro"] = False
+    calculadora["buffer_spread_seguro"] = ""
+    calculadora["reemplazar_buffer_spread_seguro"] = False
     calculadora["detalle_operando_cinta"] = ""
     registrar_cinta(calculadora, "A")
     registrar_cinta(calculadora, encabezado_cinta("nueva_calculadora"))
@@ -1297,6 +1553,14 @@ def mostrar_estado(calculadora):
     print("Estado:", calculadora["estado"])
     print("Modo decimal:", calculadora["modo_decimal"])
     print("Rate:", formatear_valor_visible(calculadora, calculadora["tasa_conversion"]))
+    print(
+        "OUT/SPD/PUB:",
+        formatear_valor_visible(calculadora, calculadora["tasa_out"]),
+        "/",
+        formatear_valor_visible(calculadora, calculadora["spread_seguro"]),
+        "/",
+        (formatear_valor_visible(calculadora, calculadora["tasa_publicada_segura"]) if calculadora["tasa_publicada_segura"] else "-"),
+    )
     print("Memoria:", formatear_valor_visible(calculadora, calculadora["memoria"]))
     print(
         "COST/SELL/MAR:",
@@ -1375,6 +1639,11 @@ def describir_estado(calculadora):
         + ",editando_tasa_impuesto=" + str(calculadora["editando_tasa_impuesto"])
         + ",tasa_conversion=" + calculadora["tasa_conversion"]
         + ",editando_tasa_conversion=" + str(calculadora["editando_tasa_conversion"])
+        + ",tasa_out=" + calculadora["tasa_out"]
+        + ",editando_tasa_out=" + str(calculadora["editando_tasa_out"])
+        + ",spread_seguro=" + calculadora["spread_seguro"]
+        + ",editando_spread_seguro=" + str(calculadora["editando_spread_seguro"])
+        + ",tasa_publicada_segura=" + calculadora["tasa_publicada_segura"]
     )
 
 
@@ -1430,7 +1699,7 @@ def ejecutar_terminal():
 
     print("Calculadora sumadora contable")
     print("Estado inicial: encendida_esperando_typing")
-    print("Usa teclas: 0-9 . + - * / = e a s g f d t c i u r p m n v x k l h w y")
+    print("Usa teclas: 0-9 . + - * / = e a s g f d t c i u r p m n v x k l h w y o b j z")
     print("e borra la entrada actual")
     print("a borra todo menos memoria")
     print("f flotante, d 2 decimales, t 3 decimales, c 4 decimales")
@@ -1439,6 +1708,7 @@ def ejecutar_terminal():
     print("m memoria read, n memoria+, v memoria-, x memoria clean")
     print("k cost, l sell, h mar")
     print("w edita rate, y convierte")
+    print("o edita OUT, b edita SPD, j calcula PUB, z calcula USD")
     print("En tasa/rate: digitos y '.' capturan, '=' confirma, 'e' limpia, tecla de funcion cancela")
     print("s subtotaliza y acumula al gran total")
     print("g imprime el gran total y reinicia en ceros")

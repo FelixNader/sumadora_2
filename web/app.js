@@ -23,6 +23,8 @@ const keypad = document.querySelector("[data-keypad]");
 const modeButtons = document.querySelectorAll("[data-decimal-mode]");
 const taxRateButton = document.querySelector("[data-tax-rate]");
 const conversionRateButton = document.querySelector("[data-conversion-rate]");
+const outRateButton = document.querySelector("[data-out-rate]");
+const spreadRateButton = document.querySelector("[data-spread-rate]");
 
 let calculadora = cargarCalculadora();
 
@@ -118,6 +120,10 @@ function render() {
     ? "editando_tasa"
     : calculadora.editando_tasa_conversion
       ? "editando_rate"
+      : calculadora.editando_tasa_out
+        ? "editando_out"
+        : calculadora.editando_spread_seguro
+          ? "editando_spd"
       : calculadora.estado;
   modeButtons.forEach((button) => {
     button.dataset.active =
@@ -130,6 +136,13 @@ function render() {
     calculadora.tasa_conversion,
   )}`;
   conversionRateButton.dataset.active = calculadora.editando_tasa_conversion ? "true" : "false";
+  outRateButton.textContent = `OUT ${formatearValorVisible(calculadora, calculadora.tasa_out)}`;
+  outRateButton.dataset.active = calculadora.editando_tasa_out ? "true" : "false";
+  spreadRateButton.textContent = `SPD ${formatearValorVisible(
+    calculadora,
+    calculadora.spread_seguro,
+  )}`;
+  spreadRateButton.dataset.active = calculadora.editando_spread_seguro ? "true" : "false";
 
   cintaNode.textContent = calculadora.cinta_entries.join("\n") || "Sin cinta aun.";
   logNode.textContent = calculadora.log_entries.join("\n") || "Sin log aun.";
@@ -204,6 +217,14 @@ function mapearTecla(tecla) {
     W: "w",
     y: "y",
     Y: "y",
+    o: "o",
+    O: "o",
+    b: "b",
+    B: "b",
+    j: "j",
+    J: "j",
+    z: "z",
+    Z: "z",
     s: "s",
     S: "s",
     g: "g",

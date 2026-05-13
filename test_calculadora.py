@@ -646,6 +646,30 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertIn("CONV 100.00 @ 2.00 = 200.00", contenido_cinta)
         self.assertIn("5.00 + CONV 100.00 @ 2.00 = 205.00", contenido_cinta)
 
+    def test_pub_calcula_tipo_publicado_seguro(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "o19.5=b0.4=j":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["tasa_out"], "19.5")
+        self.assertEqual(calculadora["spread_seguro"], "0.4")
+        self.assertEqual(calculadora["tasa_publicada_segura"], "19.10")
+        self.assertEqual(calculadora["display"], "19.10")
+
+    def test_usd_calcula_cobro_desde_pub_seguro(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "o19.5=b0.4=1000z":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "52.36")
+
+        contenido_cinta = self.leer_archivo(self.ruta_cinta)
+        self.assertIn("USD 1,000.00 @ PUB 19.10 = 52.36", contenido_cinta)
+
 
 if __name__ == "__main__":
     unittest.main()

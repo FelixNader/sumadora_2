@@ -40,6 +40,15 @@ export function nuevaCalculadora() {
     editando_tasa_conversion: false,
     buffer_tasa_conversion: "",
     reemplazar_buffer_tasa_conversion: false,
+    tasa_out: "0",
+    editando_tasa_out: false,
+    buffer_tasa_out: "",
+    reemplazar_buffer_tasa_out: false,
+    spread_seguro: "0",
+    editando_spread_seguro: false,
+    buffer_spread_seguro: "",
+    reemplazar_buffer_spread_seguro: false,
+    tasa_publicada_segura: "",
     ultimo_impuesto: "",
     memoria: "0",
     valor_cost: "",
@@ -105,6 +114,10 @@ export function presionarTecla(calculadora, tecla) {
       manejarCapturaTasaImpuesto(calculadora, tecla);
     } else if (calculadora.editando_tasa_conversion) {
       manejarCapturaTasaConversion(calculadora, tecla);
+    } else if (calculadora.editando_tasa_out) {
+      manejarCapturaTasaOut(calculadora, tecla);
+    } else if (calculadora.editando_spread_seguro) {
+      manejarCapturaSpreadSeguro(calculadora, tecla);
     } else if (tecla === "e" || tecla === "E") {
       borrarEntrada(calculadora);
     } else if (tecla === "a" || tecla === "A") {
@@ -115,12 +128,20 @@ export function presionarTecla(calculadora, tecla) {
       iniciarCapturaTasaImpuesto(calculadora);
     } else if (tecla === "w" || tecla === "W") {
       iniciarCapturaTasaConversion(calculadora);
+    } else if (tecla === "o" || tecla === "O") {
+      iniciarCapturaTasaOut(calculadora);
+    } else if (tecla === "b" || tecla === "B") {
+      iniciarCapturaSpreadSeguro(calculadora);
     } else if (tecla === "i" || tecla === "I") {
       sumarImpuesto(calculadora);
     } else if (tecla === "u" || tecla === "U") {
       restarImpuesto(calculadora);
     } else if (tecla === "y" || tecla === "Y") {
       convertirValor(calculadora);
+    } else if (tecla === "j" || tecla === "J") {
+      publicarTipoSeguro(calculadora);
+    } else if (tecla === "z" || tecla === "Z") {
+      calcularDolaresACobrar(calculadora);
     } else if (tecla === "p" || tecla === "P") {
       aplicarPorcentaje(calculadora);
     } else if (tecla === "m" || tecla === "M") {
@@ -275,6 +296,12 @@ export function obtenerDisplayVisible(calculadora) {
   if (calculadora.editando_tasa_conversion) {
     return `RATE ${formatTypedOperand(calculadora.buffer_tasa_conversion || "0")}`;
   }
+  if (calculadora.editando_tasa_out) {
+    return `OUT ${formatTypedOperand(calculadora.buffer_tasa_out || "0")}`;
+  }
+  if (calculadora.editando_spread_seguro) {
+    return `SPD ${formatTypedOperand(calculadora.buffer_spread_seguro || "0")}`;
+  }
   if (
     calculadora.estado === ESTADO_TYPING_OPERANDO &&
     calculadora.operando_actual !== ""
@@ -290,6 +317,17 @@ function obtenerTasaImpuestoDecimal(calculadora) {
 
 function obtenerTasaConversionDecimal(calculadora) {
   return parseDecimal(calculadora.tasa_conversion);
+}
+
+function calcularTasaPublicadaSeguraDecimal(calculadora) {
+  const publicada = subtractDecimals(
+    parseDecimal(calculadora.tasa_out),
+    parseDecimal(calculadora.spread_seguro),
+  );
+  if (publicada.sign < 0n || publicada.value === 0n) {
+    throw new Error("OUT debe ser mayor que SPD para publicar un tipo seguro.");
+  }
+  return publicada;
 }
 
 function obtenerValorActualParaImpuesto(calculadora) {
@@ -720,6 +758,62 @@ function convertirValor(calculadora) {
     calculadora,
     "conversion",
     `valor=${valor} tasa_conversion=${calculadora.tasa_conversion} convertido=${convertido}`,
+  );
+}
+
+function publicarTipoSeguro(calculadora) {
+  const publicada = applyModeDecimal(
+    calculadora,
+    calcularTasaPublicadaSeguraDecimal(calculadora),
+  );
+  calculadora.tasa_publicada_segura = publicada;
+  fijarResultado(calculadora, publicada);
+  registrarCinta(
+    calculadora,
+    `PUB = ${formatearValorVisible(calculadora, publicada)} (OUT ${formatearValorVisible(
+      calculadora,
+      calculadora.tasa_out,
+    )}, SPD ${formatearValorVisible(calculadora, calculadora.spread_seguro)})`,
+  );
+  registrarLog(
+    calculadora,
+    "tipo_publicado",
+    `out=${calculadora.tasa_out} spread=${calculadora.spread_seguro} publicado=${publicada}`,
+  );
+}
+
+function calcularDolaresACobrar(calculadora) {
+  const valor = obtenerValorActualParaImpuesto(calculadora);
+  const publicada = applyModeDecimal(
+    calculadora,
+    calcularTasaPublicadaSeguraDecimal(calculadora),
+  );
+  calculadora.tasa_publicada_segura = publicada;
+  const dolares = applyModeDecimal(
+    calculadora,
+    divideDecimals(parseDecimal(valor), parseDecimal(publicada), PRECISION_DIVISION),
+  );
+  aplicarResultadoTransformacion(calculadora, dolares);
+  if (
+    calculadora.estado === ESTADO_TYPING_OPERANDO &&
+    calculadora.operador_pendiente !== ""
+  ) {
+    calculadora.detalle_operando_cinta = `USD ${formatearValorVisible(
+      calculadora,
+      valor,
+    )} @ PUB ${formatearValorVisible(calculadora, publicada)}`;
+  }
+  registrarCinta(
+    calculadora,
+    `USD ${formatearValorVisible(calculadora, valor)} @ PUB ${formatearValorVisible(
+      calculadora,
+      publicada,
+    )} = ${formatearValorVisible(calculadora, dolares)}`,
+  );
+  registrarLog(
+    calculadora,
+    "usd_cobro",
+    `mxn=${valor} publicado=${publicada} usd=${dolares}`,
   );
 }
 
@@ -1202,6 +1296,12 @@ function borrarTodo(calculadora) {
   calculadora.editando_tasa_conversion = false;
   calculadora.buffer_tasa_conversion = "";
   calculadora.reemplazar_buffer_tasa_conversion = false;
+  calculadora.editando_tasa_out = false;
+  calculadora.buffer_tasa_out = "";
+  calculadora.reemplazar_buffer_tasa_out = false;
+  calculadora.editando_spread_seguro = false;
+  calculadora.buffer_spread_seguro = "";
+  calculadora.reemplazar_buffer_spread_seguro = false;
   calculadora.detalle_operando_cinta = "";
   registrarCinta(calculadora, "A");
   registrarCinta(calculadora, encabezadoCinta("nueva_calculadora"));
@@ -1384,6 +1484,176 @@ function manejarCapturaTasaConversion(calculadora, tecla) {
   throw new Error("Mientras editas rate solo se aceptan digitos, '.', '=', 'e' o 'w'.");
 }
 
+function iniciarCapturaTasaOut(calculadora) {
+  calculadora.editando_tasa_out = true;
+  calculadora.buffer_tasa_out = calculadora.tasa_out;
+  calculadora.reemplazar_buffer_tasa_out = true;
+  registrarLog(calculadora, "tasa_out_editar", `tasa_out=${calculadora.tasa_out}`);
+}
+
+function manejarCapturaTasaOut(calculadora, tecla) {
+  if (tecla === "a" || tecla === "A") {
+    calculadora.editando_tasa_out = false;
+    calculadora.buffer_tasa_out = "";
+    calculadora.reemplazar_buffer_tasa_out = false;
+    borrarTodo(calculadora);
+    return;
+  }
+
+  if (tecla === "o" || tecla === "O") {
+    calculadora.editando_tasa_out = false;
+    calculadora.buffer_tasa_out = "";
+    calculadora.reemplazar_buffer_tasa_out = false;
+    registrarLog(calculadora, "tasa_out_cancelar");
+    return;
+  }
+
+  if (tecla === "e" || tecla === "E") {
+    calculadora.buffer_tasa_out = "0";
+    calculadora.reemplazar_buffer_tasa_out = false;
+    return;
+  }
+
+  if (esDigito(tecla)) {
+    if (calculadora.reemplazar_buffer_tasa_out) {
+      calculadora.buffer_tasa_out = tecla;
+      calculadora.reemplazar_buffer_tasa_out = false;
+    } else if (calculadora.buffer_tasa_out === "" || calculadora.buffer_tasa_out === "0") {
+      calculadora.buffer_tasa_out = tecla;
+    } else {
+      calculadora.buffer_tasa_out += tecla;
+    }
+    return;
+  }
+
+  if (tecla === ".") {
+    if (calculadora.buffer_tasa_out.includes(".")) {
+      throw new Error("OUT ya tiene punto decimal.");
+    }
+    if (calculadora.reemplazar_buffer_tasa_out) {
+      calculadora.buffer_tasa_out = "0.";
+      calculadora.reemplazar_buffer_tasa_out = false;
+    } else if (calculadora.buffer_tasa_out === "") {
+      calculadora.buffer_tasa_out = "0.";
+    } else {
+      calculadora.buffer_tasa_out += ".";
+    }
+    return;
+  }
+
+  if (tecla === "=") {
+    let buffer = calculadora.buffer_tasa_out || "0";
+    if (buffer.endsWith(".")) {
+      buffer += "0";
+    }
+    const tasa = parseDecimal(buffer);
+    if (tasa.sign < 0n) {
+      throw new Error("OUT no puede ser negativo.");
+    }
+    calculadora.tasa_out = decimalToString(tasa);
+    calculadora.editando_tasa_out = false;
+    calculadora.buffer_tasa_out = "";
+    calculadora.reemplazar_buffer_tasa_out = false;
+    registrarCinta(calculadora, `OUT = ${formatearValorVisible(calculadora, calculadora.tasa_out)}`);
+    registrarLog(calculadora, "tasa_out", `tasa_out=${calculadora.tasa_out}`);
+    return;
+  }
+
+  throw new Error("Mientras editas OUT solo se aceptan digitos, '.', '=', 'e' u 'o'.");
+}
+
+function iniciarCapturaSpreadSeguro(calculadora) {
+  calculadora.editando_spread_seguro = true;
+  calculadora.buffer_spread_seguro = calculadora.spread_seguro;
+  calculadora.reemplazar_buffer_spread_seguro = true;
+  registrarLog(
+    calculadora,
+    "spread_seguro_editar",
+    `spread_seguro=${calculadora.spread_seguro}`,
+  );
+}
+
+function manejarCapturaSpreadSeguro(calculadora, tecla) {
+  if (tecla === "a" || tecla === "A") {
+    calculadora.editando_spread_seguro = false;
+    calculadora.buffer_spread_seguro = "";
+    calculadora.reemplazar_buffer_spread_seguro = false;
+    borrarTodo(calculadora);
+    return;
+  }
+
+  if (tecla === "b" || tecla === "B") {
+    calculadora.editando_spread_seguro = false;
+    calculadora.buffer_spread_seguro = "";
+    calculadora.reemplazar_buffer_spread_seguro = false;
+    registrarLog(calculadora, "spread_seguro_cancelar");
+    return;
+  }
+
+  if (tecla === "e" || tecla === "E") {
+    calculadora.buffer_spread_seguro = "0";
+    calculadora.reemplazar_buffer_spread_seguro = false;
+    return;
+  }
+
+  if (esDigito(tecla)) {
+    if (calculadora.reemplazar_buffer_spread_seguro) {
+      calculadora.buffer_spread_seguro = tecla;
+      calculadora.reemplazar_buffer_spread_seguro = false;
+    } else if (
+      calculadora.buffer_spread_seguro === "" ||
+      calculadora.buffer_spread_seguro === "0"
+    ) {
+      calculadora.buffer_spread_seguro = tecla;
+    } else {
+      calculadora.buffer_spread_seguro += tecla;
+    }
+    return;
+  }
+
+  if (tecla === ".") {
+    if (calculadora.buffer_spread_seguro.includes(".")) {
+      throw new Error("SPD ya tiene punto decimal.");
+    }
+    if (calculadora.reemplazar_buffer_spread_seguro) {
+      calculadora.buffer_spread_seguro = "0.";
+      calculadora.reemplazar_buffer_spread_seguro = false;
+    } else if (calculadora.buffer_spread_seguro === "") {
+      calculadora.buffer_spread_seguro = "0.";
+    } else {
+      calculadora.buffer_spread_seguro += ".";
+    }
+    return;
+  }
+
+  if (tecla === "=") {
+    let buffer = calculadora.buffer_spread_seguro || "0";
+    if (buffer.endsWith(".")) {
+      buffer += "0";
+    }
+    const tasa = parseDecimal(buffer);
+    if (tasa.sign < 0n) {
+      throw new Error("SPD no puede ser negativo.");
+    }
+    calculadora.spread_seguro = decimalToString(tasa);
+    calculadora.editando_spread_seguro = false;
+    calculadora.buffer_spread_seguro = "";
+    calculadora.reemplazar_buffer_spread_seguro = false;
+    registrarCinta(
+      calculadora,
+      `SPD = ${formatearValorVisible(calculadora, calculadora.spread_seguro)}`,
+    );
+    registrarLog(
+      calculadora,
+      "spread_seguro",
+      `spread_seguro=${calculadora.spread_seguro}`,
+    );
+    return;
+  }
+
+  throw new Error("Mientras editas SPD solo se aceptan digitos, '.', '=', 'e' o 'b'.");
+}
+
 function reiniciarOperacion(calculadora) {
   calculadora.estado = ESTADO_ENCENDIDA_ESPERANDO_TYPING;
   calculadora.display = "0";
@@ -1415,6 +1685,11 @@ function describirEstado(calculadora) {
     `editando_tasa_impuesto=${calculadora.editando_tasa_impuesto}`,
     `tasa_conversion=${calculadora.tasa_conversion}`,
     `editando_tasa_conversion=${calculadora.editando_tasa_conversion}`,
+    `tasa_out=${calculadora.tasa_out}`,
+    `editando_tasa_out=${calculadora.editando_tasa_out}`,
+    `spread_seguro=${calculadora.spread_seguro}`,
+    `editando_spread_seguro=${calculadora.editando_spread_seguro}`,
+    `tasa_publicada_segura=${calculadora.tasa_publicada_segura}`,
   ].join(",");
 }
 

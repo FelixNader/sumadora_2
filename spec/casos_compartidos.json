@@ -135,6 +135,16 @@
     "estado_final": "resultado_en_display"
   },
   {
+    "secuencia": "o19.5=b0.4=j",
+    "display_final": "19.10",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "o19.5=b0.4=1000z",
+    "display_final": "52.36",
+    "estado_final": "resultado_en_display"
+  },
+  {
     "secuencia": "100k20hl",
     "display_final": "125.00",
     "estado_final": "resultado_en_display"
