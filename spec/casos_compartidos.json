@@ -125,6 +125,16 @@
     "estado_final": "resultado_en_display"
   },
   {
+    "secuencia": "w17.5=100y",
+    "display_final": "1750.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
+    "secuencia": "w2=5+100y=",
+    "display_final": "205.00",
+    "estado_final": "resultado_en_display"
+  },
+  {
     "secuencia": "100k20hl",
     "display_final": "125.00",
     "estado_final": "resultado_en_display"

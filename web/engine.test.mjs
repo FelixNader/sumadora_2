@@ -209,4 +209,33 @@ for (const caso of casos) {
   assert.equal(calculadora.valor_cost, "100.00", "cost calculado");
 }
 
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "w17.5=100y") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.tasa_conversion, "17.5", "rate guardado");
+  assert.equal(calculadora.display, "1750.00", "conversion directa");
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "w2=5+100y=") {
+    presionarTecla(calculadora, tecla);
+  }
+  assert.equal(calculadora.display, "205.00", "conversion en operando pendiente");
+  assert.equal(
+    calculadora.cinta_entries.at(-2),
+    "CONV 100.00 @ 2.00 = 200.00",
+    "cinta conversion",
+  );
+  assert.equal(
+    calculadora.cinta_entries.at(-1),
+    "5.00 + CONV 100.00 @ 2.00 = 205.00",
+    "cinta operacion con conversion",
+  );
+}
+
 console.log("engine ok");

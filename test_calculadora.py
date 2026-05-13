@@ -623,6 +623,29 @@ class CalculadoraContableTest(unittest.TestCase):
         self.assertIn("MAR = 20.00", contenido_cinta)
         self.assertIn("SELL = 125.00 (COST 100.00, MAR 20.00%)", contenido_cinta)
 
+    def test_conversion_aplica_rate_al_valor_actual(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "w17.5=100y":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["tasa_conversion"], "17.5")
+        self.assertEqual(calculadora["display"], "1750.00")
+
+    def test_conversion_puede_transformar_operando_en_curso(self):
+        calculadora = self.crear_calculadora()
+        encender(calculadora)
+
+        for tecla in "w2=5+100y=":
+            presionar_tecla(calculadora, tecla)
+
+        self.assertEqual(calculadora["display"], "205.00")
+
+        contenido_cinta = self.leer_archivo(self.ruta_cinta)
+        self.assertIn("CONV 100.00 @ 2.00 = 200.00", contenido_cinta)
+        self.assertIn("5.00 + CONV 100.00 @ 2.00 = 205.00", contenido_cinta)
+
 
 if __name__ == "__main__":
     unittest.main()

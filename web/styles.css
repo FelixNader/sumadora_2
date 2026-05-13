@@ -207,6 +207,13 @@ body {
   margin-bottom: 0.8rem;
 }
 
+.convert-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.8rem;
+}
+
 .tax-key {
   border-radius: 12px;
 }
@@ -243,6 +250,29 @@ body {
 .tax-rate[data-active="true"] {
   background: linear-gradient(180deg, #9c6951, var(--utility));
   color: #fff8f3;
+}
+
+.convert-action {
+  min-width: 4.6rem;
+  min-height: 2.75rem;
+  background: linear-gradient(180deg, #89bccf, #4d8da6);
+  color: #f4fbff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 4px 0 #346578,
+    0 8px 14px rgba(45, 83, 99, 0.18);
+}
+
+.convert-rate {
+  min-height: 2.75rem;
+  padding-inline: 0.9rem;
+  background: rgba(244, 250, 255, 0.92);
+  color: #2a4c5b;
+}
+
+.convert-rate[data-active="true"] {
+  background: linear-gradient(180deg, #4d8da6, #346578);
+  color: #f4fbff;
 }
 
 .metrics {
@@ -501,6 +531,11 @@ body {
     margin-bottom: 0.65rem;
   }
 
+  .convert-strip {
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+  }
+
   .mode-key {
     min-width: 2.45rem;
     min-height: 2.45rem;
@@ -534,6 +569,18 @@ body {
   .tax-rate {
     min-height: 2.45rem;
     font-size: 0.9rem;
+    padding-inline: 0.8rem;
+  }
+
+  .convert-action {
+    min-width: 4rem;
+    min-height: 2.45rem;
+    font-size: 0.88rem;
+  }
+
+  .convert-rate {
+    min-height: 2.45rem;
+    font-size: 0.88rem;
     padding-inline: 0.8rem;
   }
 
@@ -741,6 +788,11 @@ body {
     margin-bottom: 0.3rem;
   }
 
+  html[data-orientation="landscape"] .convert-strip {
+    gap: 0.25rem;
+    margin-bottom: 0.3rem;
+  }
+
   html[data-orientation="landscape"] .mode-key {
     min-width: 2rem;
     min-height: 2rem;
@@ -796,6 +848,22 @@ body {
     min-height: 2rem;
     font-size: 0.68rem;
     padding-inline: 0.6rem;
+  }
+
+  html[data-orientation="landscape"] .convert-action {
+    min-width: 3.4rem;
+    min-height: 2rem;
+    font-size: 0.66rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 3px 0 #346578,
+      0 5px 8px rgba(45, 83, 99, 0.14);
+  }
+
+  html[data-orientation="landscape"] .convert-rate {
+    min-height: 2rem;
+    font-size: 0.66rem;
+    padding-inline: 0.55rem;
   }
 
   html[data-orientation="landscape"] .metrics {

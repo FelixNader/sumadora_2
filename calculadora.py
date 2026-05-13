@@ -55,6 +55,10 @@ def nueva_calculadora(ruta_log=ARCHIVO_LOG_DETALLADO, ruta_cinta=ARCHIVO_CINTA):
         "tasa_impuesto": "16",
         "editando_tasa_impuesto": False,
         "buffer_tasa_impuesto": "",
+        "tasa_conversion": "1",
+        "editando_tasa_conversion": False,
+        "buffer_tasa_conversion": "",
+        "reemplazar_buffer_tasa_conversion": False,
         "ultimo_impuesto": "",
         "memoria": "0",
         "valor_cost": "",
@@ -105,6 +109,8 @@ def presionar_tecla(calculadora, tecla):
     try:
         if calculadora["editando_tasa_impuesto"]:
             manejar_captura_tasa_impuesto(calculadora, tecla)
+        elif calculadora["editando_tasa_conversion"]:
+            manejar_captura_tasa_conversion(calculadora, tecla)
         elif tecla in {"e", "E"}:
             borrar_entrada(calculadora)
         elif tecla in {"a", "A"}:
@@ -113,10 +119,14 @@ def presionar_tecla(calculadora, tecla):
             cambiar_modo_decimal(calculadora, TECLAS_MODO_DECIMAL[tecla])
         elif tecla in {"r", "R"}:
             iniciar_captura_tasa_impuesto(calculadora)
+        elif tecla in {"w", "W"}:
+            iniciar_captura_tasa_conversion(calculadora)
         elif tecla in {"i", "I"}:
             sumar_impuesto(calculadora)
         elif tecla in {"u", "U"}:
             restar_impuesto(calculadora)
+        elif tecla in {"y", "Y"}:
+            convertir_valor(calculadora)
         elif tecla in TECLAS_PORCENTAJE:
             aplicar_porcentaje(calculadora)
         elif tecla in {"k", "K"}:
@@ -268,6 +278,10 @@ def obtener_display_visible(calculadora):
         return "TASA " + formatear_operando_visible(
             calculadora["buffer_tasa_impuesto"] or "0"
         ) + "%"
+    if calculadora["editando_tasa_conversion"]:
+        return "RATE " + formatear_operando_visible(
+            calculadora["buffer_tasa_conversion"] or "0"
+        )
     if calculadora["estado"] == ESTADO_TYPING_OPERANDO and calculadora["operando_actual"] != "":
         return formatear_operando_visible(calculadora["operando_actual"])
     return formatear_valor_visible(calculadora, calculadora["display"] or "0")
@@ -275,6 +289,10 @@ def obtener_display_visible(calculadora):
 
 def obtener_tasa_impuesto_decimal(calculadora):
     return Decimal(calculadora["tasa_impuesto"]) / Decimal("100")
+
+
+def obtener_tasa_conversion_decimal(calculadora):
+    return Decimal(calculadora["tasa_conversion"])
 
 
 def obtener_valor_actual_para_impuesto(calculadora):
@@ -657,6 +675,39 @@ def restar_impuesto(calculadora):
         "impuesto_resta",
         "total=" + total + " tasa=" + calculadora["tasa_impuesto"]
         + " impuesto=" + impuesto + " base=" + base,
+    )
+
+
+def convertir_valor(calculadora):
+    valor = obtener_valor_actual_para_impuesto(calculadora)
+    tasa = obtener_tasa_conversion_decimal(calculadora)
+    convertido = aplicar_modo_decimal(calculadora, Decimal(valor) * tasa)
+    aplicar_resultado_transformacion(calculadora, convertido)
+    if (
+        calculadora["estado"] == ESTADO_TYPING_OPERANDO
+        and calculadora["operador_pendiente"] != ""
+    ):
+        calculadora["detalle_operando_cinta"] = (
+            "CONV "
+            + formatear_valor_visible(calculadora, valor)
+            + " @ "
+            + formatear_valor_visible(calculadora, calculadora["tasa_conversion"])
+        )
+    registrar_cinta(
+        calculadora,
+        "CONV "
+        + formatear_valor_visible(calculadora, valor)
+        + " @ "
+        + formatear_valor_visible(calculadora, calculadora["tasa_conversion"])
+        + " = "
+        + formatear_valor_visible(calculadora, convertido),
+    )
+    registrar_log(
+        calculadora,
+        "conversion",
+        "valor=" + valor
+        + " tasa_conversion=" + calculadora["tasa_conversion"]
+        + " convertido=" + convertido,
     )
 
 
@@ -1108,6 +1159,85 @@ def manejar_captura_tasa_impuesto(calculadora, tecla):
     raise ValueError("Mientras editas tasa solo se aceptan digitos, '.', '=', 'e' o 'r'.")
 
 
+def iniciar_captura_tasa_conversion(calculadora):
+    calculadora["editando_tasa_conversion"] = True
+    calculadora["buffer_tasa_conversion"] = calculadora["tasa_conversion"]
+    calculadora["reemplazar_buffer_tasa_conversion"] = True
+    registrar_log(
+        calculadora,
+        "tasa_conversion_editar",
+        "tasa_conversion=" + calculadora["tasa_conversion"],
+    )
+
+
+def manejar_captura_tasa_conversion(calculadora, tecla):
+    if tecla in {"a", "A"}:
+        calculadora["editando_tasa_conversion"] = False
+        calculadora["buffer_tasa_conversion"] = ""
+        calculadora["reemplazar_buffer_tasa_conversion"] = False
+        borrar_todo(calculadora)
+        return
+
+    if tecla in {"w", "W"}:
+        calculadora["editando_tasa_conversion"] = False
+        calculadora["buffer_tasa_conversion"] = ""
+        calculadora["reemplazar_buffer_tasa_conversion"] = False
+        registrar_log(calculadora, "tasa_conversion_cancelar")
+        return
+
+    if tecla in {"e", "E"}:
+        calculadora["buffer_tasa_conversion"] = "0"
+        calculadora["reemplazar_buffer_tasa_conversion"] = False
+        return
+
+    if tecla.isdigit():
+        if calculadora["reemplazar_buffer_tasa_conversion"]:
+            calculadora["buffer_tasa_conversion"] = tecla
+            calculadora["reemplazar_buffer_tasa_conversion"] = False
+        elif calculadora["buffer_tasa_conversion"] in {"", "0"}:
+            calculadora["buffer_tasa_conversion"] = tecla
+        else:
+            calculadora["buffer_tasa_conversion"] += tecla
+        return
+
+    if tecla == ".":
+        if "." in calculadora["buffer_tasa_conversion"]:
+            raise ValueError("La tasa de conversion ya tiene punto decimal.")
+        if calculadora["reemplazar_buffer_tasa_conversion"]:
+            calculadora["buffer_tasa_conversion"] = "0."
+            calculadora["reemplazar_buffer_tasa_conversion"] = False
+        elif calculadora["buffer_tasa_conversion"] == "":
+            calculadora["buffer_tasa_conversion"] = "0."
+        else:
+            calculadora["buffer_tasa_conversion"] += "."
+        return
+
+    if tecla == "=":
+        buffer = calculadora["buffer_tasa_conversion"] or "0"
+        if buffer.endswith("."):
+            buffer += "0"
+        tasa = Decimal(buffer)
+        if tasa < 0:
+            raise ValueError("La tasa de conversion no puede ser negativa.")
+        calculadora["tasa_conversion"] = formatear_decimal(tasa)
+        calculadora["editando_tasa_conversion"] = False
+        calculadora["buffer_tasa_conversion"] = ""
+        calculadora["reemplazar_buffer_tasa_conversion"] = False
+        registrar_cinta(
+            calculadora,
+            "RATE = "
+            + formatear_valor_visible(calculadora, calculadora["tasa_conversion"]),
+        )
+        registrar_log(
+            calculadora,
+            "tasa_conversion",
+            "tasa_conversion=" + calculadora["tasa_conversion"],
+        )
+        return
+
+    raise ValueError("Mientras editas rate solo se aceptan digitos, '.', '=', 'e' o 'w'.")
+
+
 def borrar_entrada(calculadora):
     if calculadora["estado"] == ESTADO_TYPING_OPERANDO:
         calculadora["operando_actual"] = ""
@@ -1141,6 +1271,9 @@ def borrar_todo(calculadora):
     calculadora["valor_mar"] = ""
     calculadora["editando_tasa_impuesto"] = False
     calculadora["buffer_tasa_impuesto"] = ""
+    calculadora["editando_tasa_conversion"] = False
+    calculadora["buffer_tasa_conversion"] = ""
+    calculadora["reemplazar_buffer_tasa_conversion"] = False
     calculadora["detalle_operando_cinta"] = ""
     registrar_cinta(calculadora, "A")
     registrar_cinta(calculadora, encabezado_cinta("nueva_calculadora"))
@@ -1163,6 +1296,7 @@ def mostrar_estado(calculadora):
     print()
     print("Estado:", calculadora["estado"])
     print("Modo decimal:", calculadora["modo_decimal"])
+    print("Rate:", formatear_valor_visible(calculadora, calculadora["tasa_conversion"]))
     print("Memoria:", formatear_valor_visible(calculadora, calculadora["memoria"]))
     print(
         "COST/SELL/MAR:",
@@ -1239,6 +1373,8 @@ def describir_estado(calculadora):
         + ",valor_mar=" + calculadora["valor_mar"]
         + ",tasa_impuesto=" + calculadora["tasa_impuesto"]
         + ",editando_tasa_impuesto=" + str(calculadora["editando_tasa_impuesto"])
+        + ",tasa_conversion=" + calculadora["tasa_conversion"]
+        + ",editando_tasa_conversion=" + str(calculadora["editando_tasa_conversion"])
     )
 
 
@@ -1294,7 +1430,7 @@ def ejecutar_terminal():
 
     print("Calculadora sumadora contable")
     print("Estado inicial: encendida_esperando_typing")
-    print("Usa teclas: 0-9 . + - * / = e a s g f d t c i u r p m n v x k l h")
+    print("Usa teclas: 0-9 . + - * / = e a s g f d t c i u r p m n v x k l h w y")
     print("e borra la entrada actual")
     print("a borra todo menos memoria")
     print("f flotante, d 2 decimales, t 3 decimales, c 4 decimales")
@@ -1302,7 +1438,8 @@ def ejecutar_terminal():
     print("p aplica porcentaje")
     print("m memoria read, n memoria+, v memoria-, x memoria clean")
     print("k cost, l sell, h mar")
-    print("En tasa: digitos y '.' capturan, '=' confirma, 'e' limpia, 'r' cancela")
+    print("w edita rate, y convierte")
+    print("En tasa/rate: digitos y '.' capturan, '=' confirma, 'e' limpia, tecla de funcion cancela")
     print("s subtotaliza y acumula al gran total")
     print("g imprime el gran total y reinicia en ceros")
     print("Cada tecla se procesa sin Enter")
