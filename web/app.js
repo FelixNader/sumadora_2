@@ -148,6 +148,12 @@ if (paperSheet && paperTrigger) {
 function abrirPaperSheet(open) {
   if (!paperSheet) return;
   paperSheet.dataset.open = open ? "true" : "false";
+  if (open) {
+    const activePanel = document.querySelector("[data-panel-body]:not([hidden])");
+    if (activePanel) {
+      activePanel.scrollTop = activePanel.scrollHeight;
+    }
+  }
 }
 
 window.addEventListener("resize", sincronizarViewport);
@@ -251,6 +257,8 @@ function render() {
 
   cintaNode.textContent = calculadora.cinta_entries.join("\n") || "Sin cinta aun.";
   logNode.textContent = calculadora.log_entries.join("\n") || "Sin log aun.";
+  cintaNode.scrollTop = cintaNode.scrollHeight;
+  logNode.scrollTop = logNode.scrollHeight;
 
   if (paperCountNode) {
     const count = calculadora.cinta_entries.filter((e) => e.trim()).length;
@@ -270,6 +278,9 @@ function activarPanel(nombre) {
   });
   panelNodes.forEach((panel) => {
     panel.hidden = panel.dataset.panelBody !== nombre;
+    if (!panel.hidden) {
+      panel.scrollTop = panel.scrollHeight;
+    }
   });
 }
 
