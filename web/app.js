@@ -20,8 +20,6 @@ const cintaNode = document.querySelector("[data-cinta]");
 const logNode = document.querySelector("[data-log]");
 const panelButtons = document.querySelectorAll("[data-panel]");
 const panelNodes = document.querySelectorAll("[data-panel-body]");
-const deckButtons = document.querySelectorAll("[data-deck]");
-const deckNodes = document.querySelectorAll("[data-deck-body]");
 const keypad = document.querySelector("[data-keypad]");
 const metricsToggle = document.querySelector(".metrics-toggle");
 const metricsContainer = document.querySelector(".metrics");
@@ -71,54 +69,11 @@ panelButtons.forEach((button) => {
   });
 });
 
-deckButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const nombre = button.dataset.deck;
-    activarDeck(nombre);
-  });
-});
-
 if (metricsToggle && metricsContainer) {
   metricsToggle.addEventListener("click", () => {
     const expanded = metricsContainer.classList.toggle("metrics-visible");
     metricsToggle.setAttribute("aria-expanded", String(expanded));
   });
-}
-
-const functionSheet = document.querySelector("[data-function-sheet]");
-const sheetTrigger = document.querySelector("[data-sheet-trigger]");
-const sheetBackdrop = document.querySelector("[data-sheet-backdrop]");
-
-if (functionSheet && sheetTrigger) {
-  sheetTrigger.addEventListener("click", () => {
-    abrirSheet(true);
-  });
-
-  if (sheetBackdrop) {
-    sheetBackdrop.addEventListener("click", () => {
-      abrirSheet(false);
-    });
-  }
-
-  let touchStartY = 0;
-  functionSheet.addEventListener("touchstart", (e) => {
-    touchStartY = e.touches[0].clientY;
-  }, { passive: true });
-
-  functionSheet.addEventListener("touchmove", (e) => {
-    const deltaY = e.touches[0].clientY - touchStartY;
-    if (deltaY > 60) {
-      abrirSheet(false);
-    }
-  }, { passive: true });
-}
-
-function abrirSheet(open) {
-  if (!functionSheet) return;
-  functionSheet.dataset.open = open ? "true" : "false";
-  if (sheetTrigger) {
-    sheetTrigger.querySelector(".sheet-trigger-icon").textContent = open ? "▼" : "▲";
-  }
 }
 
 if (paperSheet && paperTrigger) {
@@ -240,20 +195,28 @@ function render() {
   metaPubNode.textContent = calculadora.tasa_publicada_segura
     ? `PUB ${formatearValorVisible(calculadora, calculadora.tasa_publicada_segura)}`
     : "PUB -";
-  taxRateButton.textContent = `IVA ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`;
-  taxRateButton.dataset.active = calculadora.editando_tasa_impuesto ? "true" : "false";
-  conversionRateButton.textContent = `RATE ${formatearValorVisible(
-    calculadora,
-    calculadora.tasa_conversion,
-  )}`;
-  conversionRateButton.dataset.active = calculadora.editando_tasa_conversion ? "true" : "false";
-  outRateButton.textContent = `OUT ${formatearValorVisible(calculadora, calculadora.tasa_out)}`;
-  outRateButton.dataset.active = calculadora.editando_tasa_out ? "true" : "false";
-  spreadRateButton.textContent = `SPD ${formatearValorVisible(
-    calculadora,
-    calculadora.spread_seguro,
-  )}`;
-  spreadRateButton.dataset.active = calculadora.editando_spread_seguro ? "true" : "false";
+  if (taxRateButton) {
+    taxRateButton.textContent = `IVA ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`;
+    taxRateButton.dataset.active = calculadora.editando_tasa_impuesto ? "true" : "false";
+  }
+  if (conversionRateButton) {
+    conversionRateButton.textContent = `RATE ${formatearValorVisible(
+      calculadora,
+      calculadora.tasa_conversion,
+    )}`;
+    conversionRateButton.dataset.active = calculadora.editando_tasa_conversion ? "true" : "false";
+  }
+  if (outRateButton) {
+    outRateButton.textContent = `OUT ${formatearValorVisible(calculadora, calculadora.tasa_out)}`;
+    outRateButton.dataset.active = calculadora.editando_tasa_out ? "true" : "false";
+  }
+  if (spreadRateButton) {
+    spreadRateButton.textContent = `SPD ${formatearValorVisible(
+      calculadora,
+      calculadora.spread_seguro,
+    )}`;
+    spreadRateButton.dataset.active = calculadora.editando_spread_seguro ? "true" : "false";
+  }
 
   cintaNode.textContent = calculadora.cinta_entries.join("\n") || "Sin cinta aun.";
   logNode.textContent = calculadora.log_entries.join("\n") || "Sin log aun.";
@@ -281,15 +244,6 @@ function activarPanel(nombre) {
     if (!panel.hidden) {
       panel.scrollTop = panel.scrollHeight;
     }
-  });
-}
-
-function activarDeck(nombre) {
-  deckButtons.forEach((button) => {
-    button.dataset.active = button.dataset.deck === nombre ? "true" : "false";
-  });
-  deckNodes.forEach((panel) => {
-    panel.hidden = panel.dataset.deckBody !== nombre;
   });
 }
 

@@ -96,14 +96,12 @@ button {
   grid-template-areas:
     "header"
     "display"
-    "keypad"
-    "functions";
+    "keypad";
 }
 
 .calculator-header { grid-area: header; }
 .display-wrap { grid-area: display; }
 .keypad { grid-area: keypad; }
-.function-console { grid-area: functions; }
 
 .calculator-header {
   display: flex;
@@ -167,8 +165,7 @@ button {
   font-size: 0.98rem;
 }
 
-.display-wrap,
-.function-console {
+.display-wrap {
   background: linear-gradient(180deg, rgba(202, 187, 162, 0.82), rgba(184, 159, 127, 0.82));
   border-radius: 26px;
   padding: 0.9rem;
@@ -323,16 +320,10 @@ button {
 }
 
 .mode-switch,
-.memory-strip,
-.button-rack {
+.memory-strip {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
-}
-
-.function-console {
-  display: grid;
-  gap: 0.75rem;
 }
 
 .sheet-handle {
@@ -345,14 +336,6 @@ button {
 }
 
 .sheet-backdrop {
-  display: none;
-}
-
-.function-sheet {
-  grid-area: functions;
-}
-
-.sheet-trigger {
   display: none;
 }
 
@@ -372,7 +355,6 @@ button {
   display: none;
 }
 
-.deck-switch,
 .panel-switch {
   display: inline-flex;
   flex-wrap: wrap;
@@ -382,7 +364,6 @@ button {
   background: rgba(105, 77, 45, 0.1);
 }
 
-.deck-switch button,
 .panel-switch button {
   border: 0;
   border-radius: 999px;
@@ -392,26 +373,10 @@ button {
   font-weight: 700;
 }
 
-.deck-switch button[data-active="true"],
 .panel-switch button[data-active="true"] {
   background: #fff9ef;
   color: #261f18;
   box-shadow: 0 5px 12px rgba(72, 52, 31, 0.12);
-}
-
-.deck-panels {
-  display: grid;
-}
-
-.deck-panel {
-  padding: 0.75rem;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.48);
-  border: 1px solid rgba(106, 78, 47, 0.12);
-}
-
-.panel-kicker {
-  margin-bottom: 0.6rem;
 }
 
 .mini-key,
@@ -431,7 +396,6 @@ button {
   font-weight: 800;
 }
 
-.mini-key.utility,
 .key.utility {
   background: linear-gradient(180deg, #9d6a50, var(--utility));
   color: #fff8f3;
@@ -470,76 +434,22 @@ button {
     0 8px 14px rgba(69, 86, 104, 0.14);
 }
 
-.business-key {
-  min-width: 4.35rem;
-  background: linear-gradient(180deg, var(--business), #a4c7af);
-  color: var(--business-ink);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    0 4px 0 var(--business-shadow),
-    0 8px 14px rgba(60, 97, 73, 0.14);
-}
-
-.tax-action,
-.tax-rate {
-  background: linear-gradient(180deg, #f4c47c, #d98c3a);
-  color: var(--tax-ink);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    0 4px 0 var(--tax-shadow),
-    0 8px 14px rgba(163, 79, 28, 0.18);
-}
-
-.tax-percent {
-  background: linear-gradient(180deg, var(--soft-tax), #e5bf74);
-  color: var(--soft-tax-ink);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    0 4px 0 var(--soft-tax-shadow),
-    0 8px 14px rgba(130, 96, 35, 0.15);
-}
-
-.tax-rate[data-active="true"] {
-  background: linear-gradient(180deg, #9d6a50, var(--utility));
-  color: #fff8f3;
-}
-
-.convert-action,
-.convert-rate {
-  background: linear-gradient(180deg, var(--convert), #4e8ca4);
-  color: var(--convert-ink);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 4px 0 var(--convert-shadow),
-    0 8px 14px rgba(45, 83, 99, 0.16);
-}
-
-.convert-rate[data-active="true"] {
-  background: linear-gradient(180deg, #5e9ab2, #345f74);
-}
-
-.tourist-action,
-.tourist-rate {
-  background: linear-gradient(180deg, var(--tourist), #98a853);
-  color: var(--tourist-ink);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    0 4px 0 var(--tourist-shadow),
-    0 8px 14px rgba(79, 92, 31, 0.17);
-}
-
-.tourist-rate[data-active="true"] {
-  background: linear-gradient(180deg, #9cac56, #69772d);
-}
-
 .keypad {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.6rem;
-  padding: 0.9rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+  padding: 0.8rem;
   border-radius: 26px;
   background: linear-gradient(180deg, rgba(202, 187, 162, 0.82), rgba(184, 159, 127, 0.82));
   box-shadow: inset 0 4px 10px rgba(86, 55, 26, 0.14);
+}
+
+.keypad-unified .key {
+  min-height: 2.5rem;
+  aspect-ratio: unset;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.2rem;
+  border-radius: 12px;
 }
 
 .key {
@@ -561,6 +471,11 @@ button {
     0 12px 20px rgba(89, 63, 37, 0.16);
 }
 
+.keypad-unified .key.utility {
+  min-height: 2.2rem;
+  font-size: 0.75rem;
+}
+
 .key.utility {
   min-height: 2.5rem;
   background: linear-gradient(180deg, #9d6a50, var(--utility));
@@ -572,6 +487,10 @@ button {
     0 10px 18px rgba(85, 51, 33, 0.2);
 }
 
+.keypad-unified .key.accent {
+  font-size: 0.9rem;
+}
+
 .key.accent {
   background: linear-gradient(180deg, #ee944f, var(--accent));
   color: #fff7f0;
@@ -581,8 +500,61 @@ button {
     0 12px 20px rgba(163, 79, 28, 0.24);
 }
 
+.fn-tax {
+  background: linear-gradient(180deg, #f4c47c, #d98c3a);
+  color: #fff9f3;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 4px 0 #9d6328,
+    0 8px 14px rgba(163, 79, 28, 0.18);
+}
+
+.fn-convert {
+  background: linear-gradient(180deg, #8abecf, #4e8ca4);
+  color: #f2fbff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 4px 0 #35657a,
+    0 8px 14px rgba(45, 83, 99, 0.16);
+}
+
+.fn-business {
+  background: linear-gradient(180deg, #d8ece0, #a4c7af);
+  color: #214632;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 4px 0 #6c9981,
+    0 8px 14px rgba(60, 97, 73, 0.14);
+}
+
+.fn-tourist {
+  background: linear-gradient(180deg, #c7d48f, #98a853);
+  color: #f7fff0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 4px 0 #69772f,
+    0 8px 14px rgba(79, 92, 31, 0.17);
+}
+
+.fn-tax[data-active="true"] {
+  background: linear-gradient(180deg, #9d6a50, #8a5b41);
+  color: #fff8f3;
+}
+
+.fn-convert[data-active="true"] {
+  background: linear-gradient(180deg, #5e9ab2, #345f74);
+}
+
+.fn-tourist[data-active="true"] {
+  background: linear-gradient(180deg, #9cac56, #69772d);
+}
+
 .key:active,
-.mini-key:active {
+.mini-key:active,
+.fn-tax:active,
+.fn-convert:active,
+.fn-business:active,
+.fn-tourist:active {
   transform: translateY(4px);
 }
 
@@ -667,13 +639,9 @@ button {
     margin-top: 0.1rem;
   }
 
-  .display-wrap,
-  .function-console {
+  .display-wrap {
     padding: 0.4rem;
     border-radius: 16px;
-  }
-
-  .display-wrap {
     gap: 0.35rem;
   }
 
@@ -731,8 +699,7 @@ button {
   }
 
   .mode-switch,
-  .memory-strip,
-  .button-rack {
+  .memory-strip {
     gap: 0.15rem;
   }
 
@@ -756,62 +723,46 @@ button {
   }
 
   .key {
-    min-height: 1.7rem;
+    min-height: 1.3rem;
     aspect-ratio: unset;
-    font-size: 0.82rem;
-    border-radius: 10px;
-    padding: 0.2rem 0.15rem;
+    font-size: 0.68rem;
+    border-radius: 8px;
+    padding: 0.15rem 0.1rem;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.82),
-      0 3px 0 var(--number-shadow),
-      0 6px 10px rgba(89, 63, 37, 0.14);
+      0 2px 0 var(--number-shadow),
+      0 4px 8px rgba(89, 63, 37, 0.12);
   }
 
   .key.utility {
-    min-height: 1.4rem;
-    font-size: 0.65rem;
+    min-height: 1.2rem;
+    font-size: 0.58rem;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.18),
       0 2px 0 var(--utility-shadow),
-      0 4px 8px rgba(85, 51, 33, 0.18);
+      0 3px 6px rgba(85, 51, 33, 0.16);
   }
 
   .key.accent {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.28),
-      0 4px 0 var(--accent-shadow),
-      0 8px 14px rgba(163, 79, 28, 0.24);
+      0 3px 0 var(--accent-shadow),
+      0 6px 10px rgba(163, 79, 28, 0.2);
   }
 
   .key:active,
   .mini-key:active {
-    transform: translateY(3px);
+    transform: translateY(2px);
   }
 
-  .function-console {
-    gap: 0.3rem;
-  }
-
-  .deck-switch,
   .panel-switch {
     gap: 0.2rem;
     padding: 0.2rem;
   }
 
-  .deck-switch button,
   .panel-switch button {
     padding: 0.3rem 0.55rem;
     font-size: 0.7rem;
-  }
-
-  .deck-panel {
-    padding: 0.3rem 0.35rem;
-    border-radius: 13px;
-  }
-
-  .panel-kicker {
-    margin-bottom: 0.2rem;
-    font-size: 0.55rem;
   }
 
   .paper-card {
@@ -877,77 +828,6 @@ button {
       "header"
       "display"
       "keypad";
-  }
-
-  .function-sheet {
-    grid-area: unset;
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    pointer-events: none;
-  }
-
-  .function-sheet[data-open="true"] {
-    pointer-events: auto;
-  }
-
-  .sheet-backdrop {
-    display: block;
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.35);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .function-sheet[data-open="true"] .sheet-backdrop {
-    opacity: 1;
-  }
-
-  .function-sheet .function-console {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-height: 60vh;
-    overflow-y: auto;
-    padding: 0.9rem 0.9rem max(1rem, env(safe-area-inset-bottom));
-    border-radius: 22px 22px 0 0;
-    background: linear-gradient(180deg, rgba(255, 249, 239, 0.96), rgba(240, 235, 220, 0.96));
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-
-  .function-sheet[data-open="true"] .function-console {
-    transform: translateY(0);
-  }
-
-  .sheet-handle {
-    display: block;
-  }
-
-  .sheet-trigger {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0 auto;
-    padding: 0.55rem 1.1rem;
-    border: 0;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.75);
-    color: var(--muted);
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    touch-action: manipulation;
-    cursor: pointer;
-  }
-
-  .sheet-trigger-icon {
-    font-size: 0.65rem;
   }
 
   .paper-sheet {
@@ -1059,8 +939,7 @@ button {
     flex: 1;
   }
 
-  .display-wrap,
-  .function-console {
+  .display-wrap {
     padding: 0.68rem;
     border-radius: 20px;
   }
@@ -1165,25 +1044,9 @@ button {
     font-size: 0.82rem;
   }
 
-  .deck-switch button,
   .panel-switch button {
     padding: 0.5rem 0.8rem;
     font-size: 0.88rem;
-  }
-
-  .button-rack {
-    gap: 0.35rem;
-  }
-
-  .business-key,
-  .convert-action,
-  .convert-rate,
-  .tourist-action,
-  .tourist-rate,
-  .tax-action,
-  .tax-rate {
-    min-width: auto;
-    flex: 1 1 calc(50% - 0.4rem);
   }
 
   .memory-key {
@@ -1201,8 +1064,7 @@ button {
     gap: 0.75rem;
   }
 
-  .display-wrap,
-  .function-console {
+  .display-wrap {
     padding: 0.7rem;
   }
 
@@ -1275,7 +1137,4 @@ button {
     font-size: 0.78rem;
   }
 
-  .deck-panel {
-    padding: 0.6rem;
-  }
 }
