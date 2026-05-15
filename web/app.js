@@ -281,11 +281,38 @@ function flashError(message) {
   estadoNode.textContent = message;
 }
 
+function esEntornoLocal() {
+  const host = window.location.hostname;
+  return (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    /^192\.168\./.test(host) ||
+    /^10\./.test(host) ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)
+  );
+}
+
 function registrarServiceWorker() {
   if (!("serviceWorker" in navigator)) {
     return;
   }
   window.addEventListener("load", () => {
+    if (esEntornoLocal()) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => {
+          registration.unregister().catch(() => {});
+        });
+      });
+      if ("caches" in window) {
+        caches.keys().then((keys) => {
+          keys.forEach((key) => {
+            caches.delete(key).catch(() => {});
+          });
+        });
+      }
+      return;
+    }
     navigator.serviceWorker.register("./sw.js").catch(() => {});
   });
 }
