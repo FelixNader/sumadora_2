@@ -156,11 +156,11 @@ function guardarCalculadora(state) {
 function procesarTecla(tecla) {
   try {
     presionarTecla(calculadora, tecla);
+    guardarCalculadora(calculadora);
+    render();
   } catch (error) {
     flashError(error.message);
   }
-  guardarCalculadora(calculadora);
-  render();
 }
 
 function render() {
