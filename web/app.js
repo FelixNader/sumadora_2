@@ -180,7 +180,7 @@ function render() {
     spreadRateButton.dataset.active = calculadora.editando_spread_seguro ? "true" : "false";
   }
 
-  cintaNode.textContent = calculadora.cinta_entries.join("\n") || "Sin cinta aun.";
+  cintaNode.innerHTML = renderizarCinta(calculadora.cinta_entries);
   logNode.textContent = calculadora.log_entries.join("\n") || "Sin log aun.";
 
   if (paperCountNode) {
@@ -193,6 +193,58 @@ function render() {
   } else {
     displayNode.dataset.mode = "activo";
   }
+}
+
+function renderizarCinta(entries) {
+  if (!entries.length) {
+    return "Sin cinta aun.";
+  }
+
+  return entries.map(renderizarLineaCinta).join("");
+}
+
+function renderizarLineaCinta(linea) {
+  const clases = ["tape-entry"];
+  if (/^--- .* ---$/.test(linea)) {
+    clases.push("tape-entry-meta");
+    return `<span class="${clases.join(" ")}">${escaparHtml(linea)}</span>`;
+  }
+  if (linea.startsWith("SUBTOTAL =")) {
+    clases.push("tape-entry-subtotal");
+  } else if (linea.startsWith("GRAN TOTAL =")) {
+    clases.push("tape-entry-grand-total");
+  }
+
+  const matches = [...linea.matchAll(/-?\d[\d,]*(?:\.\d+)?%?/g)];
+  if (!matches.length) {
+    return `<span class="${clases.join(" ")}">${escaparHtml(linea)}</span>`;
+  }
+
+  let cursor = 0;
+  let html = "";
+  const ultimoIndice = matches.length - 1;
+
+  matches.forEach((match, index) => {
+    const valor = match[0];
+    const inicio = match.index ?? 0;
+    html += escaparHtml(linea.slice(cursor, inicio));
+    const valorClases = ["tape-value"];
+    if (index === ultimoIndice && linea.includes("=")) {
+      valorClases.push("tape-value-final");
+    }
+    html += `<span class="${valorClases.join(" ")}">${escaparHtml(valor)}</span>`;
+    cursor = inicio + valor.length;
+  });
+
+  html += escaparHtml(linea.slice(cursor));
+  return `<span class="${clases.join(" ")}">${html}</span>`;
+}
+
+function escaparHtml(texto) {
+  return texto
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
 function activarPanel(nombre) {

@@ -623,6 +623,65 @@ button {
   text-align: right;
 }
 
+.tape-entry {
+  display: block;
+  padding: 0.12rem 0;
+}
+
+.tape-entry-meta {
+  color: rgba(89, 63, 42, 0.68);
+  font-size: 0.76rem;
+  letter-spacing: 0.03em;
+}
+
+.tape-entry-subtotal,
+.tape-entry-grand-total {
+  margin: 0.24rem 0;
+  padding: 0.34rem 0.5rem;
+  border-radius: 12px;
+  background: rgba(132, 76, 25, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(132, 76, 25, 0.09);
+  font-weight: 700;
+}
+
+.tape-entry-subtotal {
+  color: #5d3518;
+}
+
+.tape-entry-grand-total {
+  margin: 0.32rem 0;
+  padding: 0.42rem 0.58rem;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(186, 101, 26, 0.24), rgba(186, 101, 26, 0.16));
+  box-shadow:
+    inset 0 0 0 1px rgba(123, 66, 20, 0.16),
+    0 6px 14px rgba(123, 66, 20, 0.08);
+  color: #4d2408;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.tape-value {
+  font-weight: 800;
+  color: #342115;
+}
+
+.tape-value-final {
+  color: #8a4410;
+  font-size: 1.06em;
+  letter-spacing: 0.02em;
+}
+
+.tape-entry-subtotal .tape-value-final {
+  font-size: 1.12em;
+  color: #7c3b0d;
+}
+
+.tape-entry-grand-total .tape-value-final {
+  font-size: 1.2em;
+  color: #6e2e00;
+}
+
 @media (min-width: 1120px) {
   .app-shell {
     grid-template-columns: minmax(480px, 620px) minmax(280px, 1fr);
