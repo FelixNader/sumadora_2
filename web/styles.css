@@ -628,12 +628,6 @@ button {
   padding: 0.12rem 0;
 }
 
-.tape-entry-meta {
-  color: rgba(89, 63, 42, 0.68);
-  font-size: 0.76rem;
-  letter-spacing: 0.03em;
-}
-
 .tape-entry-subtotal,
 .tape-entry-grand-total {
   margin: 0.24rem 0;
@@ -680,6 +674,70 @@ button {
 .tape-entry-grand-total .tape-value-final {
   font-size: 1.2em;
   color: #6e2e00;
+}
+
+.tape-entry-control-meta,
+.tape-entry-control {
+  color: rgba(89, 63, 42, 0.72);
+  font-size: 0.76rem;
+  letter-spacing: 0.03em;
+}
+
+.tape-entry-control {
+  opacity: 0.88;
+}
+
+.tape-entry-resolutiva {
+  color: #3a2313;
+}
+
+.tape-entry-porcentaje,
+.tape-entry-fiscal,
+.tape-entry-conversion,
+.tape-entry-parametro,
+.tape-entry-memoria,
+.tape-entry-comercial {
+  margin: 0.1rem 0;
+  padding: 0.2rem 0.45rem 0.2rem 0.35rem;
+  border-radius: 9px;
+  border-inline-end: 3px solid transparent;
+}
+
+.tape-entry-porcentaje {
+  background: rgba(131, 94, 44, 0.06);
+  border-inline-end-color: rgba(131, 94, 44, 0.42);
+  color: #5a3a1b;
+}
+
+.tape-entry-fiscal {
+  background: rgba(180, 108, 39, 0.09);
+  border-inline-end-color: rgba(180, 108, 39, 0.65);
+  color: #6b3712;
+}
+
+.tape-entry-conversion {
+  background: rgba(58, 108, 112, 0.08);
+  border-inline-end-color: rgba(58, 108, 112, 0.66);
+  color: #234b4f;
+}
+
+.tape-entry-parametro {
+  background: rgba(78, 77, 70, 0.06);
+  border-inline-end-color: rgba(78, 77, 70, 0.38);
+  color: #514235;
+  font-size: 0.83rem;
+}
+
+.tape-entry-memoria {
+  background: rgba(66, 103, 69, 0.08);
+  border-inline-end-color: rgba(66, 103, 69, 0.58);
+  color: #29462b;
+}
+
+.tape-entry-comercial {
+  background: rgba(123, 74, 33, 0.08);
+  border-inline-end-color: rgba(123, 74, 33, 0.58);
+  color: #573116;
 }
 
 @media (min-width: 1120px) {

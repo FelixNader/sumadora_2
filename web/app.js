@@ -205,13 +205,17 @@ function renderizarCinta(entries) {
 
 function renderizarLineaCinta(linea) {
   const clases = ["tape-entry"];
-  if (/^--- .* ---$/.test(linea)) {
-    clases.push("tape-entry-meta");
+  const tipo = detectarTipoCinta(linea);
+
+  clases.push(`tape-entry-${tipo}`);
+
+  if (tipo === "control-meta") {
     return `<span class="${clases.join(" ")}">${escaparHtml(linea)}</span>`;
   }
-  if (linea.startsWith("SUBTOTAL =")) {
+
+  if (tipo === "subtotal") {
     clases.push("tape-entry-subtotal");
-  } else if (linea.startsWith("GRAN TOTAL =")) {
+  } else if (tipo === "grand-total") {
     clases.push("tape-entry-grand-total");
   }
 
@@ -238,6 +242,57 @@ function renderizarLineaCinta(linea) {
 
   html += escaparHtml(linea.slice(cursor));
   return `<span class="${clases.join(" ")}">${html}</span>`;
+}
+
+function detectarTipoCinta(linea) {
+  if (/^--- .* ---$/.test(linea)) {
+    return "control-meta";
+  }
+  if (linea.startsWith("SUBTOTAL =")) {
+    return "subtotal";
+  }
+  if (linea.startsWith("GRAN TOTAL =")) {
+    return "grand-total";
+  }
+  if (linea === "A" || linea === "E") {
+    return "control";
+  }
+  if (linea.startsWith("IVA+") || linea.startsWith("IVA-") || linea.startsWith("TASA IMPUESTO =")) {
+    return "fiscal";
+  }
+  if (linea.startsWith("CONV ") || linea.startsWith("BASE ") || linea.startsWith("PUB =")) {
+    return "conversion";
+  }
+  if (
+    linea.startsWith("RATE =") ||
+    linea.startsWith("OUT =") ||
+    linea.startsWith("SPD =") ||
+    linea.startsWith("MODO DECIMAL =")
+  ) {
+    return "parametro";
+  }
+  if (
+    linea.startsWith("M+ ") ||
+    linea.startsWith("M- ") ||
+    linea.startsWith("MR =") ||
+    linea === "MC"
+  ) {
+    return "memoria";
+  }
+  if (
+    linea.startsWith("COST =") ||
+    linea.startsWith("SELL =") ||
+    linea.startsWith("MAR =")
+  ) {
+    return "comercial";
+  }
+  if (linea.startsWith("PORC ")) {
+    return "porcentaje";
+  }
+  if (/^-?\d[\d,]*(?:\.\d+)? [+\-*/] /.test(linea)) {
+    return "resolutiva";
+  }
+  return "control";
 }
 
 function escaparHtml(texto) {

@@ -798,14 +798,14 @@ function calcularDolaresACobrar(calculadora) {
     calculadora.estado === ESTADO_TYPING_OPERANDO &&
     calculadora.operador_pendiente !== ""
   ) {
-    calculadora.detalle_operando_cinta = `USD ${formatearValorVisible(
+    calculadora.detalle_operando_cinta = `BASE ${formatearValorVisible(
       calculadora,
       valor,
-    )} @ PUB ${formatearValorVisible(calculadora, publicada)}`;
+    )} / PUB ${formatearValorVisible(calculadora, publicada)}`;
   }
   registrarCinta(
     calculadora,
-    `USD ${formatearValorVisible(calculadora, valor)} @ PUB ${formatearValorVisible(
+    `BASE ${formatearValorVisible(calculadora, valor)} / PUB ${formatearValorVisible(
       calculadora,
       publicada,
     )} = ${formatearValorVisible(calculadora, dolares)}`,

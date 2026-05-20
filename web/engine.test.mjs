@@ -263,7 +263,7 @@ for (const caso of casos) {
   assert.equal(calculadora.display, "52.36", "usd a cobrar");
   assert.equal(
     calculadora.cinta_entries.at(-1),
-    "USD 1,000.00 @ PUB 19.10 = 52.36",
+    "BASE 1,000.00 / PUB 19.10 = 52.36",
     "cinta usd",
   );
 }
