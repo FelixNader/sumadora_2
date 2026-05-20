@@ -32,7 +32,7 @@
           <div class="display-topline">
             <div class="info-chips">
               <span class="chip chip-mode" data-meta-mode>DEC 2</span>
-              <span class="chip chip-tax" data-meta-tax>IVA 16.00%</span>
+              <span class="chip chip-tax" data-meta-tax>TAX 16.00%</span>
               <span class="chip chip-rate" data-meta-rate>RATE 1.00</span>
               <span class="chip chip-pub" data-meta-pub>PUB -</span>
             </div>
@@ -117,8 +117,8 @@
 
           <div class="keypad-functions">
             <button data-key="p" class="key fn-tax">%</button>
-            <button data-key="i" class="key fn-tax">IVA+</button>
-            <button data-key="u" class="key fn-tax">IVA-</button>
+            <button data-key="i" class="key fn-tax">TAX+</button>
+            <button data-key="u" class="key fn-tax">TAX-</button>
             <button data-key="r" class="key fn-tax" data-tax-rate>TAX</button>
             <button data-key="y" class="key fn-convert">CONV</button>
 
@@ -131,6 +131,7 @@
             <button data-key="k" class="key fn-business">COST</button>
             <button data-key="l" class="key fn-business">SELL</button>
             <button data-key="h" class="key fn-business">MAR</button>
+            <button class="key fn-guide" type="button" data-open-guide>AYUDA / HOW TO</button>
           </div>
         </section>
       </section>
@@ -151,6 +152,413 @@
         <pre class="paper-output" data-panel-body="log" data-log hidden></pre>
       </section>
     </main>
+
+    <section class="guide-overlay" data-guide-overlay hidden>
+      <div class="guide-backdrop" data-close-guide></div>
+      <article class="guide-dialog" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+        <header class="guide-header">
+          <div>
+            <span class="guide-kicker">Manual</span>
+            <h2 id="guide-title">How To / Guía de Uso</h2>
+          </div>
+          <div class="guide-header-actions">
+            <div class="guide-lang-switch" role="tablist" aria-label="Guide language">
+              <button type="button" data-guide-lang="es" data-active="true">ES</button>
+              <button type="button" data-guide-lang="en" data-active="false">EN</button>
+            </div>
+            <button class="guide-close" type="button" aria-label="Cerrar instructivo" data-close-guide>✕</button>
+          </div>
+        </header>
+
+        <div class="guide-body">
+          <section class="guide-language" data-guide-content="es">
+            <div class="guide-card">
+              <h3>Uso básico</h3>
+              <ol>
+                <li>Captura un número.</li>
+                <li>Elige `+`, `-`, `X` o `/`.</li>
+                <li>Captura el siguiente número.</li>
+                <li>Pulsa `=` para resolver.</li>
+                <li>Pulsa `Sub` para acumular el subtotal en el gran total.</li>
+                <li>Pulsa `GT` para imprimir el gran total y reiniciar el ciclo operativo.</li>
+              </ol>
+            </div>
+            <div class="guide-card">
+              <h3>Teclado principal</h3>
+              <ul>
+                <li><strong>0-9, .</strong>: capturan el importe activo.</li>
+                <li><strong>+, -, X, /</strong>: operaciones básicas.</li>
+                <li><strong>=</strong>: resuelve la operación actual.</li>
+                <li><strong>AC</strong> (`a`, `Escape`): reinicia la operación actual y conserva memoria.</li>
+                <li><strong>Sub</strong> (`s`): calcula el subtotal actual y lo suma al gran total.</li>
+                <li><strong>GT</strong> (`g`): muestra el gran total acumulado y abre una nueva sesión.</li>
+                <li><strong>Borrado de entrada real</strong>: `e` o `Backspace`.</li>
+                <li><strong>Nota</strong>: el botón visible `C` hoy coincide con el modo decimal `4`, no con borrado.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Precisión decimal</h3>
+              <ul>
+                <li><strong>F</strong> (`f`): modo flotante.</li>
+                <li><strong>2</strong> (`d`): 2 decimales.</li>
+                <li><strong>3</strong> (`t`): 3 decimales.</li>
+                <li><strong>4</strong> (`c`): 4 decimales.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Memoria</h3>
+              <ul>
+                <li><strong>M+</strong> (`n`): suma el valor visible a memoria.</li>
+                <li><strong>M-</strong> (`v`): resta el valor visible de memoria.</li>
+                <li><strong>MR</strong> (`m`): recupera la memoria al display.</li>
+                <li><strong>MC</strong> (`x`): limpia la memoria.</li>
+              </ul>
+              <p>La memoria es un registro separado. No es lo mismo que <strong>subtotal</strong> ni que <strong>gran total</strong>.</p>
+              <ul>
+                <li><strong>Memoria</strong>: guarda un valor manual de referencia que tú decides conservar.</li>
+                <li><strong>Sub</strong>: consolida el subtotal actual de la operación en curso.</li>
+                <li><strong>GT</strong>: muestra el acumulado de subtotales y abre un nuevo ciclo operativo.</li>
+              </ul>
+              <p>Importante: <strong>AC no borra memoria</strong>. La memoria persiste entre limpiezas operativas y entre varias presiones de <code>AC</code>. Solo cambia con <code>M+</code>, <code>M-</code>, <code>MR</code> o <code>MC</code>, y solo se vacía por completo con <code>MC</code>.</p>
+            </div>
+            <div class="guide-card">
+              <h3>Porcentaje</h3>
+              <ul>
+                <li><strong>%</strong> (`p` o `%`): porcentaje del operando actual o del acumulado.</li>
+              </ul>
+              <p>La tecla <strong>%</strong> no hace siempre lo mismo: depende del contexto de la operación.</p>
+              <ul>
+                <li><strong>Porcentaje simple</strong>: convierte el operando a fracción decimal.</li>
+                <li><strong>Con + o -</strong>: calcula “x% de la base” y usa ese resultado como segundo término.</li>
+                <li><strong>Con X o /</strong>: convierte el porcentaje a decimal y luego multiplica o divide con ese valor.</li>
+              </ul>
+              <p>Casos reales del motor:</p>
+              <ul>
+                <li><code>10 %</code> -> <code>0.10</code></li>
+                <li><code>200 + 10 %</code> -> <code>220.00</code></li>
+                <li><code>200 - 10 %</code> -> <code>180.00</code></li>
+                <li><code>200 X 10 %</code> -> <code>20.00</code></li>
+                <li><code>200 / 10 %</code> -> <code>2000.00</code></li>
+              </ul>
+              <p>Lectura matemática:</p>
+              <ul>
+                <li><code>200 + 10%</code> significa <code>200 + (10% de 200)</code>.</li>
+                <li><code>200 - 10%</code> significa <code>200 - (10% de 200)</code>.</li>
+                <li><code>200 X 10%</code> significa <code>200 X 0.10</code>.</li>
+                <li><code>200 / 10%</code> significa <code>200 / 0.10</code>.</li>
+              </ul>
+              <p>En cinta verás dos estilos:</p>
+              <ul>
+                <li><code>PORC 10.00% = 0.10</code> para porcentaje simple.</li>
+                <li><code>PORC 10.00% DE 200.00 = 20.00</code> cuando el porcentaje se calcula sobre una base aditiva.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Funciones TAX</h3>
+              <ul>
+                <li><strong>TAX+</strong> (`i`): suma tax.</li>
+                <li><strong>TAX-</strong> (`u`): extrae tax.</li>
+                <li><strong>TAX</strong> (`r`): edita la tasa de impuesto.</li>
+              </ul>
+              <p>Al editar TAX: usa números y `.`, confirma con `=`, cancela con `r`, reinicia el buffer con `e`.</p>
+              <p><strong>TAX- no es lo mismo que restar un porcentaje.</strong> Matemáticamente está haciendo otra operación.</p>
+              <ul>
+                <li>Resta simple de porcentaje: <code>total - (total * tasa)</code></li>
+                <li>Extracción correcta de tax incluido: <code>base = total / (1 + tasa)</code></li>
+              </ul>
+              <p>Ejemplo con <code>16%</code>:</p>
+              <ul>
+                <li><code>100 -> TAX+ = 116</code></li>
+                <li><code>116 -> TAX- = 100</code></li>
+              </ul>
+              <p>Si hicieras una resta simple, obtendrías <code>116 - 16% de 116 = 97.44</code>, que es incorrecto para extraer la base. La razón es que <code>TAX-</code> invierte la fórmula fiscal de un total que ya incluye impuesto; no solo descuenta un porcentaje del total visible.</p>
+            </div>
+            <div class="guide-card">
+              <h3>Conversión y parámetros</h3>
+              <ul>
+                <li><strong>CONV</strong> (`y`): multiplica el valor actual por `RATE`.</li>
+                <li><strong>RATE</strong> (`w`): edita la tasa general de conversión.</li>
+                <li><strong>OUT</strong> (`o`): edita el tipo de cambio al que el operador estima que podrá cambiar esa moneda del cliente por moneda local.</li>
+                <li><strong>SPD</strong> (`b`): edita el margen de seguridad que apartas respecto de `OUT`.</li>
+                <li><strong>PUB</strong> (`j`): calcula el tipo seguro publicado a partir de `OUT` y `SPD`.</li>
+                <li><strong>BASE/PUB</strong> (`z`): divide el valor base entre `PUB`.</li>
+              </ul>
+              <p>Ejemplo en cinta: <code>BASE 5,000.00 / PUB 16.00 = 312.50</code></p>
+            </div>
+            <div class="guide-card">
+              <h3>Qué significa cada uno</h3>
+              <ul>
+                <li><strong>RATE</strong>: es una tasa general de conversión. Sirve para multiplicar un valor base y obtener su equivalente directo. Es útil para conversiones rápidas y no depende del esquema de publicación segura.</li>
+                <li><strong>OUT</strong>: es el tipo de cambio al que el operador estima que podrá convertir la moneda del cliente a moneda local cuando luego vaya a la casa de cambio o al mercado. Es una referencia operativa real, no solo una tasa genérica.</li>
+                <li><strong>SPD</strong>: significa <em>spread</em> o margen de seguridad. No es otra tasa de cambio independiente: es el costo o colchón de protección que el operador descuenta respecto de `OUT` para cubrir riesgo, fluctuación y el servicio de evitarle al cliente el viaje a la casa de cambio.</li>
+                <li><strong>PUB</strong>: es el tipo publicado al cliente. En la lógica actual se calcula como <code>OUT - SPD</code>. Se usa un tipo más conservador para que el operador no quede descubierto cuando después cambie esa moneda a moneda local.</li>
+                <li><strong>BASE/PUB</strong>: es el conversor rápido del precio legal en moneda base hacia la moneda del cliente usando el tipo publicado `PUB`. Su objetivo es calcular cuánto debe pagar el cliente en su moneda cuando el precio original está en MXN o en la moneda local.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Cómo usarlos en la práctica</h3>
+              <ol>
+                <li>El operador parte de un precio base legal, normalmente en MXN o en la moneda local.</li>
+                <li>Define <strong>OUT</strong> con el tipo al que estimas que luego podrás cambiar la moneda del cliente por moneda local.</li>
+                <li>Define <strong>SPD</strong> con el margen de protección o costo de servicio que quieres reservar.</li>
+                <li>Pulsa <strong>PUB</strong> para obtener el tipo que sí vas a publicar al cliente y usar para cobrarle.</li>
+                <li>Usa <strong>BASE/PUB</strong> para convertir rápidamente el precio base legal a la moneda del cliente usando ese tipo publicado.</li>
+                <li>Usa <strong>CONV</strong> con <strong>RATE</strong> cuando solo necesites una conversión general, sin lógica de publicación segura.</li>
+              </ol>
+              <p>Ejemplo:</p>
+              <ul>
+                <li><code>OUT = 15.80</code></li>
+                <li><code>SPD = 0.20</code></li>
+                <li><code>PUB = 15.60</code></li>
+                <li><code>BASE 5,000.00 / PUB 15.60 = 320.51</code></li>
+              </ul>
+              <p>Interpretación:</p>
+              <ul>
+                <li>El precio legal sigue siendo <code>5,000.00</code> en moneda base.</li>
+                <li>El cliente trae dólares u otra moneda extranjera.</li>
+                <li>El operador calcula cuánto cobrarle en esa moneda usando <code>PUB</code>.</li>
+                <li>Después, cuando el operador cambie ese dinero a moneda local, el margen incluido en <code>SPD</code> ayuda a cubrir el riesgo y el servicio prestado.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Funciones comerciales</h3>
+              <ul>
+                <li><strong>COST</strong> (`k`): guarda costo o lo calcula a partir de <code>SELL</code> y <code>MAR</code>.</li>
+                <li><strong>SELL</strong> (`l`): guarda precio de venta o lo calcula a partir de <code>COST</code> y <code>MAR</code>.</li>
+                <li><strong>MAR</strong> (`h`): guarda margen o lo calcula a partir de <code>COST</code> y <code>SELL</code>.</li>
+              </ul>
+              <p>Estas tres funciones trabajan como un pequeño sistema comercial de tres variables.</p>
+              <ul>
+                <li><strong>COST</strong>: costo base del producto o servicio.</li>
+                <li><strong>SELL</strong>: precio final de venta.</li>
+                <li><strong>MAR</strong>: margen porcentual <strong>sobre SELL</strong>, no sobre COST.</li>
+              </ul>
+              <p>Ecuaciones reales del motor:</p>
+              <ul>
+                <li><code>SELL = COST / (1 - MAR/100)</code></li>
+                <li><code>COST = SELL * (1 - MAR/100)</code></li>
+                <li><code>MAR = ((SELL - COST) / SELL) * 100</code></li>
+              </ul>
+              <p>Importante: <strong>MAR no es markup sobre costo</strong>. Aquí el porcentaje se mide sobre el precio de venta.</p>
+              <p>Ejemplo:</p>
+              <ul>
+                <li>Si <code>COST = 80</code> y <code>SELL = 100</code>, entonces <code>MAR = 20%</code>.</li>
+                <li>La utilidad es <code>20</code>, y ese <code>20</code> representa el <code>20%</code> de <code>SELL</code>, no el <code>25%</code> de <code>COST</code>.</li>
+                <li>Si guardas <code>COST = 100</code> y <code>MAR = 20</code>, al pulsar <code>SELL</code> el sistema calcula <code>125</code>.</li>
+              </ul>
+              <p>Uso práctico:</p>
+              <ol>
+                <li>Captura un valor y pulsa <code>COST</code>, <code>SELL</code> o <code>MAR</code> para guardarlo.</li>
+                <li>Cuando ya existan dos valores compatibles, pulsa la tercera tecla para calcular el faltante.</li>
+                <li>El resultado queda en display y también se registra en la cinta.</li>
+              </ol>
+            </div>
+            <div class="guide-card">
+              <h3>Cinta, log y extras</h3>
+              <ul>
+                <li><strong>Cinta</strong>: registro operativo con tipos visuales distintos.</li>
+                <li><strong>Log</strong>: registro técnico de acciones.</li>
+                <li><strong>▼</strong>: muestra u oculta métricas.</li>
+                <li><strong>Doble tap en el display</strong>: copia el valor visible.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="guide-language" data-guide-content="en" hidden>
+            <div class="guide-card">
+              <h3>Basic flow</h3>
+              <ol>
+                <li>Enter a number.</li>
+                <li>Choose `+`, `-`, `X`, or `/`.</li>
+                <li>Enter the next number.</li>
+                <li>Press `=` to resolve the operation.</li>
+                <li>Press `Sub` to accumulate the subtotal into the grand total.</li>
+                <li>Press `GT` to print the grand total and start a fresh operating cycle.</li>
+              </ol>
+            </div>
+            <div class="guide-card">
+              <h3>Main keypad</h3>
+              <ul>
+                <li><strong>0-9, .</strong>: enter the active amount.</li>
+                <li><strong>+, -, X, /</strong>: basic operations.</li>
+                <li><strong>=</strong>: resolves the current operation.</li>
+                <li><strong>AC</strong> (`a`, `Escape`): resets the current operation while keeping memory.</li>
+                <li><strong>Sub</strong> (`s`): calculates the current subtotal and adds it to the grand total.</li>
+                <li><strong>GT</strong> (`g`): shows the accumulated grand total and starts a new session.</li>
+                <li><strong>Actual entry clear</strong>: `e` or `Backspace`.</li>
+                <li><strong>Note</strong>: the visible `C` button currently matches decimal mode `4`, not clear-entry.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Decimal precision</h3>
+              <ul>
+                <li><strong>F</strong> (`f`): floating mode.</li>
+                <li><strong>2</strong> (`d`): 2 decimals.</li>
+                <li><strong>3</strong> (`t`): 3 decimals.</li>
+                <li><strong>4</strong> (`c`): 4 decimals.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Memory</h3>
+              <ul>
+                <li><strong>M+</strong> (`n`): adds the visible value to memory.</li>
+                <li><strong>M-</strong> (`v`): subtracts the visible value from memory.</li>
+                <li><strong>MR</strong> (`m`): recalls memory into the display.</li>
+                <li><strong>MC</strong> (`x`): clears memory.</li>
+              </ul>
+              <p>Memory is a separate register. It is not the same as the <strong>subtotal</strong> or the <strong>grand total</strong>.</p>
+              <ul>
+                <li><strong>Memory</strong>: stores a manual reference value that you choose to keep.</li>
+                <li><strong>Sub</strong>: consolidates the current subtotal of the active operation.</li>
+                <li><strong>GT</strong>: shows the accumulated subtotals and starts a new operating cycle.</li>
+              </ul>
+              <p>Important: <strong>AC does not clear memory</strong>. Memory persists across operating resets and repeated <code>AC</code> presses. It only changes with <code>M+</code>, <code>M-</code>, <code>MR</code>, or <code>MC</code>, and it is fully erased only by <code>MC</code>.</p>
+            </div>
+            <div class="guide-card">
+              <h3>Percentage</h3>
+              <ul>
+                <li><strong>%</strong> (`p` or `%`): percentage of the current operand or accumulator.</li>
+              </ul>
+              <p>The <strong>%</strong> key does not always behave the same way: it depends on the operation context.</p>
+              <ul>
+                <li><strong>Simple percentage</strong>: converts the operand into a decimal fraction.</li>
+                <li><strong>With + or -</strong>: calculates “x% of the base” and uses that result as the second term.</li>
+                <li><strong>With X or /</strong>: converts the percentage into a decimal value and then multiplies or divides by it.</li>
+              </ul>
+              <p>Actual engine cases:</p>
+              <ul>
+                <li><code>10 %</code> -> <code>0.10</code></li>
+                <li><code>200 + 10 %</code> -> <code>220.00</code></li>
+                <li><code>200 - 10 %</code> -> <code>180.00</code></li>
+                <li><code>200 X 10 %</code> -> <code>20.00</code></li>
+                <li><code>200 / 10 %</code> -> <code>2000.00</code></li>
+              </ul>
+              <p>Mathematical reading:</p>
+              <ul>
+                <li><code>200 + 10%</code> means <code>200 + (10% of 200)</code>.</li>
+                <li><code>200 - 10%</code> means <code>200 - (10% of 200)</code>.</li>
+                <li><code>200 X 10%</code> means <code>200 X 0.10</code>.</li>
+                <li><code>200 / 10%</code> means <code>200 / 0.10</code>.</li>
+              </ul>
+              <p>On the tape you will see two styles:</p>
+              <ul>
+                <li><code>PORC 10.00% = 0.10</code> for a simple percentage.</li>
+                <li><code>PORC 10.00% DE 200.00 = 20.00</code> when the percentage is calculated from an additive base.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Tax functions</h3>
+              <ul>
+                <li><strong>TAX+</strong> (`i`): adds tax.</li>
+                <li><strong>TAX-</strong> (`u`): extracts tax.</li>
+                <li><strong>TAX</strong> (`r`): edits the tax rate.</li>
+              </ul>
+              <p>While editing TAX: use numbers and `.`, confirm with `=`, cancel with `r`, reset the buffer with `e`.</p>
+              <p><strong>TAX- is not the same as subtracting a percentage.</strong> Mathematically it performs a different operation.</p>
+              <ul>
+                <li>Simple percentage subtraction: <code>total - (total * rate)</code></li>
+                <li>Correct extraction from a tax-included total: <code>base = total / (1 + rate)</code></li>
+              </ul>
+              <p>Example with <code>16%</code>:</p>
+              <ul>
+                <li><code>100 -> TAX+ = 116</code></li>
+                <li><code>116 -> TAX- = 100</code></li>
+              </ul>
+              <p>If you did a simple subtraction, you would get <code>116 - 16% of 116 = 97.44</code>, which is wrong for extracting the pre-tax base. The reason is that <code>TAX-</code> reverses the tax formula from a total that already includes tax; it does not just subtract a percentage from the visible total.</p>
+            </div>
+            <div class="guide-card">
+              <h3>Conversion and parameters</h3>
+              <ul>
+                <li><strong>CONV</strong> (`y`): multiplies the current value by `RATE`.</li>
+                <li><strong>RATE</strong> (`w`): edits the general conversion rate.</li>
+                <li><strong>OUT</strong> (`o`): edits the rate at which the operator expects to convert the customer's currency back into local currency.</li>
+                <li><strong>SPD</strong> (`b`): edits the safety margin set aside relative to `OUT`.</li>
+                <li><strong>PUB</strong> (`j`): calculates the safe published rate from `OUT` and `SPD`.</li>
+                <li><strong>BASE/PUB</strong> (`z`): divides the base value by `PUB`.</li>
+              </ul>
+              <p>Tape example: <code>BASE 5,000.00 / PUB 16.00 = 312.50</code></p>
+            </div>
+            <div class="guide-card">
+              <h3>What each one means</h3>
+              <ul>
+                <li><strong>RATE</strong>: a general conversion rate. It is used for direct multiplication-based conversion and does not depend on the safe-publishing workflow.</li>
+                <li><strong>OUT</strong>: the rate at which the operator expects to convert the customer's currency back into local currency later on. It is a real operating business reference, not just a generic market rate.</li>
+                <li><strong>SPD</strong>: the safety spread. It is not a separate exchange rate; it is the protection/service margin deducted relative to `OUT` to cover exchange risk, fluctuation, and the convenience of handling the exchange in-store.</li>
+                <li><strong>PUB</strong>: the rate published to the customer. In the current engine logic it is calculated as <code>OUT - SPD</code>, making it a more conservative rate for the operator to publish and charge with.</li>
+                <li><strong>BASE/PUB</strong>: the quick converter from the legal base price into the customer's currency using the published rate `PUB`.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>How to use them in practice</h3>
+              <ol>
+                <li>The operator starts from a legal base price, usually in MXN or local currency.</li>
+                <li>Set <strong>OUT</strong> to the rate at which you expect to convert the customer's currency back into local currency later.</li>
+                <li>Set <strong>SPD</strong> to the protection or service margin you want to reserve.</li>
+                <li>Press <strong>PUB</strong> to calculate the rate you will actually publish to the customer.</li>
+                <li>Use <strong>BASE/PUB</strong> to quickly convert the legal base price into the customer's currency using that published rate.</li>
+                <li>Use <strong>CONV</strong> with <strong>RATE</strong> when you only need a general conversion without the safe-publishing logic.</li>
+              </ol>
+              <p>Example:</p>
+              <ul>
+                <li><code>OUT = 15.80</code></li>
+                <li><code>SPD = 0.20</code></li>
+                <li><code>PUB = 15.60</code></li>
+                <li><code>BASE 5,000.00 / PUB 15.60 = 320.51</code></li>
+              </ul>
+              <p>Meaning:</p>
+              <ul>
+                <li>The legal price remains <code>5,000.00</code> in base currency.</li>
+                <li>The customer brings dollars or another foreign currency.</li>
+                <li>The operator calculates how much to charge in that foreign currency using <code>PUB</code>.</li>
+                <li>Later, when the operator converts that money back into local currency, the margin included in <code>SPD</code> helps cover the risk and service cost.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Business functions</h3>
+              <ul>
+                <li><strong>COST</strong> (`k`): stores cost or calculates it from <code>SELL</code> and <code>MAR</code>.</li>
+                <li><strong>SELL</strong> (`l`): stores selling price or calculates it from <code>COST</code> and <code>MAR</code>.</li>
+                <li><strong>MAR</strong> (`h`): stores margin or calculates it from <code>COST</code> and <code>SELL</code>.</li>
+              </ul>
+              <p>These three functions work as a small three-variable business calculator.</p>
+              <ul>
+                <li><strong>COST</strong>: base cost of the product or service.</li>
+                <li><strong>SELL</strong>: final selling price.</li>
+                <li><strong>MAR</strong>: margin percentage <strong>over SELL</strong>, not over COST.</li>
+              </ul>
+              <p>Actual engine equations:</p>
+              <ul>
+                <li><code>SELL = COST / (1 - MAR/100)</code></li>
+                <li><code>COST = SELL * (1 - MAR/100)</code></li>
+                <li><code>MAR = ((SELL - COST) / SELL) * 100</code></li>
+              </ul>
+              <p>Important: <strong>MAR is not markup over cost</strong>. In this calculator the percentage is measured against the selling price.</p>
+              <p>Example:</p>
+              <ul>
+                <li>If <code>COST = 80</code> and <code>SELL = 100</code>, then <code>MAR = 20%</code>.</li>
+                <li>The profit is <code>20</code>, and that <code>20</code> is <code>20%</code> of <code>SELL</code>, not <code>25%</code> of <code>COST</code>.</li>
+                <li>If you store <code>COST = 100</code> and <code>MAR = 20</code>, pressing <code>SELL</code> calculates <code>125</code>.</li>
+              </ul>
+              <p>Practical use:</p>
+              <ol>
+                <li>Enter a value and press <code>COST</code>, <code>SELL</code>, or <code>MAR</code> to store it.</li>
+                <li>Once two compatible values exist, press the third key to calculate the missing one.</li>
+                <li>The result is placed on the display and recorded in the tape.</li>
+              </ol>
+            </div>
+            <div class="guide-card">
+              <h3>Tape, log, and extras</h3>
+              <ul>
+                <li><strong>Tape</strong>: operating record with visual line typing.</li>
+                <li><strong>Log</strong>: technical action record.</li>
+                <li><strong>▼</strong>: shows or hides metrics.</li>
+                <li><strong>Double tap the display</strong>: copies the visible value.</li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </article>
+    </section>
 
     <script type="module" src="./app.js?v=20260520b"></script>
   </body>

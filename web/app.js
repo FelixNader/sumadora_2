@@ -33,14 +33,22 @@ const metaTaxNode = document.querySelector("[data-meta-tax]");
 const metaRateNode = document.querySelector("[data-meta-rate]");
 const metaPubNode = document.querySelector("[data-meta-pub]");
 const paperCountNode = document.querySelector("[data-paper-count]");
+const guideOverlay = document.querySelector("[data-guide-overlay]");
+const guideOpenButton = document.querySelector("[data-open-guide]");
+const guideCloseButtons = document.querySelectorAll("[data-close-guide]");
+const guideLangButtons = document.querySelectorAll("[data-guide-lang]");
+const guideContentNodes = document.querySelectorAll("[data-guide-content]");
 
 let calculadora = cargarCalculadora();
+let guideLang = "es";
 
 sincronizarViewport();
 render();
 registrarServiceWorker();
 blindarGestosIOS();
 configurarDobleTap();
+renderizarGuia();
+cerrarGuia();
 
 document.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-key]");
@@ -51,6 +59,13 @@ document.addEventListener("click", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (guideOverlay && !guideOverlay.hidden) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cerrarGuia();
+    }
+    return;
+  }
   const tecla = mapearTecla(event.key);
   if (!tecla) {
     return;
@@ -72,6 +87,25 @@ if (metricsToggle && metricsContainer) {
     metricsToggle.setAttribute("aria-expanded", String(expanded));
   });
 }
+
+if (guideOpenButton && guideOverlay) {
+  guideOpenButton.addEventListener("click", () => {
+    abrirGuia();
+  });
+}
+
+guideCloseButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    cerrarGuia();
+  });
+});
+
+guideLangButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    guideLang = button.dataset.guideLang || "es";
+    renderizarGuia();
+  });
+});
 
 window.addEventListener("resize", sincronizarViewport);
 window.addEventListener("orientationchange", () => {
@@ -149,7 +183,7 @@ function render() {
       button.dataset.decimalMode === calculadora.modo_decimal ? "true" : "false";
   });
   metaModeNode.textContent = `DEC ${calculadora.modo_decimal}`;
-  metaTaxNode.textContent = `IVA ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`;
+  metaTaxNode.textContent = `TAX ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`;
   metaRateNode.textContent = `RATE ${formatearValorVisible(
     calculadora,
     calculadora.tasa_conversion,
@@ -158,7 +192,7 @@ function render() {
     ? `PUB ${formatearValorVisible(calculadora, calculadora.tasa_publicada_segura)}`
     : "PUB -";
   if (taxRateButton) {
-    taxRateButton.textContent = `IVA ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`;
+    taxRateButton.textContent = `TAX ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`;
     taxRateButton.dataset.active = calculadora.editando_tasa_impuesto ? "true" : "false";
   }
   if (conversionRateButton) {
@@ -257,7 +291,7 @@ function detectarTipoCinta(linea) {
   if (linea === "A" || linea === "E") {
     return "control";
   }
-  if (linea.startsWith("IVA+") || linea.startsWith("IVA-") || linea.startsWith("TASA IMPUESTO =")) {
+  if (linea.startsWith("TAX+") || linea.startsWith("TAX-") || linea.startsWith("TAX =")) {
     return "fiscal";
   }
   if (linea.startsWith("CONV ") || linea.startsWith("BASE ") || linea.startsWith("PUB =")) {
@@ -308,6 +342,32 @@ function activarPanel(nombre) {
   });
   panelNodes.forEach((panel) => {
     panel.hidden = panel.dataset.panelBody !== nombre;
+  });
+}
+
+function abrirGuia() {
+  if (!guideOverlay) return;
+  guideOverlay.hidden = false;
+  guideOverlay.dataset.open = "true";
+  guideOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("guide-open");
+  renderizarGuia();
+}
+
+function cerrarGuia() {
+  if (!guideOverlay) return;
+  guideOverlay.hidden = true;
+  guideOverlay.dataset.open = "false";
+  guideOverlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("guide-open");
+}
+
+function renderizarGuia() {
+  guideLangButtons.forEach((button) => {
+    button.dataset.active = button.dataset.guideLang === guideLang ? "true" : "false";
+  });
+  guideContentNodes.forEach((node) => {
+    node.hidden = node.dataset.guideContent !== guideLang;
   });
 }
 

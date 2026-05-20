@@ -121,6 +121,10 @@ Planned:
 - tax example
 - margin example
 
+## User Guide
+
+For a function-by-function guide in Spanish, see [GUIA_DE_USO.md](./GUIA_DE_USO.md).
+
 ## License
 
 This repository is published as a portfolio project. See [LICENSE](./LICENSE) for usage terms.

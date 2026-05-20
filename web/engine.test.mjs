@@ -100,7 +100,7 @@ for (const caso of casos) {
   assert.equal(calculadora.display, "108.00", "display tasa editada");
   assert.equal(
     calculadora.cinta_entries.at(-1),
-    "IVA+ 100.00 @ 8.00% = 108.00 (IVA 8.00)",
+    "TAX+ 100.00 @ 8.00% = 108.00 (TAX 8.00)",
     "cinta iva con tasa editada",
   );
 }

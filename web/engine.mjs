@@ -688,10 +688,10 @@ function sumarImpuesto(calculadora) {
   aplicarResultadoTransformacion(calculadora, total);
   registrarCinta(
     calculadora,
-    `IVA+ ${formatearValorVisible(calculadora, base)} @ ${formatearValorVisible(
+    `TAX+ ${formatearValorVisible(calculadora, base)} @ ${formatearValorVisible(
       calculadora,
       calculadora.tasa_impuesto,
-    )}% = ${formatearValorVisible(calculadora, total)} (IVA ${formatearValorVisible(
+    )}% = ${formatearValorVisible(calculadora, total)} (TAX ${formatearValorVisible(
       calculadora,
       impuesto,
     )})`,
@@ -715,10 +715,10 @@ function restarImpuesto(calculadora) {
   aplicarResultadoTransformacion(calculadora, base);
   registrarCinta(
     calculadora,
-    `IVA- ${formatearValorVisible(calculadora, total)} @ ${formatearValorVisible(
+    `TAX- ${formatearValorVisible(calculadora, total)} @ ${formatearValorVisible(
       calculadora,
       calculadora.tasa_impuesto,
-    )}% = ${formatearValorVisible(calculadora, base)} (IVA ${formatearValorVisible(
+    )}% = ${formatearValorVisible(calculadora, base)} (TAX ${formatearValorVisible(
       calculadora,
       impuesto,
     )})`,
@@ -1379,7 +1379,7 @@ function manejarCapturaTasaImpuesto(calculadora, tecla) {
     calculadora.buffer_tasa_impuesto = "";
     registrarCinta(
       calculadora,
-      `TASA IMPUESTO = ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`,
+      `TAX = ${formatearValorVisible(calculadora, calculadora.tasa_impuesto)}%`,
     );
     registrarLog(
       calculadora,
