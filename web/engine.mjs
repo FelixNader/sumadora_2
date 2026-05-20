@@ -1277,7 +1277,7 @@ function borrarEntrada(calculadora) {
     calculadora.estado = ESTADO_ENCENDIDA_ESPERANDO_TYPING;
   }
 
-  registrarCinta(calculadora, "E");
+  registrarCinta(calculadora, "C");
   registrarLog(calculadora, "borrar_entrada");
   calculadora.detalle_operando_cinta = "";
 }
@@ -1303,7 +1303,7 @@ function borrarTodo(calculadora) {
   calculadora.buffer_spread_seguro = "";
   calculadora.reemplazar_buffer_spread_seguro = false;
   calculadora.detalle_operando_cinta = "";
-  registrarCinta(calculadora, "A");
+  registrarCinta(calculadora, "AC");
   registrarCinta(calculadora, encabezadoCinta("nueva_calculadora"));
   registrarLog(calculadora, "borrar_todo");
 }

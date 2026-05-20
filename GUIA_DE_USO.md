@@ -53,17 +53,17 @@ Flujo básico:
   - Tecla: `g`
   - Acción: muestra el gran total acumulado, lo imprime en cinta y arranca una nueva sesión operativa.
 
-### Nota importante sobre `C`
+### Nota sobre `C`
 
-El botón visible `C` en la fila principal hoy **no funciona como borrado de entrada**.  
-En el motor actual, la tecla `c` está asociada al modo decimal `4`.
+El botón visible `C` en la fila principal funciona como borrado de entrada.
 
-Borrado real disponible hoy:
+Borrado disponible:
 
+- botón `C`
 - `Backspace`
 - tecla `e`
 
-No hay actualmente un botón visual dedicado a `E` en el teclado principal.
+La tecla física `c` sigue reservada para el modo decimal `4`.
 
 ## Precisión decimal
 
@@ -140,6 +140,35 @@ Diferencia práctica:
 - `MC` es la acción que sí vacía la memoria por completo.
 
 En otras palabras: si quieres conservar un valor aunque limpies la calculadora o reinicies la captura, guárdalo en memoria.
+
+## Qué borra y qué conserva
+
+- `AC`
+  - limpia la operación visible
+  - reinicia el ciclo operativo
+  - conserva memoria
+
+- `Sub`
+  - toma el subtotal actual
+  - lo acumula en `Gran total`
+
+- `GT`
+  - muestra e imprime el gran total
+  - reinicia el ciclo operativo
+  - abre una nueva sesión operativa
+
+- `MR`
+  - recupera memoria
+  - no la borra
+
+- `MC`
+  - sí borra memoria por completo
+
+Regla práctica:
+
+- `AC` limpia captura
+- `Sub` y `GT` consolidan operación
+- `MC` es la limpieza real de memoria
 
 ## Porcentaje
 
@@ -421,6 +450,14 @@ No significa:
 
 Ese segundo caso sería un markup sobre costo, que es otro concepto.
 
+Razón comercial y de convención:
+
+- en muchos contextos de pricing, `margin` se entiende como la parte del precio de venta que queda como utilidad
+- eso permite responder preguntas como:
+  - “¿qué porcentaje de mi venta estoy reteniendo?”
+- si lo calcularas sobre `COST`, ya no estarías hablando del mismo concepto
+- eso se parece más a un `markup` o recargo sobre costo
+
 Ejemplo clave:
 
 - si `COST = 80`
@@ -481,6 +518,28 @@ Y si guardas:
 Resultado esperado:
 
 - `MAR = 20.00%`
+
+## Errores y límites
+
+- `MAR` debe ser menor a `100`.
+- `SELL` no puede ser `0` para calcular `MAR`.
+- No puedes aplicar `%` sin un operando válido.
+- No puedes dividir entre cero.
+- En edición de `TAX`, `RATE`, `OUT` o `SPD`, un segundo punto decimal no es válido.
+- El botón visible `C` borra la entrada actual.
+- La tecla física `c` sigue asociada al modo decimal `4`.
+
+## Flujo completo de ejemplo
+
+1. Parte de un precio base legal, por ejemplo `5000` en moneda local.
+2. Edita `OUT`, por ejemplo `15.80`.
+3. Edita `SPD`, por ejemplo `0.20`.
+4. Pulsa `PUB` para obtener el tipo publicado seguro: `15.60`.
+5. Pulsa `BASE/PUB` para convertir el precio base a la moneda del cliente.
+6. Si quieres reservar ese cobro, usa `M+` para guardarlo en memoria.
+7. Si además necesitas tax sobre una cantidad base, aplica `TAX+`. Si el importe ya incluye tax, usa `TAX-`.
+8. Usa `Sub` para mandar la operación cerrada al gran total.
+9. Usa `GT` cuando quieras imprimir el acumulado final y arrancar un nuevo ciclo.
 
 ## Cinta y log
 

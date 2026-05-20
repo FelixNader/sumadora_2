@@ -110,7 +110,7 @@
             <button data-key="+" class="key accent">+</button>
 
             <button data-key="a" class="key utility">AC</button>
-            <button data-key="c" class="key utility">C</button>
+            <button data-key="e" class="key utility">C</button>
             <button data-key="s" class="key utility">Sub</button>
             <button data-key="g" class="key utility">GT</button>
           </div>
@@ -192,8 +192,8 @@
                 <li><strong>AC</strong> (`a`, `Escape`): reinicia la operación actual y conserva memoria.</li>
                 <li><strong>Sub</strong> (`s`): calcula el subtotal actual y lo suma al gran total.</li>
                 <li><strong>GT</strong> (`g`): muestra el gran total acumulado y abre una nueva sesión.</li>
-                <li><strong>Borrado de entrada real</strong>: `e` o `Backspace`.</li>
-                <li><strong>Nota</strong>: el botón visible `C` hoy coincide con el modo decimal `4`, no con borrado.</li>
+                <li><strong>C</strong>: borrado de entrada desde el botón visible.</li>
+                <li><strong>Borrado de entrada por teclado</strong>: `e` o `Backspace`.</li>
               </ul>
             </div>
             <div class="guide-card">
@@ -220,6 +220,17 @@
                 <li><strong>GT</strong>: muestra el acumulado de subtotales y abre un nuevo ciclo operativo.</li>
               </ul>
               <p>Importante: <strong>AC no borra memoria</strong>. La memoria persiste entre limpiezas operativas y entre varias presiones de <code>AC</code>. Solo cambia con <code>M+</code>, <code>M-</code>, <code>MR</code> o <code>MC</code>, y solo se vacía por completo con <code>MC</code>.</p>
+            </div>
+            <div class="guide-card">
+              <h3>Qué borra y qué conserva</h3>
+              <ul>
+                <li><strong>AC</strong>: limpia la operación visible, reinicia el ciclo operativo y conserva memoria.</li>
+                <li><strong>Sub</strong>: toma el subtotal actual y lo acumula en <strong>Gran total</strong>.</li>
+                <li><strong>GT</strong>: muestra e imprime el gran total, reinicia el ciclo operativo y vuelve a abrir una nueva sesión operativa.</li>
+                <li><strong>MR</strong>: recupera memoria sin borrarla.</li>
+                <li><strong>MC</strong>: sí borra memoria por completo.</li>
+              </ul>
+              <p>Regla práctica: <strong>AC limpia captura</strong>, <strong>Sub y GT consolidan operación</strong>, y <strong>MC</strong> es la limpieza real de memoria.</p>
             </div>
             <div class="guide-card">
               <h3>Porcentaje</h3>
@@ -340,6 +351,7 @@
                 <li><code>MAR = ((SELL - COST) / SELL) * 100</code></li>
               </ul>
               <p>Importante: <strong>MAR no es markup sobre costo</strong>. Aquí el porcentaje se mide sobre el precio de venta.</p>
+              <p>¿Por qué se eligió así? Porque en muchos contextos comerciales <strong>margin</strong> significa qué parte del <strong>precio de venta</strong> queda como utilidad. Esa convención responde mejor a preguntas como “¿qué porcentaje de mi venta estoy reteniendo?”. Si calcularas sobre <code>COST</code>, ya no hablarías del mismo concepto: eso sería más cercano a <strong>markup</strong> o recargo sobre costo.</p>
               <p>Ejemplo:</p>
               <ul>
                 <li>Si <code>COST = 80</code> y <code>SELL = 100</code>, entonces <code>MAR = 20%</code>.</li>
@@ -351,6 +363,31 @@
                 <li>Captura un valor y pulsa <code>COST</code>, <code>SELL</code> o <code>MAR</code> para guardarlo.</li>
                 <li>Cuando ya existan dos valores compatibles, pulsa la tercera tecla para calcular el faltante.</li>
                 <li>El resultado queda en display y también se registra en la cinta.</li>
+              </ol>
+            </div>
+            <div class="guide-card">
+              <h3>Errores y límites</h3>
+              <ul>
+                <li><strong>MAR</strong> debe ser menor a <code>100</code>.</li>
+                <li><strong>SELL</strong> no puede ser <code>0</code> para calcular <code>MAR</code>.</li>
+                <li>No puedes aplicar <strong>%</strong> sin un operando válido.</li>
+                <li>No puedes dividir entre cero.</li>
+                <li>En edición de tasas o parámetros, un segundo punto decimal no es válido.</li>
+                <li>El botón visible <strong>C</strong> borra la entrada actual. El modo decimal <code>4</code> sigue disponible en la banda de precisión y con el atajo de teclado <code>c</code>.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Flujo completo de ejemplo</h3>
+              <ol>
+                <li>Parte de un precio base legal, por ejemplo <code>5000</code> en moneda local.</li>
+                <li>Edita <code>OUT</code>, por ejemplo <code>15.80</code>.</li>
+                <li>Edita <code>SPD</code>, por ejemplo <code>0.20</code>.</li>
+                <li>Pulsa <code>PUB</code> para obtener el tipo publicado seguro: <code>15.60</code>.</li>
+                <li>Pulsa <code>BASE/PUB</code> para convertir el precio base a la moneda del cliente.</li>
+                <li>Si quieres reservar ese cobro, usa <code>M+</code> para guardarlo en memoria.</li>
+                <li>Si además necesitas tax sobre una cantidad base, aplica <code>TAX+</code>. Si el importe ya incluye tax, usa <code>TAX-</code>.</li>
+                <li>Usa <code>Sub</code> para mandar la operación cerrada al gran total.</li>
+                <li>Usa <code>GT</code> cuando quieras imprimir el acumulado final y arrancar un nuevo ciclo.</li>
               </ol>
             </div>
             <div class="guide-card">
@@ -385,8 +422,8 @@
                 <li><strong>AC</strong> (`a`, `Escape`): resets the current operation while keeping memory.</li>
                 <li><strong>Sub</strong> (`s`): calculates the current subtotal and adds it to the grand total.</li>
                 <li><strong>GT</strong> (`g`): shows the accumulated grand total and starts a new session.</li>
-                <li><strong>Actual entry clear</strong>: `e` or `Backspace`.</li>
-                <li><strong>Note</strong>: the visible `C` button currently matches decimal mode `4`, not clear-entry.</li>
+                <li><strong>C</strong>: visible clear-entry button.</li>
+                <li><strong>Actual entry clear by keyboard</strong>: `e` or `Backspace`.</li>
               </ul>
             </div>
             <div class="guide-card">
@@ -413,6 +450,17 @@
                 <li><strong>GT</strong>: shows the accumulated subtotals and starts a new operating cycle.</li>
               </ul>
               <p>Important: <strong>AC does not clear memory</strong>. Memory persists across operating resets and repeated <code>AC</code> presses. It only changes with <code>M+</code>, <code>M-</code>, <code>MR</code>, or <code>MC</code>, and it is fully erased only by <code>MC</code>.</p>
+            </div>
+            <div class="guide-card">
+              <h3>What clears and what stays</h3>
+              <ul>
+                <li><strong>AC</strong>: clears the visible operation, resets the operating cycle, and keeps memory.</li>
+                <li><strong>Sub</strong>: takes the current subtotal and accumulates it into the <strong>Grand total</strong>.</li>
+                <li><strong>GT</strong>: shows and prints the grand total, resets the operating cycle, and opens a fresh operating session.</li>
+                <li><strong>MR</strong>: recalls memory without clearing it.</li>
+                <li><strong>MC</strong>: fully clears memory.</li>
+              </ul>
+              <p>Practical rule: <strong>AC clears capture</strong>, <strong>Sub and GT consolidate operations</strong>, and <strong>MC</strong> is the real memory wipe.</p>
             </div>
             <div class="guide-card">
               <h3>Percentage</h3>
@@ -533,6 +581,7 @@
                 <li><code>MAR = ((SELL - COST) / SELL) * 100</code></li>
               </ul>
               <p>Important: <strong>MAR is not markup over cost</strong>. In this calculator the percentage is measured against the selling price.</p>
+              <p>Why is it defined this way? Because in many business contexts <strong>margin</strong> means what portion of the <strong>selling price</strong> remains as profit. That convention answers questions such as “what percentage of my sale am I keeping?”. If you calculate against <code>COST</code>, you are no longer talking about the same concept: that would be closer to <strong>markup</strong> over cost.</p>
               <p>Example:</p>
               <ul>
                 <li>If <code>COST = 80</code> and <code>SELL = 100</code>, then <code>MAR = 20%</code>.</li>
@@ -544,6 +593,31 @@
                 <li>Enter a value and press <code>COST</code>, <code>SELL</code>, or <code>MAR</code> to store it.</li>
                 <li>Once two compatible values exist, press the third key to calculate the missing one.</li>
                 <li>The result is placed on the display and recorded in the tape.</li>
+              </ol>
+            </div>
+            <div class="guide-card">
+              <h3>Errors and limits</h3>
+              <ul>
+                <li><strong>MAR</strong> must be lower than <code>100</code>.</li>
+                <li><strong>SELL</strong> cannot be <code>0</code> when calculating <code>MAR</code>.</li>
+                <li>You cannot apply <strong>%</strong> without a valid operand.</li>
+                <li>You cannot divide by zero.</li>
+                <li>When editing rates or parameters, a second decimal point is invalid.</li>
+                <li>The visible <strong>C</strong> button clears the current entry. Decimal mode <code>4</code> remains available from the precision strip and from keyboard shortcut <code>c</code>.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Complete example flow</h3>
+              <ol>
+                <li>Start from a legal base price, for example <code>5000</code> in local currency.</li>
+                <li>Edit <code>OUT</code>, for example <code>15.80</code>.</li>
+                <li>Edit <code>SPD</code>, for example <code>0.20</code>.</li>
+                <li>Press <code>PUB</code> to obtain the safe published rate: <code>15.60</code>.</li>
+                <li>Press <code>BASE/PUB</code> to convert the base price into the customer currency.</li>
+                <li>If you want to keep that amount aside, use <code>M+</code> to store it in memory.</li>
+                <li>If you also need tax on a base amount, apply <code>TAX+</code>. If the visible amount already includes tax, use <code>TAX-</code>.</li>
+                <li>Use <code>Sub</code> to send the closed operation into the grand total.</li>
+                <li>Use <code>GT</code> when you want to print the final accumulated amount and start a new cycle.</li>
               </ol>
             </div>
             <div class="guide-card">
