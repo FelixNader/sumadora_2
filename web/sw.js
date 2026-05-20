@@ -1,12 +1,12 @@
-const CACHE_NAME = "sumadora-contable-v2";
+const APP_VERSION = "20260520b";
+const CACHE_NAME = `sumadora-contable-${APP_VERSION}`;
 const ASSETS = [
-  "./",
-  "./index.html",
-  "./styles.css",
-  "./app.js",
+  `./index.html?v=${APP_VERSION}`,
+  `./styles.css?v=${APP_VERSION}`,
+  `./app.js?v=${APP_VERSION}`,
   "./engine.mjs",
-  "./manifest.webmanifest",
-  "./icon.svg",
+  `./manifest.webmanifest?v=${APP_VERSION}`,
+  `./icon.svg?v=${APP_VERSION}`,
 ];
 
 self.addEventListener("install", (event) => {
@@ -25,12 +25,42 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) {
-        return cached;
-      }
-      return fetch(event.request);
-    }),
-  );
+  if (event.request.method !== "GET") {
+    return;
+  }
+
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  event.respondWith(responderRequest(event.request));
 });
+
+async function responderRequest(request) {
+  const cache = await caches.open(CACHE_NAME);
+
+  try {
+    const networkResponse = await fetch(request, { cache: "no-store" });
+    if (networkResponse.ok) {
+      cache.put(request, networkResponse.clone()).catch(() => {});
+    }
+    return networkResponse;
+  } catch (error) {
+    const cachedResponse = await cache.match(request, { ignoreSearch: request.mode === "navigate" });
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    if (request.mode === "navigate") {
+      const fallback =
+        (await cache.match(`./index.html?v=${APP_VERSION}`)) ||
+        (await cache.match("./index.html"));
+      if (fallback) {
+        return fallback;
+      }
+    }
+
+    throw error;
+  }
+}

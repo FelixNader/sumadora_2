@@ -420,7 +420,7 @@ function registrarServiceWorker() {
       }
       return;
     }
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
+    navigator.serviceWorker.register("./sw.js?v=20260520b").catch(() => {});
   });
 }
 
