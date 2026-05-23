@@ -1,4 +1,4 @@
-const APP_VERSION = "20260520b";
+const APP_VERSION = "20260523a";
 const CACHE_NAME = `sumadora-contable-${APP_VERSION}`;
 const ASSETS = [
   `./index.html?v=${APP_VERSION}`,

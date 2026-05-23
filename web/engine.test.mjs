@@ -6,6 +6,7 @@ import {
   apagar,
   encender,
   formatearValorVisible,
+  iniciarNuevaCinta,
   nuevaCalculadora,
   obtenerDisplayVisible,
   presionarTecla,
@@ -173,6 +174,26 @@ for (const caso of casos) {
   assert.equal(calculadora.memoria, "10.00", "memoria persiste tras apagar");
   assert.equal(calculadora.display, "0", "display reiniciado tras encender");
   assert.equal(calculadora.estado, "encendida_esperando_typing", "estado tras encender");
+}
+
+{
+  const calculadora = nuevaCalculadora();
+  encender(calculadora);
+  for (const tecla of "t10nw2=100y5+5s") {
+    presionarTecla(calculadora, tecla);
+  }
+  iniciarNuevaCinta(calculadora);
+  assert.equal(calculadora.display, "0", "nueva cinta display");
+  assert.equal(calculadora.estado, "encendida_esperando_typing", "nueva cinta estado");
+  assert.equal(calculadora.gran_total, "0", "nueva cinta gran total");
+  assert.equal(calculadora.ultimo_subtotal, "", "nueva cinta ultimo subtotal");
+  assert.equal(calculadora.memoria, "10.000", "nueva cinta conserva memoria");
+  assert.equal(calculadora.modo_decimal, "3", "nueva cinta conserva modo");
+  assert.equal(calculadora.tasa_conversion, "2", "nueva cinta conserva rate");
+  assert.equal(calculadora.cinta_entries.length, 1, "nueva cinta limpia historial");
+  assert.match(calculadora.cinta_entries[0], /nueva_cinta/, "nueva cinta encabezado");
+  assert.equal(calculadora.log_entries.length, 1, "nueva cinta limpia log");
+  assert.match(calculadora.log_entries[0], /accion=nueva_cinta/, "nueva cinta log");
 }
 
 {

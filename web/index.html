@@ -7,9 +7,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Sumadora Contable</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=20260520b">
-    <link rel="icon" href="./icon.svg?v=20260520b" type="image/svg+xml">
-    <link rel="stylesheet" href="./styles.css?v=20260520b">
+    <link rel="manifest" href="./manifest.webmanifest?v=20260523a">
+    <link rel="icon" href="./icon.svg?v=20260523a" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css?v=20260523a">
   </head>
   <body>
     <main class="app-shell">
@@ -142,7 +142,14 @@
             <span class="panel-kicker">Registro</span>
             <strong class="paper-title">Cinta y log</strong>
           </div>
-          <span class="paper-badge" data-paper-count>0</span>
+          <div class="paper-header-actions">
+            <span class="paper-badge" data-paper-count>0</span>
+            <div class="paper-toolbar">
+              <button class="panel-action panel-action-primary" type="button" data-new-tape>Nueva cinta</button>
+              <button class="panel-action" type="button" data-export-session>Exportar sesión</button>
+              <button class="panel-action" type="button" data-import-session>Importar sesión</button>
+            </div>
+          </div>
         </div>
         <div class="panel-switch">
           <button data-panel="cinta" data-active="true">Cinta</button>
@@ -150,6 +157,7 @@
         </div>
         <pre class="paper-output" data-panel-body="cinta" data-cinta></pre>
         <pre class="paper-output" data-panel-body="log" data-log hidden></pre>
+        <input type="file" accept=".json,application/json" data-import-session-input hidden>
       </section>
     </main>
 
@@ -395,6 +403,9 @@
               <ul>
                 <li><strong>Cinta</strong>: registro operativo con tipos visuales distintos.</li>
                 <li><strong>Log</strong>: registro técnico de acciones.</li>
+                <li><strong>Nueva cinta</strong>: limpia cinta, log y acumulados operativos, pero conserva memoria y parámetros.</li>
+                <li><strong>Exportar sesión</strong>: descarga un archivo JSON con el estado actual.</li>
+                <li><strong>Importar sesión</strong>: restaura una sesión guardada desde JSON.</li>
                 <li><strong>▼</strong>: muestra u oculta métricas.</li>
                 <li><strong>Doble tap en el display</strong>: copia el valor visible.</li>
               </ul>
@@ -625,6 +636,9 @@
               <ul>
                 <li><strong>Tape</strong>: operating record with visual line typing.</li>
                 <li><strong>Log</strong>: technical action record.</li>
+                <li><strong>New tape</strong>: clears tape, log, and operating totals while keeping memory and parameters.</li>
+                <li><strong>Export session</strong>: downloads a JSON file with the current state.</li>
+                <li><strong>Import session</strong>: restores a previously saved JSON session.</li>
                 <li><strong>▼</strong>: shows or hides metrics.</li>
                 <li><strong>Double tap the display</strong>: copies the visible value.</li>
               </ul>
@@ -634,6 +648,6 @@
       </article>
     </section>
 
-    <script type="module" src="./app.js?v=20260520b"></script>
+    <script type="module" src="./app.js?v=20260523a"></script>
   </body>
   </html>

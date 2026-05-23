@@ -93,6 +93,30 @@ export function apagar(calculadora) {
   calculadora.detalle_operando_cinta = "";
 }
 
+export function iniciarNuevaCinta(calculadora) {
+  const memoria = calculadora.memoria;
+  const modoDecimal = calculadora.modo_decimal;
+  const tasaImpuesto = calculadora.tasa_impuesto;
+  const tasaConversion = calculadora.tasa_conversion;
+  const tasaOut = calculadora.tasa_out;
+  const spreadSeguro = calculadora.spread_seguro;
+  const tasaPublicadaSegura = calculadora.tasa_publicada_segura;
+
+  Object.assign(calculadora, nuevaCalculadora(), {
+    memoria,
+    modo_decimal: modoDecimal,
+    tasa_impuesto: tasaImpuesto,
+    tasa_conversion: tasaConversion,
+    tasa_out: tasaOut,
+    spread_seguro: spreadSeguro,
+    tasa_publicada_segura: tasaPublicadaSegura,
+  });
+
+  reiniciarOperacion(calculadora);
+  registrarLog(calculadora, "nueva_cinta");
+  registrarCinta(calculadora, encabezadoCinta("nueva_cinta"));
+}
+
 export function presionarTecla(calculadora, tecla) {
   if (tecla.length !== 1) {
     throw new Error("La tecla debe ser un unico caracter.");

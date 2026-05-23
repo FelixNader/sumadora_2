@@ -164,6 +164,11 @@ En otras palabras: si quieres conservar un valor aunque limpies la calculadora o
 - `MC`
   - sí borra memoria por completo
 
+- `Nueva cinta`
+  - limpia cinta y log
+  - reinicia captura, subtotal y gran total
+  - conserva memoria y parámetros (`DEC`, `TAX`, `RATE`, `OUT`, `SPD`)
+
 Regla práctica:
 
 - `AC` limpia captura
@@ -550,6 +555,19 @@ Panel inferior:
 
 - `Log`
   - registro más técnico de acciones internas
+
+- `Nueva cinta`
+  - deja lista una cinta nueva para otro set de cuentas
+  - limpia el historial visible de cinta y log
+  - no borra memoria ni parámetros configurados
+
+- `Exportar sesión`
+  - descarga un archivo `.json` con el estado actual
+  - incluye cinta, log, memoria, parámetros y captura operativa
+
+- `Importar sesión`
+  - reemplaza la sesión actual con el contenido de un archivo `.json`
+  - sirve para retomar una sesión guardada previamente
 
 La cinta ahora diferencia visualmente:
 

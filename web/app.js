@@ -3,6 +3,7 @@ import {
   restaurarCalculadora,
   encender,
   formatearValorVisible,
+  iniciarNuevaCinta,
   obtenerDisplayVisible,
   presionarTecla,
   ESTADO_ENCENDIDA_ESPERANDO_TYPING,
@@ -20,6 +21,10 @@ const cintaNode = document.querySelector("[data-cinta]");
 const logNode = document.querySelector("[data-log]");
 const panelButtons = document.querySelectorAll("[data-panel]");
 const panelNodes = document.querySelectorAll("[data-panel-body]");
+const newTapeButton = document.querySelector("[data-new-tape]");
+const exportSessionButton = document.querySelector("[data-export-session]");
+const importSessionButton = document.querySelector("[data-import-session]");
+const importSessionInput = document.querySelector("[data-import-session-input]");
 const keypad = document.querySelector("[data-keypad]");
 const metricsToggle = document.querySelector(".metrics-toggle");
 const metricsContainer = document.querySelector(".metrics");
@@ -41,14 +46,6 @@ const guideContentNodes = document.querySelectorAll("[data-guide-content]");
 
 let calculadora = cargarCalculadora();
 let guideLang = "es";
-
-sincronizarViewport();
-render();
-registrarServiceWorker();
-blindarGestosIOS();
-configurarDobleTap();
-renderizarGuia();
-cerrarGuia();
 
 document.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-key]");
@@ -80,6 +77,34 @@ panelButtons.forEach((button) => {
     activarPanel(nombre);
   });
 });
+
+if (newTapeButton) {
+  newTapeButton.addEventListener("click", () => {
+    crearNuevaCinta();
+  });
+}
+
+if (exportSessionButton) {
+  exportSessionButton.addEventListener("click", () => {
+    exportarSesion();
+  });
+}
+
+if (importSessionButton && importSessionInput) {
+  importSessionButton.addEventListener("click", () => {
+    importSessionInput.value = "";
+    importSessionInput.click();
+  });
+}
+
+if (importSessionInput) {
+  importSessionInput.addEventListener("change", async (event) => {
+    const input = event.target;
+    const [file] = input.files || [];
+    await importarSesion(file);
+    input.value = "";
+  });
+}
 
 if (metricsToggle && metricsContainer) {
   metricsToggle.addEventListener("click", () => {
@@ -121,6 +146,8 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener("resize", sincronizarViewport);
 }
 
+inicializarInterfaz();
+
 function cargarCalculadora() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) {
@@ -147,6 +174,112 @@ function cargarCalculadora() {
 
 function guardarCalculadora(state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function inicializarInterfaz() {
+  ejecutarSeguro(sincronizarViewport);
+  ejecutarSeguro(render);
+  ejecutarSeguro(registrarServiceWorker);
+  ejecutarSeguro(blindarGestosIOS);
+  ejecutarSeguro(configurarDobleTap);
+  ejecutarSeguro(renderizarGuia);
+  ejecutarSeguro(cerrarGuia);
+}
+
+function ejecutarSeguro(fn) {
+  try {
+    fn();
+  } catch (error) {
+    console.error(`Fallo al iniciar ${fn.name || "funcion"}`, error);
+  }
+}
+
+function crearNuevaCinta() {
+  const confirmado = window.confirm(
+    "Se limpiarán cinta, log y acumulados operativos. La memoria y los parámetros se conservarán. ¿Continuar?",
+  );
+  if (!confirmado) {
+    return;
+  }
+
+  iniciarNuevaCinta(calculadora);
+  guardarCalculadora(calculadora);
+  activarPanel("cinta");
+  render();
+}
+
+function exportarSesion() {
+  const payload = {
+    format: "sumadora-contable-session",
+    version: 1,
+    exported_at: new Date().toISOString(),
+    state: calculadora,
+  };
+
+  descargarArchivo(
+    JSON.stringify(payload, null, 2),
+    `sumadora-sesion-${marcaArchivo()}.json`,
+    "application/json",
+  );
+}
+
+async function importarSesion(file) {
+  if (!file) {
+    return;
+  }
+
+  const confirmado = window.confirm(
+    "Importar una sesión reemplazará la cinta, el log y el estado actual. ¿Continuar?",
+  );
+  if (!confirmado) {
+    return;
+  }
+
+  try {
+    const raw = await file.text();
+    const payload = JSON.parse(raw);
+    const snapshot = extraerSnapshotImportado(payload);
+    const restaurada = restaurarCalculadora(snapshot);
+    if (restaurada.estado === "apagada") {
+      encender(restaurada);
+    }
+    calculadora = restaurada;
+    guardarCalculadora(calculadora);
+    activarPanel("cinta");
+    render();
+  } catch {
+    flashError("Archivo de sesión inválido.");
+  }
+}
+
+function extraerSnapshotImportado(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error("Formato inválido.");
+  }
+
+  if (payload.state && typeof payload.state === "object" && !Array.isArray(payload.state)) {
+    return payload.state;
+  }
+
+  return payload;
+}
+
+function descargarArchivo(contenido, nombreArchivo, mimeType) {
+  const blob = new Blob([contenido], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = nombreArchivo;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 0);
+}
+
+function marcaArchivo() {
+  return new Date().toISOString().replaceAll(":", "-").replace("T", "_").slice(0, 19);
 }
 
 function procesarTecla(tecla) {
@@ -480,11 +613,13 @@ function registrarServiceWorker() {
       }
       return;
     }
-    navigator.serviceWorker.register("./sw.js?v=20260520b").catch(() => {});
+    navigator.serviceWorker.register("./sw.js?v=20260523a").catch(() => {});
   });
 }
 
 function blindarGestosIOS() {
+  if (!keypad) return;
+
   let ultimoTouchEnd = 0;
 
   keypad.addEventListener(
