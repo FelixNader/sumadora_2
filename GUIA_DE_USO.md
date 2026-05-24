@@ -168,6 +168,7 @@ En otras palabras: si quieres conservar un valor aunque limpies la calculadora o
   - limpia cinta y log
   - reinicia captura, subtotal y gran total
   - conserva memoria y parámetros (`DEC`, `TAX`, `RATE`, `OUT`, `SPD`)
+  - antes de limpiar, puede exportar la cinta en `CSV`
 
 Regla práctica:
 
@@ -560,14 +561,15 @@ Panel inferior:
   - deja lista una cinta nueva para otro set de cuentas
   - limpia el historial visible de cinta y log
   - no borra memoria ni parámetros configurados
+  - puede exportar primero la cinta en `CSV`
 
-- `Exportar sesión`
-  - descarga un archivo `.json` con el estado actual
-  - incluye cinta, log, memoria, parámetros y captura operativa
+- `Exportar CSV`
+  - descarga la cinta como archivo de hoja de cálculo
+  - incluye orden, tipo de línea y detalle
 
-- `Importar sesión`
-  - reemplaza la sesión actual con el contenido de un archivo `.json`
-  - sirve para retomar una sesión guardada previamente
+- `Exportar TXT`
+  - descarga la cinta como texto plano
+  - útil para archivo simple o compartir el registro tal cual
 
 La cinta ahora diferencia visualmente:
 

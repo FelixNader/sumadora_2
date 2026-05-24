@@ -22,9 +22,8 @@ const logNode = document.querySelector("[data-log]");
 const panelButtons = document.querySelectorAll("[data-panel]");
 const panelNodes = document.querySelectorAll("[data-panel-body]");
 const newTapeButton = document.querySelector("[data-new-tape]");
-const exportSessionButton = document.querySelector("[data-export-session]");
-const importSessionButton = document.querySelector("[data-import-session]");
-const importSessionInput = document.querySelector("[data-import-session-input]");
+const exportCsvButton = document.querySelector("[data-export-csv]");
+const exportTxtButton = document.querySelector("[data-export-txt]");
 const keypad = document.querySelector("[data-keypad]");
 const metricsToggle = document.querySelector(".metrics-toggle");
 const metricsContainer = document.querySelector(".metrics");
@@ -84,25 +83,15 @@ if (newTapeButton) {
   });
 }
 
-if (exportSessionButton) {
-  exportSessionButton.addEventListener("click", () => {
-    exportarSesion();
+if (exportCsvButton) {
+  exportCsvButton.addEventListener("click", () => {
+    exportarCintaCsv();
   });
 }
 
-if (importSessionButton && importSessionInput) {
-  importSessionButton.addEventListener("click", () => {
-    importSessionInput.value = "";
-    importSessionInput.click();
-  });
-}
-
-if (importSessionInput) {
-  importSessionInput.addEventListener("change", async (event) => {
-    const input = event.target;
-    const [file] = input.files || [];
-    await importarSesion(file);
-    input.value = "";
+if (exportTxtButton) {
+  exportTxtButton.addEventListener("click", () => {
+    exportarCintaTxt();
   });
 }
 
@@ -195,11 +184,27 @@ function ejecutarSeguro(fn) {
 }
 
 function crearNuevaCinta() {
-  const confirmado = window.confirm(
-    "Se limpiarán cinta, log y acumulados operativos. La memoria y los parámetros se conservarán. ¿Continuar?",
-  );
-  if (!confirmado) {
-    return;
+  if (tieneCintaExportable()) {
+    const exportarAntes = window.confirm(
+      "¿Deseas exportar la cinta en CSV antes de limpiar? Aceptar exporta y luego limpia.",
+    );
+    if (exportarAntes) {
+      exportarCintaCsv();
+    } else {
+      const continuarSinExportar = window.confirm(
+        "Se limpiarán cinta, log y acumulados operativos sin exportar. La memoria y los parámetros se conservarán. ¿Continuar?",
+      );
+      if (!continuarSinExportar) {
+        return;
+      }
+    }
+  } else {
+    const confirmado = window.confirm(
+      "Se limpiarán cinta, log y acumulados operativos. La memoria y los parámetros se conservarán. ¿Continuar?",
+    );
+    if (!confirmado) {
+      return;
+    }
   }
 
   iniciarNuevaCinta(calculadora);
@@ -208,60 +213,48 @@ function crearNuevaCinta() {
   render();
 }
 
-function exportarSesion() {
-  const payload = {
-    format: "sumadora-contable-session",
-    version: 1,
-    exported_at: new Date().toISOString(),
-    state: calculadora,
-  };
-
+function exportarCintaCsv() {
   descargarArchivo(
-    JSON.stringify(payload, null, 2),
-    `sumadora-sesion-${marcaArchivo()}.json`,
-    "application/json",
+    construirCsvCinta(),
+    `sumadora-cinta-${marcaArchivo()}.csv`,
+    "text/csv;charset=utf-8",
   );
 }
 
-async function importarSesion(file) {
-  if (!file) {
-    return;
-  }
-
-  const confirmado = window.confirm(
-    "Importar una sesión reemplazará la cinta, el log y el estado actual. ¿Continuar?",
+function exportarCintaTxt() {
+  descargarArchivo(
+    construirTxtCinta(),
+    `sumadora-cinta-${marcaArchivo()}.txt`,
+    "text/plain;charset=utf-8",
   );
-  if (!confirmado) {
-    return;
-  }
-
-  try {
-    const raw = await file.text();
-    const payload = JSON.parse(raw);
-    const snapshot = extraerSnapshotImportado(payload);
-    const restaurada = restaurarCalculadora(snapshot);
-    if (restaurada.estado === "apagada") {
-      encender(restaurada);
-    }
-    calculadora = restaurada;
-    guardarCalculadora(calculadora);
-    activarPanel("cinta");
-    render();
-  } catch {
-    flashError("Archivo de sesión inválido.");
-  }
 }
 
-function extraerSnapshotImportado(payload) {
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    throw new Error("Formato inválido.");
-  }
+function tieneCintaExportable() {
+  return calculadora.cinta_entries.some((linea) => linea.trim() !== "");
+}
 
-  if (payload.state && typeof payload.state === "object" && !Array.isArray(payload.state)) {
-    return payload.state;
-  }
+function construirCsvCinta() {
+  const lineas = obtenerLineasCintaExportables();
+  const filas = [["orden", "tipo", "detalle"]];
 
-  return payload;
+  lineas.forEach((linea, indice) => {
+    filas.push([String(indice + 1), detectarTipoCinta(linea), linea]);
+  });
+
+  return `\uFEFF${filas.map((fila) => fila.map(escaparCsv).join(",")).join("\n")}`;
+}
+
+function construirTxtCinta() {
+  return `${obtenerLineasCintaExportables().join("\n")}\n`;
+}
+
+function obtenerLineasCintaExportables() {
+  return calculadora.cinta_entries.filter((linea) => linea.trim() !== "");
+}
+
+function escaparCsv(valor) {
+  const texto = String(valor).replaceAll('"', '""');
+  return `"${texto}"`;
 }
 
 function descargarArchivo(contenido, nombreArchivo, mimeType) {
@@ -613,7 +606,7 @@ function registrarServiceWorker() {
       }
       return;
     }
-    navigator.serviceWorker.register("./sw.js?v=20260523a").catch(() => {});
+    navigator.serviceWorker.register("./sw.js?v=20260523b").catch(() => {});
   });
 }
 
