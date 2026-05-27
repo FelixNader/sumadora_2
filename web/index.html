@@ -172,6 +172,7 @@
             <div class="guide-lang-switch" role="tablist" aria-label="Guide language">
               <button type="button" data-guide-lang="es" data-active="true">ES</button>
               <button type="button" data-guide-lang="en" data-active="false">EN</button>
+              <button type="button" data-guide-lang="tr" data-active="false">TR</button>
             </div>
             <button class="guide-close" type="button" aria-label="Cerrar instructivo" data-close-guide>✕</button>
           </div>
@@ -407,6 +408,8 @@
                 <li><strong>Exportar TXT</strong>: descarga la cinta como texto plano.</li>
                 <li><strong>▼</strong>: muestra u oculta métricas.</li>
                 <li><strong>Doble tap en el display</strong>: copia el valor visible.</li>
+                <li><strong>AYUDA / HOW TO</strong>: abre este instructivo integrado y permite cambiar entre <code>ES</code>, <code>EN</code> y <code>TR</code>.</li>
+                <li><strong>Persistencia local</strong>: la app restaura memoria, parámetros, cinta y log al volver a abrirla.</li>
               </ul>
             </div>
           </section>
@@ -640,6 +643,243 @@
                 <li><strong>Export TXT</strong>: downloads the tape as plain text.</li>
                 <li><strong>▼</strong>: shows or hides metrics.</li>
                 <li><strong>Double tap the display</strong>: copies the visible value.</li>
+                <li><strong>AYUDA / HOW TO</strong>: opens this built-in guide and lets you switch between <code>ES</code>, <code>EN</code>, and <code>TR</code>.</li>
+                <li><strong>Local persistence</strong>: the app restores memory, parameters, tape, and log when reopened.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="guide-language" data-guide-content="tr" hidden>
+            <div class="guide-card">
+              <h3>Temel akış</h3>
+              <ol>
+                <li>Bir sayı girin.</li>
+                <li><code>+</code>, <code>-</code>, <code>X</code> veya <code>/</code> seçin.</li>
+                <li>Sonraki sayıyı girin.</li>
+                <li>İşlemi sonuçlandırmak için <code>=</code> tuşuna basın.</li>
+                <li>Ara toplamı genel toplama eklemek için <code>Sub</code> tuşuna basın.</li>
+                <li>Genel toplamı yazdırıp yeni bir çalışma döngüsü başlatmak için <code>GT</code> tuşuna basın.</li>
+              </ol>
+            </div>
+            <div class="guide-card">
+              <h3>Ana tuş takımı</h3>
+              <ul>
+                <li><strong>0-9, .</strong>: aktif tutarı girer.</li>
+                <li><strong>+, -, X, /</strong>: temel işlemler.</li>
+                <li><strong>=</strong>: mevcut işlemi sonuçlandırır.</li>
+                <li><strong>AC</strong> (<code>a</code>, <code>Escape</code>): belleği koruyarak mevcut işlemi sıfırlar.</li>
+                <li><strong>Sub</strong> (<code>s</code>): mevcut ara toplamı hesaplar ve genel toplama ekler.</li>
+                <li><strong>GT</strong> (<code>g</code>): biriken genel toplamı gösterir ve yeni oturum başlatır.</li>
+                <li><strong>C</strong>: görünür giriş temizleme düğmesi.</li>
+                <li><strong>Klavyeden giriş temizleme</strong>: <code>e</code> veya <code>Backspace</code>.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Ondalık hassasiyet</h3>
+              <ul>
+                <li><strong>F</strong> (<code>f</code>): kayan mod.</li>
+                <li><strong>2</strong> (<code>d</code>): 2 ondalık.</li>
+                <li><strong>3</strong> (<code>t</code>): 3 ondalık.</li>
+                <li><strong>4</strong> (<code>c</code>): 4 ondalık.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Bellek</h3>
+              <ul>
+                <li><strong>M+</strong> (<code>n</code>): görünen değeri belleğe ekler.</li>
+                <li><strong>M-</strong> (<code>v</code>): görünen değeri bellekten çıkarır.</li>
+                <li><strong>MR</strong> (<code>m</code>): belleği ekrana geri çağırır.</li>
+                <li><strong>MC</strong> (<code>x</code>): belleği temizler.</li>
+              </ul>
+              <p>Bellek ayrı bir kayıttır. <strong>Ara toplam</strong> veya <strong>genel toplam</strong> ile aynı şey değildir.</p>
+              <ul>
+                <li><strong>Bellek</strong>: sizin saklamak istediğiniz manuel bir referans değeri tutar.</li>
+                <li><strong>Sub</strong>: aktif işlemin mevcut ara toplamını birleştirir.</li>
+                <li><strong>GT</strong>: biriken ara toplamları gösterir ve yeni bir çalışma döngüsü başlatır.</li>
+              </ul>
+              <p>Önemli: <strong>AC belleği silmez</strong>. Bellek, çalışma sıfırlamaları ve tekrar eden <code>AC</code> kullanımları arasında korunur. Yalnızca <code>M+</code>, <code>M-</code>, <code>MR</code> veya <code>MC</code> ile değişir; tamamen silinmesi için <code>MC</code> gerekir.</p>
+            </div>
+            <div class="guide-card">
+              <h3>Neler temizlenir, neler korunur</h3>
+              <ul>
+                <li><strong>AC</strong>: görünür işlemi temizler, çalışma döngüsünü sıfırlar ve belleği korur.</li>
+                <li><strong>Sub</strong>: mevcut ara toplamı alır ve <strong>Genel toplam</strong> içine ekler.</li>
+                <li><strong>GT</strong>: genel toplamı gösterir ve yazdırır, çalışma döngüsünü sıfırlar ve yeni bir çalışma oturumu açar.</li>
+                <li><strong>MR</strong>: belleği silmeden geri çağırır.</li>
+                <li><strong>MC</strong>: belleği tamamen temizler.</li>
+              </ul>
+              <p>Pratik kural: <strong>AC girişi temizler</strong>, <strong>Sub ve GT işlemleri birleştirir</strong>, <strong>MC</strong> ise belleği gerçekten siler.</p>
+            </div>
+            <div class="guide-card">
+              <h3>Yüzde</h3>
+              <ul>
+                <li><strong>%</strong> (<code>p</code> veya <code>%</code>): mevcut operandın veya birikimli değerin yüzdesi.</li>
+              </ul>
+              <p><strong>%</strong> tuşu her zaman aynı şekilde çalışmaz; işlem bağlamına göre davranır.</p>
+              <ul>
+                <li><strong>Basit yüzde</strong>: operandı ondalık kesre dönüştürür.</li>
+                <li><strong>+ veya - ile</strong>: tabanın belirli yüzdesini hesaplar ve bunu ikinci terim olarak kullanır.</li>
+                <li><strong>X veya / ile</strong>: yüzdeyi ondalık değere çevirir, sonra onunla çarpar veya böler.</li>
+              </ul>
+              <p>Motorun gerçek örnekleri:</p>
+              <ul>
+                <li><code>10 %</code> -> <code>0.10</code></li>
+                <li><code>200 + 10 %</code> -> <code>220.00</code></li>
+                <li><code>200 - 10 %</code> -> <code>180.00</code></li>
+                <li><code>200 X 10 %</code> -> <code>20.00</code></li>
+                <li><code>200 / 10 %</code> -> <code>2000.00</code></li>
+              </ul>
+              <p>Matematiksel okuma:</p>
+              <ul>
+                <li><code>200 + 10%</code> şu anlama gelir: <code>200 + (200'ün %10'u)</code>.</li>
+                <li><code>200 - 10%</code> şu anlama gelir: <code>200 - (200'ün %10'u)</code>.</li>
+                <li><code>200 X 10%</code> şu anlama gelir: <code>200 X 0.10</code>.</li>
+                <li><code>200 / 10%</code> şu anlama gelir: <code>200 / 0.10</code>.</li>
+              </ul>
+              <p>Şeritte iki farklı biçim görürsünüz:</p>
+              <ul>
+                <li>Basit yüzde için <code>PORC 10.00% = 0.10</code>.</li>
+                <li>Toplamsal taban üzerinden hesaplandığında <code>PORC 10.00% DE 200.00 = 20.00</code>.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Vergi işlevleri</h3>
+              <ul>
+                <li><strong>TAX+</strong> (<code>i</code>): vergi ekler.</li>
+                <li><strong>TAX-</strong> (<code>u</code>): vergiyi ayıklar.</li>
+                <li><strong>TAX</strong> (<code>r</code>): vergi oranını düzenler.</li>
+              </ul>
+              <p>TAX düzenlerken sayı ve <code>.</code> kullanın; <code>=</code> ile onaylayın, <code>r</code> ile iptal edin, <code>e</code> ile arabelleği sıfırlayın.</p>
+              <p><strong>TAX- bir yüzdeyi çıkarmakla aynı şey değildir.</strong> Matematiksel olarak farklı bir işlem yapar.</p>
+              <ul>
+                <li>Basit yüzde çıkarma: <code>toplam - (toplam * oran)</code></li>
+                <li>Vergi dahil toplamdan doğru ayıklama: <code>taban = toplam / (1 + oran)</code></li>
+              </ul>
+              <p><code>16%</code> ile örnek:</p>
+              <ul>
+                <li><code>100 -> TAX+ = 116</code></li>
+                <li><code>116 -> TAX- = 100</code></li>
+              </ul>
+              <p>Basit çıkarma yapsaydınız <code>116 - 116'nın %16'sı = 97.44</code> elde ederdiniz; bu, vergi öncesi tabanı bulmak için yanlıştır. Çünkü <code>TAX-</code>, vergiyi zaten içeren toplamın formülünü tersine çevirir.</p>
+            </div>
+            <div class="guide-card">
+              <h3>Dönüşüm ve parametreler</h3>
+              <ul>
+                <li><strong>CONV</strong> (<code>y</code>): mevcut değeri <code>RATE</code> ile çarpar.</li>
+                <li><strong>RATE</strong> (<code>w</code>): genel dönüşüm oranını düzenler.</li>
+                <li><strong>OUT</strong> (<code>o</code>): operatörün müşteri parasını daha sonra yerel para birimine çevirmeyi beklediği kuru düzenler.</li>
+                <li><strong>SPD</strong> (<code>b</code>): <code>OUT</code> değerine göre ayrılan güvenlik marjını düzenler.</li>
+                <li><strong>PUB</strong> (<code>j</code>): <code>OUT</code> ve <code>SPD</code> üzerinden güvenli ilan kurunu hesaplar.</li>
+                <li><strong>BASE/PUB</strong> (<code>z</code>): taban değeri <code>PUB</code> değerine böler.</li>
+              </ul>
+              <p>Şerit örneği: <code>BASE 5,000.00 / PUB 16.00 = 312.50</code></p>
+            </div>
+            <div class="guide-card">
+              <h3>Her birinin anlamı</h3>
+              <ul>
+                <li><strong>RATE</strong>: genel bir dönüşüm oranıdır. Doğrudan çarpma tabanlı dönüşüm için kullanılır ve güvenli yayın akışına bağlı değildir.</li>
+                <li><strong>OUT</strong>: operatörün müşterinin parasını daha sonra yerel para birimine çevirmeyi beklediği kurdur. Bu, genel piyasa kuru değil, gerçek operasyonel referanstır.</li>
+                <li><strong>SPD</strong>: güvenlik farkı veya marjıdır. Ayrı bir döviz kuru değildir; kur riski, dalgalanma ve mağaza içinde dönüşüm hizmeti için <code>OUT</code> üzerinden düşülen koruma payıdır.</li>
+                <li><strong>PUB</strong>: müşteriye ilan edilen kurdur. Mevcut mantıkta <code>OUT - SPD</code> olarak hesaplanır; bu yüzden operatör için daha temkinli bir kurdur.</li>
+                <li><strong>BASE/PUB</strong>: yasal taban fiyatı müşterinin parasına <code>PUB</code> kuru ile hızlıca dönüştüren araçtır.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Pratik kullanım</h3>
+              <ol>
+                <li>Operatör, genelde MXN veya yerel para birimindeki yasal taban fiyattan başlar.</li>
+                <li>Daha sonra müşterinin parasını hangi kurdan yerel paraya çevirmeyi bekliyorsanız <strong>OUT</strong> olarak ayarlayın.</li>
+                <li>Ayırmak istediğiniz koruma veya hizmet marjını <strong>SPD</strong> olarak girin.</li>
+                <li>Müşteriye gerçekten göstereceğiniz kuru hesaplamak için <strong>PUB</strong> tuşuna basın.</li>
+                <li>Bu ilan edilmiş kurla yasal taban fiyatı müşterinin parasına çevirmek için <strong>BASE/PUB</strong> kullanın.</li>
+                <li>Güvenli yayın mantığı olmadan sadece genel dönüşüm gerekiyorsa <strong>CONV</strong> ile <strong>RATE</strong> kullanın.</li>
+              </ol>
+              <p>Örnek:</p>
+              <ul>
+                <li><code>OUT = 15.80</code></li>
+                <li><code>SPD = 0.20</code></li>
+                <li><code>PUB = 15.60</code></li>
+                <li><code>BASE 5,000.00 / PUB 15.60 = 320.51</code></li>
+              </ul>
+              <p>Anlamı:</p>
+              <ul>
+                <li>Yasal fiyat taban para biriminde <code>5,000.00</code> olarak kalır.</li>
+                <li>Müşteri dolar veya başka bir yabancı para getirir.</li>
+                <li>Operatör, bu yabancı para üzerinden ne kadar tahsil edeceğini <code>PUB</code> ile hesaplar.</li>
+                <li>Daha sonra bu para yerel para birimine çevrildiğinde, <code>SPD</code> içindeki marj risk ve hizmet maliyetini karşılamaya yardımcı olur.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Ticari işlevler</h3>
+              <ul>
+                <li><strong>COST</strong> (<code>k</code>): maliyeti kaydeder veya <code>SELL</code> ve <code>MAR</code> üzerinden hesaplar.</li>
+                <li><strong>SELL</strong> (<code>l</code>): satış fiyatını kaydeder veya <code>COST</code> ve <code>MAR</code> üzerinden hesaplar.</li>
+                <li><strong>MAR</strong> (<code>h</code>): marjı kaydeder veya <code>COST</code> ve <code>SELL</code> üzerinden hesaplar.</li>
+              </ul>
+              <p>Bu üç işlev küçük bir üç değişkenli ticari hesaplayıcı gibi çalışır.</p>
+              <ul>
+                <li><strong>COST</strong>: ürün veya hizmetin taban maliyeti.</li>
+                <li><strong>SELL</strong>: nihai satış fiyatı.</li>
+                <li><strong>MAR</strong>: <strong>SELL</strong> üzerinden hesaplanan marj yüzdesi; <strong>COST</strong> üzerinden değil.</li>
+              </ul>
+              <p>Motorun gerçek denklemleri:</p>
+              <ul>
+                <li><code>SELL = COST / (1 - MAR/100)</code></li>
+                <li><code>COST = SELL * (1 - MAR/100)</code></li>
+                <li><code>MAR = ((SELL - COST) / SELL) * 100</code></li>
+              </ul>
+              <p>Önemli: <strong>MAR, maliyet üzerine eklenen markup değildir</strong>. Bu hesap makinesinde yüzde satış fiyatına göre ölçülür.</p>
+              <p>Neden böyle tanımlandı? Çünkü birçok ticari bağlamda <strong>margin</strong>, satış fiyatının ne kadarının kâr olarak kaldığını ifade eder. Eğer bunu <code>COST</code> üzerinden hesaplarsanız, artık aynı kavramdan değil, daha çok <strong>markup</strong>tan söz etmiş olursunuz.</p>
+              <p>Örnek:</p>
+              <ul>
+                <li><code>COST = 80</code> ve <code>SELL = 100</code> ise <code>MAR = 20%</code> olur.</li>
+                <li>Kâr <code>20</code> değeridir ve bu <code>20</code>, <code>SELL</code> değerinin <code>%20</code>'sidir; <code>COST</code> değerinin <code>%25</code>'i değildir.</li>
+                <li><code>COST = 100</code> ve <code>MAR = 20</code> kaydedilirse, <code>SELL</code> tuşu <code>125</code> hesaplar.</li>
+              </ul>
+              <p>Pratik kullanım:</p>
+              <ol>
+                <li>Bir değer girin ve kaydetmek için <code>COST</code>, <code>SELL</code> veya <code>MAR</code> tuşuna basın.</li>
+                <li>İki uyumlu değer mevcut olduğunda eksik olanı hesaplamak için üçüncü tuşa basın.</li>
+                <li>Sonuç ekrana gelir ve şeride de kaydedilir.</li>
+              </ol>
+            </div>
+            <div class="guide-card">
+              <h3>Hatalar ve sınırlar</h3>
+              <ul>
+                <li><strong>MAR</strong> değeri <code>100</code>'den küçük olmalıdır.</li>
+                <li><strong>MAR</strong> hesaplanırken <strong>SELL</strong> değeri <code>0</code> olamaz.</li>
+                <li>Geçerli bir operand olmadan <strong>%</strong> uygulanamaz.</li>
+                <li>Sıfıra bölme yapılamaz.</li>
+                <li>Oran veya parametre düzenlerken ikinci bir ondalık nokta geçersizdir.</li>
+                <li>Görünür <strong>C</strong> düğmesi mevcut girişi temizler. <code>4</code> ondalık modu, hassasiyet şeridinden ve klavyede <code>c</code> kısayoluyla kullanılmaya devam eder.</li>
+              </ul>
+            </div>
+            <div class="guide-card">
+              <h3>Tam örnek akışı</h3>
+              <ol>
+                <li>Örneğin yerel para biriminde <code>5000</code> gibi bir yasal taban fiyatla başlayın.</li>
+                <li><code>OUT</code> değerini örneğin <code>15.80</code> olarak düzenleyin.</li>
+                <li><code>SPD</code> değerini örneğin <code>0.20</code> olarak düzenleyin.</li>
+                <li>Güvenli ilan kurunu almak için <code>PUB</code> tuşuna basın: <code>15.60</code>.</li>
+                <li>Taban fiyatı müşterinin para birimine çevirmek için <code>BASE/PUB</code> kullanın.</li>
+                <li>Bu tutarı ayırmak istiyorsanız belleğe kaydetmek için <code>M+</code> kullanın.</li>
+                <li>Taban tutara vergi eklemeniz gerekiyorsa <code>TAX+</code>; görünen tutar zaten vergi içeriyorsa <code>TAX-</code> kullanın.</li>
+                <li>Kapanan işlemi genel toplama göndermek için <code>Sub</code> kullanın.</li>
+                <li>Nihai birikimli tutarı yazdırmak ve yeni döngü başlatmak için <code>GT</code> kullanın.</li>
+              </ol>
+            </div>
+            <div class="guide-card">
+              <h3>Şerit, günlük ve ekler</h3>
+              <ul>
+                <li><strong>Şerit</strong>: görsel satır türlerine sahip operasyon kaydı.</li>
+                <li><strong>Günlük</strong>: teknik eylem kaydı.</li>
+                <li><strong>Yeni şerit</strong>: önce şeridi dışa aktarabilir, sonra bellek ve parametreleri koruyarak şeridi, günlüğü ve operasyon toplamlarını temizler.</li>
+                <li><strong>CSV dışa aktar</strong>: şeridi tablo dostu biçimde indirir.</li>
+                <li><strong>TXT dışa aktar</strong>: şeridi düz metin olarak indirir.</li>
+                <li><strong>▼</strong>: metrikleri gösterir veya gizler.</li>
+                <li><strong>Ekrana çift dokun</strong>: görünen değeri kopyalar.</li>
+                <li><strong>AYUDA / HOW TO</strong>: bu yerleşik kılavuzu açar ve <code>ES</code>, <code>EN</code>, <code>TR</code> arasında geçiş yapmanızı sağlar.</li>
+                <li><strong>Yerel kalıcılık</strong>: uygulama tekrar açıldığında bellek, parametreler, şerit ve günlük geri yüklenir.</li>
               </ul>
             </div>
           </section>

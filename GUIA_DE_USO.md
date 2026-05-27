@@ -7,11 +7,25 @@ Esta guía explica cada botón, tecla y función disponible en la versión web d
 La aplicación está dividida en estas zonas:
 
 - `Display`: muestra el importe activo.
+- `Chips superiores`: muestran `DEC`, `TAX`, `RATE` y `PUB`.
+- `Métricas`: muestran `Último subtotal`, `Gran total`, `Memoria` y `Tipo publicado`.
 - `Precisión`: cambia el modo decimal `F`, `2`, `3`, `4`.
 - `Memoria`: `M+`, `M-`, `MR`, `MC`.
 - `Teclado principal`: números, operadores, `AC`, `Sub`, `GT`.
-- `Funciones`: TAX, conversión, parámetros y funciones comerciales.
+- `Funciones`: porcentaje, TAX, conversión, parámetros y funciones comerciales.
 - `Registro`: panel de `Cinta` y `Log`.
+- `Ayuda`: botón `AYUDA / HOW TO` con instructivo integrado en `ES` y `EN`.
+
+## Estado y persistencia
+
+- La app guarda localmente:
+  - memoria
+  - modo decimal
+  - `TAX`, `RATE`, `OUT`, `SPD`, `PUB`
+  - valores visibles de cinta y log
+- Si recargas la página o vuelves a abrir la PWA, la sesión se restaura desde el navegador.
+- `Nueva cinta` reinicia la jornada visible, pero conserva memoria y parámetros.
+- `AC` no borra memoria ni parámetros.
 
 ## Uso rápido
 
@@ -590,6 +604,10 @@ La cinta ahora diferencia visualmente:
 
 - Botón `▼` en la parte superior:
   - muestra u oculta métricas adicionales.
+
+- Botón `AYUDA / HOW TO`:
+  - abre el instructivo integrado sin salir de la calculadora
+  - permite cambiar entre `ES` y `EN`
 
 ## Atajos de teclado
 
