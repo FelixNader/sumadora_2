@@ -606,7 +606,7 @@ function registrarServiceWorker() {
       }
       return;
     }
-    navigator.serviceWorker.register("./sw.js?v=20260523b").catch(() => {});
+    navigator.serviceWorker.register("./sw.js?v=20260527a").catch(() => {});
   });
 }
 
