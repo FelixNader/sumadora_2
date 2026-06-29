@@ -1,73 +1,43 @@
-export type Mode = "OFF" | "ON" | "PRINT" | "ITEM" | "CONVERSION";
-export type DecimalMode = "F" | "3" | "2" | "0" | "ADD2";
-type Operation = "+" | "-" | "*" | "/";
-type BusinessMode = "COST" | "SELL" | "MGN" | null;
+import {
+  formatForDisplay,
+  formatForTape,
+  isOverflow,
+  normalizeOperandForOperation,
+  roundByMode,
+  symbolFor,
+  exceedsDigitLimit,
+} from "./policies/numericPolicy";
+import { appendTapeLine, canPrintToTape } from "./policies/tapePolicy";
+import {
+  createInitialCalculatorState,
+  sanitizeSnapshot,
+} from "./state";
+import { solveBusinessValues } from "./services/businessMath";
+import {
+  BusinessMode,
+  CalculatorSnapshot,
+  CalculatorState,
+  DecimalMode,
+  ExpressionToken,
+  Mode,
+  Operation,
+} from "./types";
 
-export interface CalculatorState {
-  mode: Mode;
-  decimalMode: DecimalMode;
-  displayValue: string;
-  totalMemory: number;
-  grandTotal: number;
-  independentMemory: number;
-  itemCount: number;
-  referenceNumber: number;
-  conversionRate: number;
-  taxRate: number;
-  paperTape: string[];
-  error: string | null;
-  pendingOperation: Operation | null;
-  firstOperand: number | null;
-  lastOperand: number | null;
-  lastOperator: Operation | null;
-  waitingForNewEntry: boolean;
-  pendingBusiness: BusinessMode;
-  businessBase: number | null;
-  businessCost: number | null;
-  businessSell: number | null;
-  businessMargin: number | null;
-  expressionTokens: Array<number | Operation>;
-  resetItemCountOnNextOp: boolean;
-}
-
-export interface CalculatorSnapshot {
-  version: 1;
-  state: CalculatorState;
-}
-
-const MAX_INT_DIGITS = 12;
-const MAX_TAPE_LINES = 800;
+export type {
+  BusinessMode,
+  CalculatorSnapshot,
+  CalculatorState,
+  DecimalMode,
+  ExpressionToken,
+  Mode,
+  Operation,
+} from "./types";
 
 export class Calculator {
   private state: CalculatorState;
 
   constructor() {
-    this.state = {
-      mode: "PRINT",
-      decimalMode: "F",
-      displayValue: "0",
-      totalMemory: 0,
-      grandTotal: 0,
-      independentMemory: 0,
-      itemCount: 0,
-      referenceNumber: 0,
-      conversionRate: 1,
-      taxRate: 16,
-      paperTape: [],
-      error: null,
-      pendingOperation: null,
-      firstOperand: null,
-      lastOperand: null,
-      lastOperator: null,
-      waitingForNewEntry: false,
-      pendingBusiness: null,
-      businessBase: null,
-      businessCost: null,
-      businessSell: null,
-      businessMargin: null,
-      expressionTokens: [],
-      resetItemCountOnNextOp: false,
-    };
+    this.state = createInitialCalculatorState();
   }
 
   getState(): CalculatorState {
@@ -89,33 +59,7 @@ export class Calculator {
       throw new Error("Unsupported snapshot format");
     }
 
-    this.state = {
-      ...snapshot.state,
-      paperTape: Array.isArray(snapshot.state.paperTape)
-        ? [...snapshot.state.paperTape].slice(-MAX_TAPE_LINES)
-        : [],
-      businessCost:
-        typeof snapshot.state.businessCost === "number"
-          ? snapshot.state.businessCost
-          : null,
-      businessSell:
-        typeof snapshot.state.businessSell === "number"
-          ? snapshot.state.businessSell
-          : null,
-      businessMargin:
-        typeof snapshot.state.businessMargin === "number"
-          ? snapshot.state.businessMargin
-          : null,
-      expressionTokens: Array.isArray(snapshot.state.expressionTokens)
-        ? snapshot.state.expressionTokens.filter((token) =>
-          typeof token === "number" || token === "+" || token === "-" || token === "*" || token === "/"
-        )
-        : [],
-      resetItemCountOnNextOp:
-        typeof snapshot.state.resetItemCountOnNextOp === "boolean"
-          ? snapshot.state.resetItemCountOnNextOp
-          : false,
-    };
+    this.state = sanitizeSnapshot(snapshot);
   }
 
   setMode(mode: Mode): void {
@@ -147,7 +91,7 @@ export class Calculator {
       this.state.displayValue = `-${digit}`;
     } else {
       const next = `${this.state.displayValue}${digit}`;
-      if (this.checkDigitLimit(next)) {
+      if (exceedsDigitLimit(next)) {
         this.setError();
         return;
       }
@@ -248,8 +192,8 @@ export class Calculator {
 
       if (typeof lastToken === "string") {
         const secondOperand = this.state.waitingForNewEntry
-          ? this.state.lastOperand ?? this.normalizeOperandForOperation(current, lastToken)
-          : this.normalizeOperandForOperation(current, lastToken);
+          ? this.state.lastOperand ?? this.normalizeOperandForCurrentDisplay(current, lastToken)
+          : this.normalizeOperandForCurrentDisplay(current, lastToken);
 
         if (lastToken === "*" || lastToken === "/") {
           const leftOperand = this.resolveMulDivLeftOperand(expression);
@@ -258,10 +202,10 @@ export class Calculator {
             return;
           }
           this.printToTape(
-            `${this.formatForTape(leftOperand)} ${this.symbolFor(lastToken)} ${this.formatForTape(secondOperand)} = ${this.formatForTape(mulDivResult)}`
+            `${formatForTape(leftOperand)} ${symbolFor(lastToken)} ${formatForTape(secondOperand)} = ${formatForTape(mulDivResult)}`
           );
         } else {
-          this.printToTape(`${this.formatForTape(secondOperand)} ${this.symbolFor(lastToken)}`);
+          this.printToTape(`${formatForTape(secondOperand)} ${symbolFor(lastToken)}`);
         }
 
         expression.push(secondOperand);
@@ -285,7 +229,7 @@ export class Calculator {
         }
       }
 
-      this.state.displayValue = this.formatForDisplay(result);
+      this.state.displayValue = formatForDisplay(result);
       this.state.totalMemory = result;
       this.state.firstOperand = result;
       this.state.pendingOperation = null;
@@ -302,11 +246,11 @@ export class Calculator {
 
       if (this.state.lastOperator === "+" || this.state.lastOperator === "-") {
         this.printToTape(
-          `${this.formatForTape(this.state.lastOperand)} ${this.symbolFor(this.state.lastOperator)}`
+          `${formatForTape(this.state.lastOperand)} ${symbolFor(this.state.lastOperator)}`
         );
       } else {
         this.printToTape(
-          `${this.formatForTape(current)} ${this.symbolFor(this.state.lastOperator)} ${this.formatForTape(this.state.lastOperand)} = ${this.formatForTape(result)}`
+          `${formatForTape(current)} ${symbolFor(this.state.lastOperator)} ${formatForTape(this.state.lastOperand)} = ${formatForTape(result)}`
         );
       }
       this.finalizeResult(result, this.state.lastOperator, this.state.lastOperand, false);
@@ -324,8 +268,8 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    this.state.independentMemory = this.roundByMode(this.state.independentMemory + value, "+");
-    this.printToTape(`M+ ${this.formatForTape(value)} => ${this.formatForTape(this.state.independentMemory)}`);
+    this.state.independentMemory = this.roundForCurrentMode(this.state.independentMemory + value, "+");
+    this.printToTape(`M+ ${formatForTape(value)} => ${formatForTape(this.state.independentMemory)}`);
   }
 
   memorySubtract(): void {
@@ -336,15 +280,15 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    this.state.independentMemory = this.roundByMode(this.state.independentMemory - value, "-");
-    this.printToTape(`M- ${this.formatForTape(value)} => ${this.formatForTape(this.state.independentMemory)}`);
+    this.state.independentMemory = this.roundForCurrentMode(this.state.independentMemory - value, "-");
+    this.printToTape(`M- ${formatForTape(value)} => ${formatForTape(this.state.independentMemory)}`);
   }
 
   memoryRecall(): void {
     if (!this.canIndependentMemory()) {
       return;
     }
-    this.state.displayValue = this.formatForDisplay(this.state.independentMemory);
+    this.state.displayValue = formatForDisplay(this.state.independentMemory);
     this.state.waitingForNewEntry = true;
   }
 
@@ -357,9 +301,9 @@ export class Calculator {
   }
 
   grandTotalRecall(): void {
-    this.state.displayValue = this.formatForDisplay(this.state.grandTotal);
+    this.state.displayValue = formatForDisplay(this.state.grandTotal);
     this.state.waitingForNewEntry = true;
-    this.printToTape(`GRAND TOTAL ${this.formatForTape(this.state.grandTotal)}`);
+    this.printToTape(`GRAND TOTAL ${formatForTape(this.state.grandTotal)}`);
   }
 
   printReference(): void {
@@ -371,16 +315,16 @@ export class Calculator {
     if (this.state.mode !== "ITEM") {
       return;
     }
-    this.printToTape(`ITEMS ${this.state.itemCount} TOTAL ${this.formatForTape(this.state.totalMemory)}`);
-    this.state.displayValue = this.formatForDisplay(this.state.totalMemory);
+    this.printToTape(`ITEMS ${this.state.itemCount} TOTAL ${formatForTape(this.state.totalMemory)}`);
+    this.state.displayValue = formatForDisplay(this.state.totalMemory);
     this.state.waitingForNewEntry = true;
     this.state.resetItemCountOnNextOp = true;
   }
 
   subtotal(): void {
     const subtotalValue = this.resolveRunningTotal();
-    this.printToTape(`SUBTOTAL ${this.formatForTape(subtotalValue)}`);
-    this.state.grandTotal = this.roundByMode(this.state.grandTotal + subtotalValue, "+");
+    this.printToTape(`SUBTOTAL ${formatForTape(subtotalValue)}`);
+    this.state.grandTotal = this.roundForCurrentMode(this.state.grandTotal + subtotalValue, "+");
 
     this.state.displayValue = "0";
     this.state.waitingForNewEntry = true;
@@ -404,8 +348,8 @@ export class Calculator {
     const average = this.state.itemCount > 0
       ? this.state.totalMemory / this.state.itemCount
       : 0;
-    this.printToTape(`AVG ${this.formatForTape(average)}`);
-    this.state.displayValue = this.formatForDisplay(average);
+    this.printToTape(`AVG ${formatForTape(average)}`);
+    this.state.displayValue = formatForDisplay(average);
     this.state.waitingForNewEntry = true;
   }
 
@@ -438,15 +382,15 @@ export class Calculator {
       result = (this.state.firstOperand * current) / 100;
     }
 
-    result = this.roundByMode(result, this.state.pendingOperation ?? "+");
-    if (this.checkOverflow(result)) {
+    result = this.roundForCurrentMode(result, this.state.pendingOperation ?? "+");
+    if (isOverflow(result)) {
       this.setError();
       return;
     }
 
-    this.state.displayValue = this.formatForDisplay(result);
+    this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = true;
-    this.printToTape(`% ${this.formatForTape(result)}`);
+    this.printToTape(`% ${formatForTape(result)}`);
     this.state.totalMemory = result;
   }
 
@@ -457,7 +401,7 @@ export class Calculator {
     }
     this.state.taxRate = value;
     this.state.waitingForNewEntry = true;
-    this.printToTape(`TAX RATE ${this.formatForTape(value)}%`);
+    this.printToTape(`TAX RATE ${formatForTape(value)}%`);
   }
 
   addTax(): void {
@@ -465,19 +409,19 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    const taxAmount = this.roundByMode(value * (this.state.taxRate / 100), "+");
-    const result = this.roundByMode(value * (1 + this.state.taxRate / 100), "+");
-    if (this.checkOverflow(result)) {
+    const taxAmount = this.roundForCurrentMode(value * (this.state.taxRate / 100), "+");
+    const result = this.roundForCurrentMode(value * (1 + this.state.taxRate / 100), "+");
+    if (isOverflow(result)) {
       this.setError();
       return;
     }
-    this.state.displayValue = this.formatForDisplay(result);
+    this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = true;
     this.state.totalMemory = result;
     this.printToTape(`TAX+`);
-    this.printToTape(`BASE  ${this.formatForTape(value)}`);
-    this.printToTape(`TAX ${this.formatForDisplay(this.state.taxRate)}% ${this.formatForTape(taxAmount)}`);
-    this.printToTape(`TOTAL ${this.formatForTape(result)}`);
+    this.printToTape(`BASE  ${formatForTape(value)}`);
+    this.printToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(taxAmount)}`);
+    this.printToTape(`TOTAL ${formatForTape(result)}`);
   }
 
   subtractTax(): void {
@@ -485,20 +429,20 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    const baseValue = this.roundByMode(value / (1 + this.state.taxRate / 100), "-");
-    const taxAmount = this.roundByMode(value - baseValue, "-");
+    const baseValue = this.roundForCurrentMode(value / (1 + this.state.taxRate / 100), "-");
+    const taxAmount = this.roundForCurrentMode(value - baseValue, "-");
     const result = baseValue;
-    if (this.checkOverflow(result)) {
+    if (isOverflow(result)) {
       this.setError();
       return;
     }
-    this.state.displayValue = this.formatForDisplay(result);
+    this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = true;
     this.state.totalMemory = result;
     this.printToTape(`TAX-`);
-    this.printToTape(`TOTAL ${this.formatForTape(value)}`);
-    this.printToTape(`BASE  ${this.formatForTape(baseValue)}`);
-    this.printToTape(`TAX ${this.formatForDisplay(this.state.taxRate)}% ${this.formatForTape(taxAmount)}`);
+    this.printToTape(`TOTAL ${formatForTape(value)}`);
+    this.printToTape(`BASE  ${formatForTape(baseValue)}`);
+    this.printToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(taxAmount)}`);
   }
 
   setConversionRate(): void {
@@ -512,7 +456,7 @@ export class Calculator {
     }
     this.state.conversionRate = rate;
     this.state.waitingForNewEntry = true;
-    this.printToTape(`RATE ${this.formatForTape(rate)}`);
+    this.printToTape(`RATE ${formatForTape(rate)}`);
   }
 
   convertDomesticToForeign(): void {
@@ -523,10 +467,10 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    const result = this.roundByMode(value / this.state.conversionRate, "/");
-    this.state.displayValue = this.formatForDisplay(result);
+    const result = this.roundForCurrentMode(value / this.state.conversionRate, "/");
+    this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = true;
-    this.printToTape(`${this.formatForTape(value)} -> ${this.formatForTape(result)} FC`);
+    this.printToTape(`${formatForTape(value)} -> ${formatForTape(result)} FC`);
   }
 
   convertForeignToDomestic(): void {
@@ -537,10 +481,10 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    const result = this.roundByMode(value * this.state.conversionRate, "*");
-    this.state.displayValue = this.formatForDisplay(result);
+    const result = this.roundForCurrentMode(value * this.state.conversionRate, "*");
+    this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = true;
-    this.printToTape(`${this.formatForTape(value)} FC -> ${this.formatForTape(result)} DC`);
+    this.printToTape(`${formatForTape(value)} FC -> ${formatForTape(result)} DC`);
   }
 
   businessFunction(fn: Exclude<BusinessMode, null>): void {
@@ -557,55 +501,46 @@ export class Calculator {
       this.state.businessMargin = value;
     }
 
-    this.printToTape(`${fn} IN ${this.formatForTape(value)}`);
+    this.printToTape(`${fn} IN ${formatForTape(value)}`);
 
-    const cost = this.state.businessCost;
-    const sell = this.state.businessSell;
-    const margin = this.state.businessMargin;
-
-    let result: number | null = null;
-    let solvedKey: "COST" | "SELL" | "MGN" | null = null;
-
-    if (cost !== null && sell !== null) {
-      if (sell === 0) {
-        this.setError();
-        return;
-      }
-      result = this.roundByMode(((sell - cost) / sell) * 100, "+");
-      solvedKey = "MGN";
-      this.state.businessMargin = result;
-    } else if (cost !== null && margin !== null) {
-      if (margin >= 100) {
-        this.setError();
-        return;
-      }
-      result = this.roundByMode(cost / (1 - margin / 100), "/");
-      solvedKey = "SELL";
-      this.state.businessSell = result;
-    } else if (sell !== null && margin !== null) {
-      if (margin >= 100) {
-        this.setError();
-        return;
-      }
-      result = this.roundByMode(sell * (1 - margin / 100), "-");
-      solvedKey = "COST";
-      this.state.businessCost = result;
-    }
-
-    this.state.waitingForNewEntry = true;
-
-    if (result === null || solvedKey === null) {
-      return;
-    }
-
-    if (!Number.isFinite(result) || this.checkOverflow(result)) {
+    let solution;
+    try {
+      solution = solveBusinessValues(
+        {
+          cost: this.state.businessCost,
+          sell: this.state.businessSell,
+          margin: this.state.businessMargin,
+        },
+        (numericValue, operation) =>
+          this.roundForCurrentMode(numericValue, operation)
+      );
+    } catch {
       this.setError();
       return;
     }
 
-    this.state.displayValue = this.formatForDisplay(result);
-    this.state.totalMemory = result;
-    this.printToTape(`${solvedKey} OUT ${this.formatForTape(result)}`);
+    this.state.waitingForNewEntry = true;
+
+    if (!solution) {
+      return;
+    }
+
+    if (!Number.isFinite(solution.result) || isOverflow(solution.result)) {
+      this.setError();
+      return;
+    }
+
+    if (solution.solvedKey === "COST") {
+      this.state.businessCost = solution.result;
+    } else if (solution.solvedKey === "SELL") {
+      this.state.businessSell = solution.result;
+    } else {
+      this.state.businessMargin = solution.result;
+    }
+
+    this.state.displayValue = formatForDisplay(solution.result);
+    this.state.totalMemory = solution.result;
+    this.printToTape(`${solution.solvedKey} OUT ${formatForTape(solution.result)}`);
   }
 
   clearTape(): void {
@@ -631,7 +566,7 @@ export class Calculator {
       }
     }
 
-    const operand = this.normalizeOperandForOperation(rawCurrent, operation);
+    const operand = this.normalizeOperandForCurrentDisplay(rawCurrent, operation);
     const previousOperator = this.state.expressionTokens[this.state.expressionTokens.length - 1];
 
     if (previousOperator === "*" || previousOperator === "/") {
@@ -641,10 +576,10 @@ export class Calculator {
         return;
       }
       this.printToTape(
-        `${this.formatForTape(leftOperand)} ${this.symbolFor(previousOperator)} ${this.formatForTape(operand)} = ${this.formatForTape(mulDivResult)}`
+        `${formatForTape(leftOperand)} ${symbolFor(previousOperator)} ${formatForTape(operand)} = ${formatForTape(mulDivResult)}`
       );
     } else {
-      this.printToTape(`${this.formatForTape(operand)} ${this.symbolFor(operation)}`);
+      this.printToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
     }
 
     this.state.expressionTokens.push(operand);
@@ -654,7 +589,7 @@ export class Calculator {
 
     const preview = this.evaluateExpression(this.state.expressionTokens.slice(0, -1));
     if (preview !== null) {
-      this.state.displayValue = this.formatForDisplay(preview);
+      this.state.displayValue = formatForDisplay(preview);
       this.state.totalMemory = preview;
       this.state.firstOperand = preview;
     }
@@ -674,7 +609,7 @@ export class Calculator {
     secondOperand: number,
     accumulateGrandTotal: boolean
   ): void {
-    this.state.displayValue = this.formatForDisplay(result);
+    this.state.displayValue = formatForDisplay(result);
     this.state.totalMemory = result;
     this.state.lastOperator = operation;
     this.state.lastOperand = secondOperand;
@@ -689,7 +624,7 @@ export class Calculator {
     }
 
     if (accumulateGrandTotal) {
-      this.state.grandTotal = this.roundByMode(this.state.grandTotal + result, "+");
+      this.state.grandTotal = this.roundForCurrentMode(this.state.grandTotal + result, "+");
     }
   }
 
@@ -710,8 +645,8 @@ export class Calculator {
       rawResult = first / second;
     }
 
-    const result = this.roundByMode(rawResult, operation);
-    if (!Number.isFinite(result) || this.checkOverflow(result)) {
+    const result = this.roundForCurrentMode(rawResult, operation);
+    if (!Number.isFinite(result) || isOverflow(result)) {
       this.setError();
       return null;
     }
@@ -740,7 +675,7 @@ export class Calculator {
         } else {
           const current = this.parseDisplayValue();
           if (current !== null) {
-            tokens.push(this.normalizeOperandForOperation(current, lastToken));
+            tokens.push(this.normalizeOperandForCurrentDisplay(current, lastToken));
           }
         }
       }
@@ -761,7 +696,7 @@ export class Calculator {
         return this.state.totalMemory;
       }
 
-      const secondOperand = this.normalizeOperandForOperation(current, this.state.pendingOperation);
+      const secondOperand = this.normalizeOperandForCurrentDisplay(current, this.state.pendingOperation);
       const computed = this.executeOperation(this.state.firstOperand, secondOperand, this.state.pendingOperation);
       if (computed === null) {
         return this.state.totalMemory;
@@ -777,7 +712,7 @@ export class Calculator {
     return current ?? 0;
   }
 
-  private resolveMulDivLeftOperand(expressionWithTrailingOperator: Array<number | Operation>): number {
+  private resolveMulDivLeftOperand(expressionWithTrailingOperator: ExpressionToken[]): number {
     const tokens = [...expressionWithTrailingOperator];
     if (tokens.length > 0 && typeof tokens[tokens.length - 1] === "string") {
       tokens.pop();
@@ -800,12 +735,12 @@ export class Calculator {
     return evaluated;
   }
 
-  private evaluateExpression(tokens: Array<number | Operation>): number | null {
+  private evaluateExpression(tokens: ExpressionToken[]): number | null {
     if (tokens.length === 0) {
       return 0;
     }
 
-    const noMulDiv: Array<number | Operation> = [];
+    const noMulDiv: ExpressionToken[] = [];
     let index = 0;
 
     while (index < tokens.length) {
@@ -863,33 +798,13 @@ export class Calculator {
     return result;
   }
 
-  private normalizeOperandForOperation(value: number, operation: Operation): number {
-    if (this.state.decimalMode === "ADD2" && (operation === "+" || operation === "-") && !this.state.displayValue.includes(".")) {
-      return value / 100;
-    }
-    return value;
-  }
-
-  private roundByMode(value: number, operation: Operation | "+" | "-"): number {
-    const placesByMode: Record<DecimalMode, number | null> = {
-      F: null,
-      "3": 3,
-      "2": 2,
-      "0": 0,
-      ADD2: 2,
-    };
-
-    const decimals = placesByMode[this.state.decimalMode];
-    if (decimals === null) {
-      return value;
-    }
-
-    if (this.state.decimalMode === "ADD2" && operation !== "+" && operation !== "-") {
-      return value;
-    }
-
-    const factor = 10 ** decimals;
-    return Math.round(value * factor) / factor;
+  private normalizeOperandForCurrentDisplay(value: number, operation: Operation): number {
+    return normalizeOperandForOperation(
+      this.state.displayValue,
+      this.state.decimalMode,
+      value,
+      operation
+    );
   }
 
   private parseDisplayValue(): number | null {
@@ -901,50 +816,12 @@ export class Calculator {
     return parsed;
   }
 
-  private checkDigitLimit(value: string): boolean {
-    return value.replace(/[-.]/g, "").length > MAX_INT_DIGITS;
-  }
-
-  private checkOverflow(value: number): boolean {
-    const integerLength = Math.trunc(Math.abs(value)).toString().length;
-    return integerLength > MAX_INT_DIGITS;
-  }
-
-  private formatForDisplay(value: number): string {
-    if (Object.is(value, -0)) {
-      return "0";
-    }
-    return Number(value.toFixed(10)).toString();
-  }
-
-  private formatForTape(value: number): string {
-    return this.formatForDisplay(value).padStart(14, " ");
-  }
-
-  private symbolFor(operation: Operation): string {
-    if (operation === "*") {
-      return "x";
-    }
-    if (operation === "/") {
-      return "/";
-    }
-    return operation;
-  }
-
   private printToTape(text: string, forceOn = false): void {
-    if (this.state.mode === "OFF") {
+    if (!canPrintToTape(this.state, forceOn)) {
       return;
     }
 
-    const canPrintByMode = this.state.mode === "PRINT" || this.state.mode === "ITEM" || this.state.mode === "CONVERSION";
-    if (!canPrintByMode && !(forceOn && this.state.mode === "ON")) {
-      return;
-    }
-
-    this.state.paperTape.push(text);
-    if (this.state.paperTape.length > MAX_TAPE_LINES) {
-      this.state.paperTape = this.state.paperTape.slice(-MAX_TAPE_LINES);
-    }
+    this.state.paperTape = appendTapeLine(this.state.paperTape, text);
   }
 
   private setError(): void {
@@ -959,5 +836,12 @@ export class Calculator {
     this.state.businessSell = null;
     this.state.businessMargin = null;
     this.state.expressionTokens = [];
+  }
+
+  private roundForCurrentMode(
+    value: number,
+    operation: Operation | "+" | "-"
+  ): number {
+    return roundByMode(this.state.decimalMode, value, operation);
   }
 }

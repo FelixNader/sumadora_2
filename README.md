@@ -100,6 +100,13 @@ src/
     calculator/
       Calculator.ts
       Calculator.test.ts
+      state.ts
+      types.ts
+      policies/
+        numericPolicy.ts
+        tapePolicy.ts
+      services/
+        businessMath.ts
   infrastructure/
     persistence/
       LocalStorageCalculatorSnapshotRepository.ts
@@ -116,20 +123,16 @@ src/
 
 ### Domain
 
-`src/domain/calculator/Calculator.ts`
+`src/domain/calculator/`
 
 Aqui vive la logica importante:
 
-- evaluacion de expresiones
-- redondeo por modo
-- reglas de disponibilidad por modo
-- errores y overflow
-- impuestos
-- conversion
-- memoria
-- subtotales
-- cinta
-- snapshots del estado
+- `Calculator.ts`: entidad principal y flujo operacional
+- `types.ts`: lenguaje del dominio
+- `state.ts`: estado inicial y saneamiento de snapshots
+- `policies/numericPolicy.ts`: redondeo, formato y validacion numerica
+- `policies/tapePolicy.ts`: reglas de impresion y recorte de cinta
+- `services/businessMath.ts`: resolucion de `COST / SELL / MGN`
 
 Esta capa no depende de React ni de APIs del navegador.
 
@@ -174,7 +177,7 @@ npm run build
 
 ## Limites actuales
 
-- El dominio sigue concentrado en una sola entidad fuerte: `Calculator`
+- El dominio ya no es un unico archivo, pero `Calculator` sigue siendo el principal orquestador del comportamiento
 - Los casos de uso existen como servicio de aplicacion, no como un archivo por comando
 - La persistencia actual es local al navegador, sin backend ni sincronizacion externa
 
@@ -183,6 +186,6 @@ Ese alcance es intencional. El proyecto busca una direccion de arquitectura prof
 ## Siguiente etapa razonable
 
 - separar casos de uso por comando si el dominio sigue creciendo
-- extraer politicas de redondeo y error a modulos propios
+- extraer el evaluador de expresiones a un servicio de dominio dedicado
 - agregar pruebas de infraestructura y flujos de importacion/exportacion
 - documentar decisiones arquitectonicas como ADRs pequenas
