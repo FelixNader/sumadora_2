@@ -23,6 +23,8 @@ La implementacion actual sigue una **Clean Architecture ligera**:
 
 No es una arquitectura corporativa sobredimensionada. El sistema sigue siendo pequeno, pero ahora la separacion entre dominio, aplicacion e infraestructura existe en el codigo y no solo en los diagramas.
 
+Las decisiones principales quedaron documentadas en [docs/adr/README.md](./docs/adr/README.md).
+
 ### Mapa de bounded contexts
 
 ```mermaid
