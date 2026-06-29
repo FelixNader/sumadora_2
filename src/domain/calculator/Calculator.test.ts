@@ -12,6 +12,37 @@ test('ADD2 treats integer input as cents for add/sub operations', () => {
   expect(calculator.getState().displayValue).toBe('0.03');
 });
 
+test('legacy PRINT, ON and OFF snapshots are normalized to NORMAL mode', () => {
+  const calculator = new Calculator();
+
+  calculator.loadSnapshot({
+    version: 1,
+    state: {
+      ...calculator.getState(),
+      mode: "PRINT" as never,
+    },
+  });
+  expect(calculator.getState().mode).toBe('NORMAL');
+
+  calculator.loadSnapshot({
+    version: 1,
+    state: {
+      ...calculator.getState(),
+      mode: "ON" as never,
+    },
+  });
+  expect(calculator.getState().mode).toBe('NORMAL');
+
+  calculator.loadSnapshot({
+    version: 1,
+    state: {
+      ...calculator.getState(),
+      mode: "OFF" as never,
+    },
+  });
+  expect(calculator.getState().mode).toBe('NORMAL');
+});
+
 test('CONVERSION mode disables independent memory operations', () => {
   const calculator = new Calculator();
 

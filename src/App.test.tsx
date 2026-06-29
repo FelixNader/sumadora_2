@@ -4,7 +4,7 @@ import App from './App';
 
 test('renders calculator heading', () => {
   render(<App />);
-  const titleElement = screen.getByText(/CASIO HR-100TM/i);
+  const titleElement = screen.getByText(/Sumadora Contable V1/i);
   expect(titleElement).toBeInTheDocument();
 });
 

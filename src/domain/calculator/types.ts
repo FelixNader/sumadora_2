@@ -1,4 +1,4 @@
-export type Mode = "OFF" | "ON" | "PRINT" | "ITEM" | "CONVERSION";
+export type Mode = "NORMAL" | "ITEM" | "CONVERSION";
 export type DecimalMode = "F" | "3" | "2" | "0" | "ADD2";
 export type Operation = "+" | "-" | "*" | "/";
 export type BusinessMode = "COST" | "SELL" | "MGN" | null;

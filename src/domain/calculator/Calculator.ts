@@ -92,9 +92,6 @@ export class Calculator {
 
   setMode(mode: Mode): void {
     this.state.mode = mode;
-    if (mode === "OFF") {
-      this.state.displayValue = "0";
-    }
     this.printToTape(`[MODE ${mode}]`);
   }
 
@@ -319,7 +316,7 @@ export class Calculator {
 
   printReference(): void {
     this.state.referenceNumber += 1;
-    this.printToTape(`REF# ${this.state.referenceNumber.toString().padStart(4, "0")}`, true);
+    this.printToTape(`REF# ${this.state.referenceNumber.toString().padStart(4, "0")}`);
   }
 
   printItemTotal(): void {
@@ -684,15 +681,15 @@ export class Calculator {
   }
 
   private canOperate(): boolean {
-    return this.state.mode !== "OFF";
+    return true;
   }
 
   private canIndependentMemory(): boolean {
-    return this.canOperate() && this.state.mode !== "CONVERSION";
+    return this.state.mode !== "CONVERSION";
   }
 
   private canConvertCurrency(): boolean {
-    return this.canOperate() && this.state.mode === "CONVERSION";
+    return this.state.mode === "CONVERSION";
   }
 
   private resolveRunningTotal(): number {
@@ -764,8 +761,8 @@ export class Calculator {
     return parsed;
   }
 
-  private printToTape(text: string, forceOn = false): void {
-    if (!canPrintToTape(this.state, forceOn)) {
+  private printToTape(text: string): void {
+    if (!canPrintToTape(this.state)) {
       return;
     }
 

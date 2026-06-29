@@ -138,8 +138,8 @@ const CalculatorUI: React.FC = () => {
       <div className="hr-calculator">
         <div className="hr-topbar">
           <div className="hr-brand">
-            <h2>CASIO HR-100TM</h2>
-            <p>Desktop Printing Calculator (Replica)</p>
+            <h2>Sumadora Contable V1</h2>
+            <p>Replica web con cinta siempre activa</p>
           </div>
           <div className="hr-storage-actions">
             <button onClick={handleExport}>Exportar</button>
@@ -178,9 +178,9 @@ const CalculatorUI: React.FC = () => {
 
         <div className="hr-selectors">
           <div className="hr-selector-group">
-            <label>Function Selector</label>
+            <label>Modo de trabajo</label>
             <div className="hr-selector-buttons">
-              {(['OFF', 'ON', 'PRINT', 'ITEM', 'CONVERSION'] as Mode[]).map((mode) => (
+              {(['NORMAL', 'ITEM', 'CONVERSION'] as Mode[]).map((mode) => (
                 <button
                   key={mode}
                   className={state.mode === mode ? 'active' : ''}
@@ -193,7 +193,7 @@ const CalculatorUI: React.FC = () => {
           </div>
 
           <div className="hr-selector-group">
-            <label>Decimal Selector</label>
+            <label>Selector decimal</label>
             <div className="hr-selector-buttons">
               {(['F', '3', '2', '0', 'ADD2'] as DecimalMode[]).map((decimalMode) => (
                 <button
@@ -207,6 +207,7 @@ const CalculatorUI: React.FC = () => {
             </div>
           </div>
         </div>
+        <p className="hr-helper-line">La cinta esta siempre activa; el modo solo cambia la logica contable o de conversion.</p>
 
         <div className="hr-keypad">
           <button className="key-fn" onClick={() => handleButtonClick('REF')}>REF</button>

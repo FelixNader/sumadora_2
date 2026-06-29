@@ -1,8 +1,13 @@
+.hr-container,
+.hr-container * {
+  box-sizing: border-box;
+}
+
 .hr-container {
   min-height: 100dvh;
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: minmax(220px, 30dvh) 1fr;
+  grid-template-rows: auto auto;
   gap: 12px;
   padding: 12px;
   background:
@@ -10,11 +15,13 @@
     radial-gradient(circle at 85% 75%, rgba(21, 79, 131, 0.18), transparent 30%),
     linear-gradient(135deg, #d5d1c7, #e8e3d5 55%, #f4f0e7);
   font-family: "Courier Prime", "Courier New", monospace;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  align-items: start;
 }
 
 .hr-paper-tape {
-  order: 1;
+  order: 2;
   width: 100%;
   margin: 0;
   background: #f4f0e8;
@@ -26,6 +33,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  max-height: min(36dvh, 320px);
 }
 
 .hr-paper-tape h3 {
@@ -81,7 +89,7 @@
 }
 
 .hr-calculator {
-  order: 2;
+  order: 1;
   width: 100%;
   margin: 0;
   background: linear-gradient(180deg, #40474d, #2e3438);
@@ -97,8 +105,13 @@
 .hr-topbar {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 10px;
   margin-bottom: 10px;
+}
+
+.hr-brand {
+  min-width: 0;
 }
 
 .hr-brand h2 {
@@ -106,6 +119,7 @@
   font-size: 20px;
   color: #f3f4f6;
   letter-spacing: 1px;
+  overflow-wrap: anywhere;
 }
 
 .hr-brand p {
@@ -119,6 +133,7 @@
   gap: 6px;
   flex-wrap: wrap;
   align-content: flex-start;
+  justify-content: flex-end;
 }
 
 .hr-storage-actions button {
@@ -143,6 +158,8 @@
 .hr-status-line {
   display: flex;
   justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
   color: #8ee7a3;
   font-size: 11px;
 }
@@ -159,6 +176,7 @@
   min-height: 44px;
   overflow: hidden;
   cursor: copy;
+  word-break: break-all;
 }
 
 .hr-selectors {
@@ -195,6 +213,12 @@
 .hr-selector-buttons button.active {
   background: #f2be61;
   color: #1b1b1b;
+}
+
+.hr-helper-line {
+  margin: 0 0 8px;
+  color: #c8ced5;
+  font-size: 11px;
 }
 
 .hr-keypad {
@@ -261,10 +285,12 @@
 
 @media (min-width: 769px) {
   .hr-container {
-    grid-template-columns: minmax(0, 60%) minmax(0, 40%);
+    grid-template-columns: minmax(0, 1.9fr) minmax(300px, 0.95fr);
     grid-template-rows: 1fr;
     gap: 16px;
     padding: 16px;
+    max-width: 1500px;
+    margin: 0 auto;
   }
 
   .hr-calculator {
@@ -275,6 +301,7 @@
   .hr-paper-tape {
     order: 2;
     min-height: 0;
+    max-height: calc(100dvh - 32px);
   }
 
   .hr-keypad {
@@ -290,9 +317,10 @@
 
 @media (min-width: 1200px) {
   .hr-container {
-    grid-template-columns: minmax(640px, 65%) minmax(320px, 35%);
+    grid-template-columns: minmax(720px, 860px) minmax(320px, 380px);
     gap: 20px;
     padding: 24px;
+    justify-content: center;
   }
 
   .hr-calculator,
@@ -306,8 +334,21 @@
 }
 
 @media (max-width: 640px) {
+  .hr-container {
+    padding: 10px;
+    gap: 10px;
+  }
+
   .hr-topbar {
     flex-direction: column;
+  }
+
+  .hr-storage-actions {
+    justify-content: flex-start;
+  }
+
+  .hr-display-section {
+    padding: 8px;
   }
 
   .hr-selector-buttons {
@@ -321,5 +362,40 @@
   .hr-keypad button {
     min-height: 44px;
     font-size: 12px;
+  }
+
+  .hr-paper-tape {
+    max-height: min(32dvh, 240px);
+  }
+}
+
+@media (max-width: 420px) {
+  .hr-brand h2 {
+    font-size: 18px;
+    letter-spacing: 0.5px;
+  }
+
+  .hr-brand p,
+  .hr-leds,
+  .hr-status-line,
+  .hr-helper-line,
+  .hr-storage-actions button,
+  .hr-selector-group label,
+  .hr-selector-buttons button {
+    font-size: 10px;
+  }
+
+  .hr-display {
+    font-size: clamp(20px, 8vw, 28px);
+    padding: 8px;
+  }
+
+  .hr-keypad {
+    gap: 5px;
+  }
+
+  .hr-keypad button {
+    min-height: 42px;
+    font-size: 11px;
   }
 }

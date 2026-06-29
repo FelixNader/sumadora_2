@@ -6,10 +6,10 @@ Replica web de una calculadora contable de escritorio inspirada en la `CASIO HR-
 
 - Operaciones aritmeticas con precedencia real entre `+`, `-`, `x` y `/`
 - Selector decimal `F`, `3`, `2`, `0` y `ADD2`
-- Modos `OFF`, `ON`, `PRINT`, `ITEM` y `CONVERSION`
+- Modos visibles `NORMAL`, `ITEM` y `CONVERSION`
 - Memoria independiente, `grand total`, subtotales y conteo de items
 - Impuestos, conversion de moneda y calculos `COST / SELL / MGN`
-- Cinta de papel simulada
+- Cinta de papel siempre activa
 - Persistencia local con exportacion e importacion de snapshots JSON
 - Copia del valor mostrado mediante doble clic sobre el display
 
@@ -226,7 +226,7 @@ Aqui vive la logica importante:
 - `types.ts`: lenguaje del dominio
 - `state.ts`: estado inicial y saneamiento de snapshots
 - `policies/numericPolicy.ts`: redondeo, formato y validacion numerica
-- `policies/tapePolicy.ts`: reglas de impresion y recorte de cinta
+- `policies/tapePolicy.ts`: reglas de disponibilidad y recorte de cinta
 - `services/accountingService.ts`: subtotal, conteo de items y grand total
 - `services/businessMath.ts`: resolucion de `COST / SELL / MGN`
 - `services/currencyConversionService.ts`: conversion monetaria
@@ -276,6 +276,8 @@ Lo mismo aplica al portapapeles: si la app corre como web local o PWA en el disp
 Renderiza la replica visual, captura eventos de botones y teclado, y delega la logica al servicio de aplicacion.
 
 La traduccion de teclado fisico vive en `src/ui/keyboard/translateCalculatorKeyboardEvent.ts`, con pruebas dedicadas para `typing`, numpad, separador decimal y teclas de control. El display tambien expone doble clic para copiar el valor mostrado como capacidad propia de la app web/PWA.
+
+La ayuda visible de la interfaz ya no presenta `PRINT` como modo. La cinta se considera siempre activa y los modos visibles quedan reducidos a `NORMAL`, `ITEM` y `CONVERSION`.
 
 ## Scripts
 
