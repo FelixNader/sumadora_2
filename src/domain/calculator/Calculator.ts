@@ -26,11 +26,21 @@ import {
   createSubtotalTransition,
 } from "./services/accountingService";
 import {
+  convertDomesticToForeign,
+  convertForeignToDomestic,
+  normalizeConversionRate,
+} from "./services/currencyConversionService";
+import {
   createClearedEntryState,
   createClearAllState,
   createErrorState,
   createResetAllState,
 } from "./services/sessionStateService";
+import {
+  calculateTaxAddition,
+  calculateTaxSubtraction,
+  normalizeTaxRate,
+} from "./services/taxService";
 import {
   BusinessMode,
   CalculatorSnapshot,
@@ -401,7 +411,7 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    this.state.taxRate = value;
+    this.state.taxRate = normalizeTaxRate(value);
     this.state.waitingForNewEntry = true;
     this.printToTape(`TAX RATE ${formatForTape(value)}%`);
   }
@@ -411,19 +421,24 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    const taxAmount = this.roundForCurrentMode(value * (this.state.taxRate / 100), "+");
-    const result = this.roundForCurrentMode(value * (1 + this.state.taxRate / 100), "+");
-    if (isOverflow(result)) {
+    let computation;
+    try {
+      computation = calculateTaxAddition(value, this.state.taxRate, {
+        isOverflow,
+        round: (numericValue, operation) =>
+          this.roundForCurrentMode(numericValue, operation),
+      });
+    } catch {
       this.setError();
       return;
     }
-    this.state.displayValue = formatForDisplay(result);
+    this.state.displayValue = formatForDisplay(computation.result);
     this.state.waitingForNewEntry = true;
-    this.state.totalMemory = result;
+    this.state.totalMemory = computation.result;
     this.printToTape(`TAX+`);
     this.printToTape(`BASE  ${formatForTape(value)}`);
-    this.printToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(taxAmount)}`);
-    this.printToTape(`TOTAL ${formatForTape(result)}`);
+    this.printToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(computation.taxAmount)}`);
+    this.printToTape(`TOTAL ${formatForTape(computation.result)}`);
   }
 
   subtractTax(): void {
@@ -431,20 +446,24 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    const baseValue = this.roundForCurrentMode(value / (1 + this.state.taxRate / 100), "-");
-    const taxAmount = this.roundForCurrentMode(value - baseValue, "-");
-    const result = baseValue;
-    if (isOverflow(result)) {
+    let computation;
+    try {
+      computation = calculateTaxSubtraction(value, this.state.taxRate, {
+        isOverflow,
+        round: (numericValue, operation) =>
+          this.roundForCurrentMode(numericValue, operation),
+      });
+    } catch {
       this.setError();
       return;
     }
-    this.state.displayValue = formatForDisplay(result);
+    this.state.displayValue = formatForDisplay(computation.result);
     this.state.waitingForNewEntry = true;
-    this.state.totalMemory = result;
+    this.state.totalMemory = computation.result;
     this.printToTape(`TAX-`);
     this.printToTape(`TOTAL ${formatForTape(value)}`);
-    this.printToTape(`BASE  ${formatForTape(baseValue)}`);
-    this.printToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(taxAmount)}`);
+    this.printToTape(`BASE  ${formatForTape(computation.result)}`);
+    this.printToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(computation.taxAmount)}`);
   }
 
   setConversionRate(): void {
@@ -452,13 +471,17 @@ export class Calculator {
       return;
     }
     const rate = this.parseDisplayValue();
-    if (rate === null || rate === 0) {
+    if (rate === null) {
+      return;
+    }
+    try {
+      this.state.conversionRate = normalizeConversionRate(rate);
+    } catch {
       this.setError();
       return;
     }
-    this.state.conversionRate = rate;
     this.state.waitingForNewEntry = true;
-    this.printToTape(`RATE ${formatForTape(rate)}`);
+    this.printToTape(`RATE ${formatForTape(this.state.conversionRate)}`);
   }
 
   convertDomesticToForeign(): void {
@@ -469,7 +492,17 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    const result = this.roundForCurrentMode(value / this.state.conversionRate, "/");
+    let result;
+    try {
+      result = convertDomesticToForeign(value, this.state.conversionRate, {
+        isOverflow,
+        round: (numericValue, operation) =>
+          this.roundForCurrentMode(numericValue, operation),
+      });
+    } catch {
+      this.setError();
+      return;
+    }
     this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = true;
     this.printToTape(`${formatForTape(value)} -> ${formatForTape(result)} FC`);
@@ -483,7 +516,17 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    const result = this.roundForCurrentMode(value * this.state.conversionRate, "*");
+    let result;
+    try {
+      result = convertForeignToDomestic(value, this.state.conversionRate, {
+        isOverflow,
+        round: (numericValue, operation) =>
+          this.roundForCurrentMode(numericValue, operation),
+      });
+    } catch {
+      this.setError();
+      return;
+    }
     this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = true;
     this.printToTape(`${formatForTape(value)} FC -> ${formatForTape(result)} DC`);

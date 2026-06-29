@@ -111,10 +111,14 @@ src/
         accountingService.ts
         accountingService.test.ts
         businessMath.ts
+        currencyConversionService.ts
+        currencyConversionService.test.ts
         expressionEvaluator.ts
         expressionEvaluator.test.ts
         sessionStateService.ts
         sessionStateService.test.ts
+        taxService.ts
+        taxService.test.ts
   infrastructure/
     persistence/
       LocalStorageCalculatorSnapshotRepository.ts
@@ -142,8 +146,10 @@ Aqui vive la logica importante:
 - `policies/tapePolicy.ts`: reglas de impresion y recorte de cinta
 - `services/accountingService.ts`: subtotal, conteo de items y grand total
 - `services/businessMath.ts`: resolucion de `COST / SELL / MGN`
+- `services/currencyConversionService.ts`: conversion monetaria
 - `services/expressionEvaluator.ts`: evaluacion y precedencia de expresiones
 - `services/sessionStateService.ts`: limpieza, reinicio y transiciones de error
+- `services/taxService.ts`: calculos fiscales
 
 Esta capa no depende de React ni de APIs del navegador.
 
