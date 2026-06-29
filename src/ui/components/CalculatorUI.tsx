@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  CalculatorSnapshot,
   DecimalMode,
   Mode,
 } from "../../domain/calculator/Calculator";
 import { CalculatorApplicationService } from "../../application/services/CalculatorApplicationService";
+import { BrowserCalculatorSnapshotFileGateway } from "../../infrastructure/files/BrowserCalculatorSnapshotFileGateway";
 import { LocalStorageCalculatorSnapshotRepository } from "../../infrastructure/persistence/LocalStorageCalculatorSnapshotRepository";
 import { Calculator } from "../../domain/calculator/Calculator";
 import "./CalculatorUI.css";
@@ -14,7 +14,8 @@ const CalculatorUI: React.FC = () => {
     () =>
       new CalculatorApplicationService(
         new Calculator(),
-        new LocalStorageCalculatorSnapshotRepository()
+        new LocalStorageCalculatorSnapshotRepository(),
+        new BrowserCalculatorSnapshotFileGateway()
       )
   );
   const [state, setState] = useState(service.getState());
@@ -67,14 +68,7 @@ const CalculatorUI: React.FC = () => {
   };
 
   const handleExport = () => {
-    const blob = new Blob([JSON.stringify(service.exportSnapshot(), null, 2)], {
-      type: "application/json",
-    });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `casio-hr100tm-backup-${Date.now()}.json`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    service.exportSnapshot();
   };
 
   const handleImportClick = () => {
@@ -89,9 +83,7 @@ const CalculatorUI: React.FC = () => {
     }
 
     try {
-      const text = await file.text();
-      const snapshot = JSON.parse(text) as CalculatorSnapshot;
-      setState(service.importSnapshot(snapshot));
+      setState(await service.importSnapshot(file));
       setImportError("");
     } catch {
       setImportError("Archivo invalido. Debe ser un backup JSON exportado por la app.");

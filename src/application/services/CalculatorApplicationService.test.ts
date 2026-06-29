@@ -1,5 +1,6 @@
 import { CalculatorSnapshot } from "../../domain/calculator/Calculator";
 import { Calculator } from "../../domain/calculator/Calculator";
+import { CalculatorSnapshotFileGateway } from "../ports/CalculatorSnapshotFileGateway";
 import { CalculatorSnapshotRepository } from "../ports/CalculatorSnapshotRepository";
 import { CalculatorApplicationService } from "./CalculatorApplicationService";
 
@@ -18,6 +19,23 @@ class InMemorySnapshotRepository implements CalculatorSnapshotRepository {
 
   clear() {
     this.cleared = true;
+  }
+}
+
+class InMemorySnapshotFileGateway implements CalculatorSnapshotFileGateway {
+  exported: CalculatorSnapshot | null = null;
+  imported: CalculatorSnapshot | null = null;
+
+  exportSnapshot(snapshot: CalculatorSnapshot) {
+    this.exported = snapshot;
+  }
+
+  async importSnapshot() {
+    if (!this.imported) {
+      throw new Error("missing import payload");
+    }
+
+    return this.imported;
   }
 }
 
@@ -63,4 +81,40 @@ test("persists updated snapshots through the repository", () => {
   service.persist();
 
   expect(repository.saved?.state.displayValue).toBe("12");
+});
+
+test("exports snapshots through the configured file gateway", () => {
+  const repository = new InMemorySnapshotRepository();
+  const fileGateway = new InMemorySnapshotFileGateway();
+  const service = new CalculatorApplicationService(
+    new Calculator(),
+    repository,
+    fileGateway
+  );
+
+  service.dispatch("9");
+  service.exportSnapshot();
+
+  expect(fileGateway.exported?.state.displayValue).toBe("9");
+});
+
+test("imports snapshots from the file gateway and persists them", async () => {
+  const repository = new InMemorySnapshotRepository();
+  const fileGateway = new InMemorySnapshotFileGateway();
+  const seededCalculator = new Calculator();
+  seededCalculator.inputDigit("7");
+  seededCalculator.inputDigit("3");
+  fileGateway.imported = seededCalculator.getSnapshot();
+
+  const service = new CalculatorApplicationService(
+    new Calculator(),
+    repository,
+    fileGateway
+  );
+  const file = new File(["{}"], "backup.json", { type: "application/json" });
+
+  const state = await service.importSnapshot(file);
+
+  expect(state.displayValue).toBe("73");
+  expect(repository.saved?.state.displayValue).toBe("73");
 });

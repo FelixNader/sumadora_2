@@ -94,10 +94,17 @@ flowchart TB
 src/
   application/
     ports/
+      CalculatorSnapshotFileGateway.ts
       CalculatorSnapshotRepository.ts
     services/
       CalculatorApplicationService.ts
       CalculatorApplicationService.test.ts
+    usecases/
+      configureCalculatorMode.ts
+      dispatchCalculatorAction.ts
+      hydrateCalculatorState.ts
+      persistCalculatorState.ts
+      transferCalculatorSnapshot.ts
   domain/
     calculator/
       Calculator.ts
@@ -120,6 +127,8 @@ src/
         taxService.ts
         taxService.test.ts
   infrastructure/
+    files/
+      BrowserCalculatorSnapshotFileGateway.ts
     persistence/
       LocalStorageCalculatorSnapshotRepository.ts
   ui/
@@ -155,21 +164,29 @@ Esta capa no depende de React ni de APIs del navegador.
 
 ### Application
 
-`src/application/services/CalculatorApplicationService.ts`
+`src/application/`
 
 Coordina la sesion de calculo:
 
-- hidrata el dominio desde un repositorio
-- traduce acciones de UI a metodos del dominio
-- persiste snapshots cuando cambia el estado
+- `services/CalculatorApplicationService.ts`: fachada de aplicacion
+- `usecases/dispatchCalculatorAction.ts`: despacho de acciones de calculadora
+- `usecases/hydrateCalculatorState.ts`: restauracion de estado
+- `usecases/persistCalculatorState.ts`: persistencia de estado
+- `usecases/configureCalculatorMode.ts`: cambio de modo y selector decimal
+- `usecases/transferCalculatorSnapshot.ts`: importacion y exportacion de snapshots
+- `ports/CalculatorSnapshotRepository.ts`: puerto de persistencia
+- `ports/CalculatorSnapshotFileGateway.ts`: puerto de importacion/exportacion de archivo
 
-Aqui estan los casos de uso ligeros del sistema. No es una capa enorme, pero ya evita que la UI coordine directamente al dominio y la persistencia al mismo tiempo.
+Aqui estan los casos de uso ligeros del sistema. La UI ya no contiene la logica de archivo ni el mapeo principal de persistencia; solo invoca la capa de aplicacion.
 
 ### Infrastructure
 
-`src/infrastructure/persistence/LocalStorageCalculatorSnapshotRepository.ts`
+`src/infrastructure/`
 
-Implementa el puerto de persistencia usando `localStorage`. Si mañana el almacenamiento cambia, el dominio no necesita enterarse.
+- `persistence/LocalStorageCalculatorSnapshotRepository.ts`: persistencia en `localStorage`
+- `files/BrowserCalculatorSnapshotFileGateway.ts`: lectura y descarga de snapshots en el navegador
+
+Si mañana cambia el almacenamiento o el mecanismo de archivos, el dominio no necesita enterarse.
 
 ### UI
 
