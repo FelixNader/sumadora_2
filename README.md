@@ -111,6 +111,8 @@ src/
         businessMath.ts
         expressionEvaluator.ts
         expressionEvaluator.test.ts
+        sessionStateService.ts
+        sessionStateService.test.ts
   infrastructure/
     persistence/
       LocalStorageCalculatorSnapshotRepository.ts
@@ -139,6 +141,7 @@ Aqui vive la logica importante:
 - `services/accountingService.ts`: subtotal, conteo de items y grand total
 - `services/businessMath.ts`: resolucion de `COST / SELL / MGN`
 - `services/expressionEvaluator.ts`: evaluacion y precedencia de expresiones
+- `services/sessionStateService.ts`: limpieza, reinicio y transiciones de error
 
 Esta capa no depende de React ni de APIs del navegador.
 

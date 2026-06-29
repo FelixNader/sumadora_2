@@ -26,6 +26,12 @@ import {
   createSubtotalTransition,
 } from "./services/accountingService";
 import {
+  createClearedEntryState,
+  createClearAllState,
+  createErrorState,
+  createResetAllState,
+} from "./services/sessionStateService";
+import {
   BusinessMode,
   CalculatorSnapshot,
   CalculatorState,
@@ -137,39 +143,16 @@ export class Calculator {
   }
 
   clearEntry(): void {
-    this.state.displayValue = "0";
-    this.state.error = null;
+    Object.assign(this.state, createClearedEntryState());
   }
 
   clearAll(): void {
-    this.state.displayValue = "0";
-    this.state.error = null;
-    this.state.pendingOperation = null;
-    this.state.firstOperand = null;
-    this.state.lastOperand = null;
-    this.state.lastOperator = null;
-    this.state.waitingForNewEntry = false;
-    this.state.pendingBusiness = null;
-    this.state.businessBase = null;
-    this.state.businessCost = null;
-    this.state.businessSell = null;
-    this.state.businessMargin = null;
-    this.state.expressionTokens = [];
-    this.state.resetItemCountOnNextOp = false;
-    this.state.totalMemory = 0;
-    this.state.grandTotal = 0;
-    this.state.itemCount = 0;
+    Object.assign(this.state, createClearAllState());
     this.printToTape("[AC]");
   }
 
   resetAll(): void {
-    this.clearAll();
-    this.state.independentMemory = 0;
-    this.state.grandTotal = 0;
-    this.state.referenceNumber = 0;
-    this.state.conversionRate = 1;
-    this.state.taxRate = 16;
-    this.state.paperTape = [];
+    Object.assign(this.state, createResetAllState());
   }
 
   add(): void {
@@ -747,17 +730,7 @@ export class Calculator {
   }
 
   private setError(): void {
-    this.state.error = "E";
-    this.state.displayValue = "E";
-    this.state.pendingOperation = null;
-    this.state.firstOperand = null;
-    this.state.waitingForNewEntry = false;
-    this.state.pendingBusiness = null;
-    this.state.businessBase = null;
-    this.state.businessCost = null;
-    this.state.businessSell = null;
-    this.state.businessMargin = null;
-    this.state.expressionTokens = [];
+    Object.assign(this.state, createErrorState());
   }
 
   private roundForCurrentMode(
