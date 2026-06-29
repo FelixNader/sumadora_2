@@ -106,6 +106,8 @@ src/
         numericPolicy.ts
         tapePolicy.ts
       services/
+        accountingService.ts
+        accountingService.test.ts
         businessMath.ts
         expressionEvaluator.ts
         expressionEvaluator.test.ts
@@ -134,6 +136,7 @@ Aqui vive la logica importante:
 - `state.ts`: estado inicial y saneamiento de snapshots
 - `policies/numericPolicy.ts`: redondeo, formato y validacion numerica
 - `policies/tapePolicy.ts`: reglas de impresion y recorte de cinta
+- `services/accountingService.ts`: subtotal, conteo de items y grand total
 - `services/businessMath.ts`: resolucion de `COST / SELL / MGN`
 - `services/expressionEvaluator.ts`: evaluacion y precedencia de expresiones
 

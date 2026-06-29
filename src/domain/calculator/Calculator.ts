@@ -19,6 +19,13 @@ import {
 } from "./state";
 import { solveBusinessValues } from "./services/businessMath";
 import {
+  addSpecifiedItemCount,
+  applyExpressionItemCount,
+  applyFinalizedOperationItemCount,
+  calculateItemAverage,
+  createSubtotalTransition,
+} from "./services/accountingService";
+import {
   BusinessMode,
   CalculatorSnapshot,
   CalculatorState,
@@ -226,16 +233,15 @@ export class Calculator {
         return;
       }
 
-      if (this.state.mode === "ITEM") {
-        const itemOps = expression.filter((token) => token === "+" || token === "-").length;
-        if (itemOps > 0) {
-          if (this.state.resetItemCountOnNextOp) {
-            this.state.itemCount = 0;
-            this.state.resetItemCountOnNextOp = false;
-          }
-          this.state.itemCount += itemOps;
-        }
-      }
+      const itemCountUpdate = applyExpressionItemCount(
+        this.state.mode,
+        this.state.itemCount,
+        this.state.resetItemCountOnNextOp,
+        expression
+      );
+      this.state.itemCount = itemCountUpdate.itemCount;
+      this.state.resetItemCountOnNextOp =
+        itemCountUpdate.resetItemCountOnNextOp;
 
       this.state.displayValue = formatForDisplay(result);
       this.state.totalMemory = result;
@@ -336,30 +342,31 @@ export class Calculator {
   subtotal(): void {
     const subtotalValue = this.resolveRunningTotal();
     this.printToTape(`SUBTOTAL ${formatForTape(subtotalValue)}`);
-    this.state.grandTotal = this.roundForCurrentMode(this.state.grandTotal + subtotalValue, "+");
-
-    this.state.displayValue = "0";
-    this.state.waitingForNewEntry = true;
-    this.state.pendingOperation = null;
-    this.state.firstOperand = null;
-    this.state.lastOperator = null;
-    this.state.lastOperand = null;
-    this.state.expressionTokens = [];
-    this.state.totalMemory = 0;
-
-    if (this.state.mode === "ITEM") {
-      this.state.itemCount = 0;
-      this.state.resetItemCountOnNextOp = false;
-    }
+    const transition = createSubtotalTransition(this.state, subtotalValue, (value, operation) =>
+      this.roundForCurrentMode(value, operation)
+    );
+    this.state.grandTotal = transition.grandTotal;
+    this.state.displayValue = transition.displayValue;
+    this.state.waitingForNewEntry = transition.waitingForNewEntry;
+    this.state.pendingOperation = transition.pendingOperation;
+    this.state.firstOperand = transition.firstOperand;
+    this.state.lastOperator = transition.lastOperator;
+    this.state.lastOperand = transition.lastOperand;
+    this.state.expressionTokens = transition.expressionTokens;
+    this.state.totalMemory = transition.totalMemory;
+    this.state.itemCount = transition.itemCount;
+    this.state.resetItemCountOnNextOp =
+      transition.resetItemCountOnNextOp;
   }
 
   printItemAverage(): void {
     if (this.state.mode !== "ITEM") {
       return;
     }
-    const average = this.state.itemCount > 0
-      ? this.state.totalMemory / this.state.itemCount
-      : 0;
+    const average = calculateItemAverage(
+      this.state.itemCount,
+      this.state.totalMemory
+    );
     this.printToTape(`AVG ${formatForTape(average)}`);
     this.state.displayValue = formatForDisplay(average);
     this.state.waitingForNewEntry = true;
@@ -373,10 +380,10 @@ export class Calculator {
     if (value === null) {
       return;
     }
-    const integerPart = Math.trunc(Math.abs(value));
-    const addValue = integerPart % 1000;
-    this.state.itemCount += addValue;
-    this.printToTape(`ITEM +${addValue} => ${this.state.itemCount}`);
+    const nextItemCount = addSpecifiedItemCount(this.state.itemCount, value);
+    const added = nextItemCount - this.state.itemCount;
+    this.state.itemCount = nextItemCount;
+    this.printToTape(`ITEM +${added} => ${this.state.itemCount}`);
     this.state.waitingForNewEntry = true;
   }
 
@@ -635,14 +642,15 @@ export class Calculator {
     this.state.lastOperator = operation;
     this.state.lastOperand = secondOperand;
 
-    if (this.state.mode === "ITEM" && (operation === "+" || operation === "-")) {
-      if (this.state.resetItemCountOnNextOp) {
-        this.state.itemCount = 1;
-        this.state.resetItemCountOnNextOp = false;
-      } else {
-        this.state.itemCount += 1;
-      }
-    }
+    const itemCountUpdate = applyFinalizedOperationItemCount(
+      this.state.mode,
+      this.state.itemCount,
+      this.state.resetItemCountOnNextOp,
+      operation
+    );
+    this.state.itemCount = itemCountUpdate.itemCount;
+    this.state.resetItemCountOnNextOp =
+      itemCountUpdate.resetItemCountOnNextOp;
 
     if (accumulateGrandTotal) {
       this.state.grandTotal = this.roundForCurrentMode(this.state.grandTotal + result, "+");
