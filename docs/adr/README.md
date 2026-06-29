@@ -3,3 +3,4 @@
 - [0001 - Adopt lightweight clean architecture](./0001-lightweight-clean-architecture.md)
 - [0002 - Keep Calculator as aggregate root and extract domain services incrementally](./0002-calculator-aggregate-and-domain-services.md)
 - [0003 - Persist snapshots through a repository port backed by localStorage](./0003-snapshot-repository-port-and-localstorage-adapter.md)
+- [0004 - Keep React as a UI detail instead of migrating this project to plain JavaScript](./0004-react-as-ui-detail-not-primary-architecture.md)
