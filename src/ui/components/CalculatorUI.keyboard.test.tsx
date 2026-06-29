@@ -4,6 +4,11 @@ import App from "../../App";
 
 beforeEach(() => {
   localStorage.clear();
+  Object.assign(navigator, {
+    clipboard: {
+      writeText: jest.fn().mockResolvedValue(undefined),
+    },
+  });
 });
 
 function getDisplay(container: HTMLElement): string {

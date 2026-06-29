@@ -1,5 +1,6 @@
 import { CalculatorSnapshot } from "../../domain/calculator/Calculator";
 import { Calculator } from "../../domain/calculator/Calculator";
+import { ClipboardGateway } from "../ports/ClipboardGateway";
 import { CalculatorSnapshotFileGateway } from "../ports/CalculatorSnapshotFileGateway";
 import { CalculatorSnapshotRepository } from "../ports/CalculatorSnapshotRepository";
 import { CalculatorApplicationService } from "./CalculatorApplicationService";
@@ -36,6 +37,14 @@ class InMemorySnapshotFileGateway implements CalculatorSnapshotFileGateway {
     }
 
     return this.imported;
+  }
+}
+
+class InMemoryClipboardGateway implements ClipboardGateway {
+  written: string | null = null;
+
+  async writeText(value: string) {
+    this.written = value;
   }
 }
 
@@ -117,4 +126,23 @@ test("imports snapshots from the file gateway and persists them", async () => {
 
   expect(state.displayValue).toBe("73");
   expect(repository.saved?.state.displayValue).toBe("73");
+});
+
+test("copies current display value through the configured clipboard gateway", async () => {
+  const repository = new InMemorySnapshotRepository();
+  const fileGateway = new InMemorySnapshotFileGateway();
+  const clipboardGateway = new InMemoryClipboardGateway();
+  const service = new CalculatorApplicationService(
+    new Calculator(),
+    repository,
+    fileGateway,
+    clipboardGateway
+  );
+
+  service.dispatch("4");
+  service.dispatch("2");
+  const copiedValue = await service.copyDisplayValue();
+
+  expect(copiedValue).toBe("42");
+  expect(clipboardGateway.written).toBe("42");
 });

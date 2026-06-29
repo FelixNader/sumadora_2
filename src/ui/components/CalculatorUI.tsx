@@ -4,6 +4,7 @@ import {
   Mode,
 } from "../../domain/calculator/Calculator";
 import { CalculatorApplicationService } from "../../application/services/CalculatorApplicationService";
+import { BrowserClipboardGateway } from "../../infrastructure/clipboard/BrowserClipboardGateway";
 import { BrowserCalculatorSnapshotFileGateway } from "../../infrastructure/files/BrowserCalculatorSnapshotFileGateway";
 import { LocalStorageCalculatorSnapshotRepository } from "../../infrastructure/persistence/LocalStorageCalculatorSnapshotRepository";
 import { Calculator } from "../../domain/calculator/Calculator";
@@ -16,11 +17,13 @@ const CalculatorUI: React.FC = () => {
       new CalculatorApplicationService(
         new Calculator(),
         new LocalStorageCalculatorSnapshotRepository(),
-        new BrowserCalculatorSnapshotFileGateway()
+        new BrowserCalculatorSnapshotFileGateway(),
+        new BrowserClipboardGateway()
       )
   );
   const [state, setState] = useState(service.getState());
   const [importError, setImportError] = useState("");
+  const [copyFeedback, setCopyFeedback] = useState("");
   const [isTapePinned, setIsTapePinned] = useState(true);
   const paperTapeRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -76,6 +79,15 @@ const CalculatorUI: React.FC = () => {
     fileInputRef.current?.click();
   };
 
+  const handleCopyDisplayValue = useCallback(async () => {
+    try {
+      const copiedValue = await service.copyDisplayValue();
+      setCopyFeedback(`Copiado: ${copiedValue}`);
+    } catch {
+      setCopyFeedback("No se pudo copiar el valor mostrado.");
+    }
+  }, [service]);
+
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -109,6 +121,18 @@ const CalculatorUI: React.FC = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [handleButtonClick]);
 
+  useEffect(() => {
+    if (!copyFeedback) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCopyFeedback("");
+    }, 1800);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [copyFeedback]);
+
   return (
     <div className="hr-container">
       <div className="hr-calculator">
@@ -138,7 +162,13 @@ const CalculatorUI: React.FC = () => {
             <span>ITM {state.itemCount}</span>
             <span>M {state.independentMemory !== 0 ? 'ON' : 'OFF'}</span>
           </div>
-          <div className="hr-display">{state.displayValue}</div>
+          <div
+            className="hr-display"
+            onDoubleClick={handleCopyDisplayValue}
+            title="Doble clic para copiar el valor mostrado"
+          >
+            {state.displayValue}
+          </div>
           <div className="hr-status-line">
             <span>TAX {state.taxRate}%</span>
             <span>RATE {state.conversionRate}</span>
@@ -227,6 +257,7 @@ const CalculatorUI: React.FC = () => {
         </div>
 
         {importError && <p className="import-error">{importError}</p>}
+        {copyFeedback && <p className="copy-feedback">{copyFeedback}</p>}
       </div>
 
       <div className="hr-paper-tape">

@@ -10,6 +10,8 @@ import {
   configureCalculatorDecimalMode,
   configureCalculatorMode,
 } from "../usecases/configureCalculatorMode";
+import { ClipboardGateway } from "../ports/ClipboardGateway";
+import { copyDisplayValue } from "../usecases/copyDisplayValue";
 import { hydrateCalculatorState } from "../usecases/hydrateCalculatorState";
 import { persistCalculatorState } from "../usecases/persistCalculatorState";
 import {
@@ -24,7 +26,8 @@ export class CalculatorApplicationService {
   constructor(
     private readonly calculator: Calculator,
     private readonly snapshotRepository: CalculatorSnapshotRepository,
-    private readonly snapshotFileGateway?: CalculatorSnapshotFileGateway
+    private readonly snapshotFileGateway?: CalculatorSnapshotFileGateway,
+    private readonly clipboardGateway?: ClipboardGateway
   ) {}
 
   getState(): CalculatorState {
@@ -78,5 +81,13 @@ export class CalculatorApplicationService {
       this.snapshotRepository,
       snapshot
     );
+  }
+
+  async copyDisplayValue(): Promise<string> {
+    if (!this.clipboardGateway) {
+      throw new Error("Clipboard gateway is not configured");
+    }
+
+    return copyDisplayValue(this.calculator, this.clipboardGateway);
   }
 }

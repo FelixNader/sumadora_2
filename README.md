@@ -11,6 +11,7 @@ Replica web de una calculadora contable de escritorio inspirada en la `CASIO HR-
 - Impuestos, conversion de moneda y calculos `COST / SELL / MGN`
 - Cinta de papel simulada
 - Persistencia local con exportacion e importacion de snapshots JSON
+- Copia del valor mostrado mediante doble clic sobre el display
 
 ## Arquitectura
 
@@ -45,33 +46,97 @@ flowchart LR
     Core --> Persistence
 ```
 
+La copia al portapapeles no aparece en este grafo porque no es un bounded context de negocio. Es una capacidad de aplicacion e infraestructura propia del entorno web/PWA.
+
 ### Vista de Clean Architecture
 
 ```mermaid
 flowchart LR
-    subgraph Domain["Domain"]
-        Calc["Calculator"]
+    subgraph UI["UI / React"]
+        Screen["CalculatorUI"]
+        Keyboard["translateCalculatorKeyboardEvent"]
+        Display["Display double click"]
+        SnapshotButtons["Import / Export buttons"]
     end
 
     subgraph Application["Application"]
+        Dispatch["dispatchCalculatorAction"]
+        Copy["copyDisplayValue"]
+        Transfer["transferCalculatorSnapshot"]
         Service["CalculatorApplicationService"]
-        Port["CalculatorSnapshotRepository"]
+        ClipboardPort["ClipboardGateway"]
+        SnapshotRepoPort["CalculatorSnapshotRepository"]
+        SnapshotFilePort["CalculatorSnapshotFileGateway"]
+    end
+
+    subgraph Domain["Domain"]
+        Calc["Calculator aggregate"]
+        Rules["Domain services and policies"]
     end
 
     subgraph Infrastructure["Infrastructure"]
+        ClipboardAdapter["BrowserClipboardGateway"]
         LocalRepo["LocalStorageCalculatorSnapshotRepository"]
+        FileAdapter["BrowserCalculatorSnapshotFileGateway"]
     end
 
-    subgraph UI["UI"]
-        Screen["CalculatorUI"]
-        App["App"]
-    end
-
-    App --> Screen
     Screen --> Service
-    Service --> Calc
-    Service --> Port
-    LocalRepo --> Port
+    Keyboard --> Dispatch
+    Display --> Copy
+    SnapshotButtons --> Transfer
+    Service --> Dispatch
+    Service --> Copy
+    Service --> Transfer
+    Dispatch --> Calc
+    Copy --> Calc
+    Transfer --> Calc
+    Calc --> Rules
+    Copy --> ClipboardPort
+    Transfer --> SnapshotRepoPort
+    Transfer --> SnapshotFilePort
+    ClipboardAdapter --> ClipboardPort
+    LocalRepo --> SnapshotRepoPort
+    FileAdapter --> SnapshotFilePort
+```
+
+### Flujo por capacidad
+
+```mermaid
+flowchart TB
+    subgraph Typing["1. Typing y teclado fisico"]
+        K1["Evento DOM keydown"] --> K2["translateCalculatorKeyboardEvent"]
+        K2 --> K3["dispatchCalculatorAction"]
+        K3 --> K4["Calculator"]
+    end
+
+    subgraph Copy["2. Copia del display"]
+        C1["Doble clic en display"] --> C2["copyDisplayValue"]
+        C2 --> C3["ClipboardGateway"]
+        C3 --> C4["BrowserClipboardGateway"]
+        C4 --> C5["Clipboard API"]
+    end
+
+    subgraph Snapshot["3. Backup local"]
+        S1["Click importar / exportar"] --> S2["transferCalculatorSnapshot"]
+        S2 --> S3["CalculatorSnapshotRepository"]
+        S2 --> S4["CalculatorSnapshotFileGateway"]
+        S3 --> S5["localStorage"]
+        S4 --> S6["Browser File APIs"]
+    end
+```
+
+### Que logica usa que detalle y por que
+
+```mermaid
+flowchart TB
+    Domain["Domain logic uses no browser detail because calculation rules must stay pure"]
+    Application["Application logic uses ports because it coordinates use cases without binding to the browser"]
+    UI["UI uses React and DOM events because rendering and interaction belong to delivery"]
+    Infrastructure["Infrastructure uses browser APIs because storage, files and clipboard are environment details"]
+
+    UI --> Application
+    Application --> Domain
+    Infrastructure --> Application
 ```
 
 ### Regla de dependencia
@@ -94,6 +159,7 @@ flowchart TB
 src/
   application/
     ports/
+      ClipboardGateway.ts
       CalculatorSnapshotFileGateway.ts
       CalculatorSnapshotRepository.ts
     services/
@@ -101,6 +167,7 @@ src/
       CalculatorApplicationService.test.ts
     usecases/
       configureCalculatorMode.ts
+      copyDisplayValue.ts
       dispatchCalculatorAction.ts
       hydrateCalculatorState.ts
       persistCalculatorState.ts
@@ -127,6 +194,8 @@ src/
         taxService.ts
         taxService.test.ts
   infrastructure/
+    clipboard/
+      BrowserClipboardGateway.ts
     files/
       BrowserCalculatorSnapshotFileGateway.ts
     persistence/
@@ -135,6 +204,8 @@ src/
     components/
       CalculatorUI.tsx
       CalculatorUI.css
+      CalculatorUI.clipboard.test.tsx
+      CalculatorUI.keyboard.test.tsx
     keyboard/
       translateCalculatorKeyboardEvent.ts
       translateCalculatorKeyboardEvent.test.ts
@@ -173,23 +244,30 @@ Coordina la sesion de calculo:
 
 - `services/CalculatorApplicationService.ts`: fachada de aplicacion
 - `usecases/dispatchCalculatorAction.ts`: despacho de acciones de calculadora
+- `usecases/copyDisplayValue.ts`: copia del display al portapapeles
 - `usecases/hydrateCalculatorState.ts`: restauracion de estado
 - `usecases/persistCalculatorState.ts`: persistencia de estado
 - `usecases/configureCalculatorMode.ts`: cambio de modo y selector decimal
 - `usecases/transferCalculatorSnapshot.ts`: importacion y exportacion de snapshots
+- `ports/ClipboardGateway.ts`: puerto de portapapeles
 - `ports/CalculatorSnapshotRepository.ts`: puerto de persistencia
 - `ports/CalculatorSnapshotFileGateway.ts`: puerto de importacion/exportacion de archivo
 
 Aqui estan los casos de uso ligeros del sistema. La UI ya no contiene la logica de archivo ni el mapeo principal de persistencia; solo invoca la capa de aplicacion.
+
+El caso de copia del display sigue la misma regla: el doble clic nace en React, pero la operacion de copiado se expresa como `copyDisplayValue.ts` y depende de `ClipboardGateway`, no de `navigator.clipboard` directamente.
 
 ### Infrastructure
 
 `src/infrastructure/`
 
 - `persistence/LocalStorageCalculatorSnapshotRepository.ts`: persistencia en `localStorage`
+- `clipboard/BrowserClipboardGateway.ts`: escritura al portapapeles del navegador
 - `files/BrowserCalculatorSnapshotFileGateway.ts`: lectura y descarga de snapshots en el navegador
 
 Si mañana cambia el almacenamiento o el mecanismo de archivos, el dominio no necesita enterarse.
+
+Lo mismo aplica al portapapeles: si la app corre como web local o PWA en el dispositivo anfitrion, el detalle concreto sigue siendo la API del navegador disponible en ese entorno, no una preocupacion del dominio.
 
 ### UI
 
@@ -197,7 +275,7 @@ Si mañana cambia el almacenamiento o el mecanismo de archivos, el dominio no ne
 
 Renderiza la replica visual, captura eventos de botones y teclado, y delega la logica al servicio de aplicacion.
 
-La traduccion de teclado fisico vive en `src/ui/keyboard/translateCalculatorKeyboardEvent.ts`, con pruebas dedicadas para `typing`, numpad, separador decimal y teclas de control.
+La traduccion de teclado fisico vive en `src/ui/keyboard/translateCalculatorKeyboardEvent.ts`, con pruebas dedicadas para `typing`, numpad, separador decimal y teclas de control. El display tambien expone doble clic para copiar el valor mostrado como capacidad propia de la app web/PWA.
 
 ## Scripts
 
@@ -210,8 +288,8 @@ npm run build
 ## Verificacion actual
 
 - Tests de dominio para `ADD2`, conversion, items, impuestos, negocio y precedencia
-- Tests de aplicacion para hidratacion y persistencia
-- Tests de UI para render, operacion basica y typing de teclado fisico
+- Tests de aplicacion para hidratacion, persistencia y copiado del display
+- Tests de UI para render, operacion basica, typing de teclado fisico y doble clic de copiado
 - Build de produccion valido con `react-scripts build`
 
 ## Limites actuales
