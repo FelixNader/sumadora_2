@@ -1,0 +1,119 @@
+.business-calculator {
+  background-color: #ecf0f1;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
+  font-family: 'Courier New', monospace;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.business-calculator h2 {
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.calc-section {
+  margin-bottom: 30px;
+  padding: 15px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.calc-section h3 {
+  color: #34495e;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.input-group input {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.button-group button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.button-group button:hover {
+  background-color: #2980b9;
+}
+
+.result {
+  background-color: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.result h3 {
+  color: #34495e;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.result-display {
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 16px;
+  color: #2c3e50;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', monospace;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .business-calculator {
+    padding: 15px;
+  }
+
+  .input-group {
+    flex-direction: column;
+  }
+
+  .input-group input {
+    min-width: auto;
+  }
+
+  .button-group {
+    justify-content: center;
+  }
+
+  .button-group button {
+    flex: 1;
+    min-width: 120px;
+  }
+}

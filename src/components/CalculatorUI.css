@@ -1,0 +1,318 @@
+.hr-container {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(220px, 30dvh) 1fr;
+  gap: 12px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(187, 132, 76, 0.2), transparent 35%),
+    radial-gradient(circle at 85% 75%, rgba(21, 79, 131, 0.18), transparent 30%),
+    linear-gradient(135deg, #d5d1c7, #e8e3d5 55%, #f4f0e7);
+  font-family: "Courier Prime", "Courier New", monospace;
+  overflow: hidden;
+}
+
+.hr-paper-tape {
+  order: 1;
+  width: 100%;
+  margin: 0;
+  background: #f4f0e8;
+  border: 2px solid #bfb3a3;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  padding: 10px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.hr-paper-tape h3 {
+  margin: 0 0 8px;
+  color: #3e3327;
+  text-align: center;
+  font-size: 14px;
+}
+
+.hr-tape-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.hr-tape-content {
+  background: repeating-linear-gradient(
+    180deg,
+    #f8f4ec 0,
+    #f8f4ec 24px,
+    #efe8dd 24px,
+    #efe8dd 25px
+  );
+  padding: 8px;
+  border-radius: 6px;
+  min-height: 100%;
+}
+
+.hr-tape-line {
+  font-size: 12px;
+  color: #32291d;
+  padding: 3px 0;
+  white-space: pre;
+}
+
+.hr-tape-line-last {
+  color: #12100a;
+  font-weight: 700;
+}
+
+.hr-scroll-end {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  border: 1px solid #2e3e4d;
+  background: #37536b;
+  color: #f4f7fa;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.hr-calculator {
+  order: 2;
+  width: 100%;
+  margin: 0;
+  background: linear-gradient(180deg, #40474d, #2e3438);
+  border: 2px solid #1c2125;
+  border-radius: 14px;
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.35);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.hr-topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.hr-brand h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #f3f4f6;
+  letter-spacing: 1px;
+}
+
+.hr-brand p {
+  margin: 3px 0 0;
+  font-size: 11px;
+  color: #c8ced5;
+}
+
+.hr-storage-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-content: flex-start;
+}
+
+.hr-storage-actions button {
+  border: 1px solid #000;
+  background: #d8ba72;
+  color: #1b1b1b;
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 6px 9px;
+  cursor: pointer;
+}
+
+.hr-display-section {
+  border: 2px solid #0f1f2a;
+  border-radius: 8px;
+  background: #10222f;
+  padding: 9px;
+  margin-bottom: 8px;
+}
+
+.hr-leds,
+.hr-status-line {
+  display: flex;
+  justify-content: space-between;
+  color: #8ee7a3;
+  font-size: 11px;
+}
+
+.hr-display {
+  margin: 6px 0;
+  border-radius: 6px;
+  border: 1px solid #092030;
+  background: #d5e6dd;
+  color: #112a1f;
+  text-align: right;
+  padding: 10px;
+  font-size: clamp(22px, 5vw, 34px);
+  min-height: 44px;
+  overflow: hidden;
+}
+
+.hr-selectors {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.hr-selector-group label {
+  display: block;
+  color: #d9e1e8;
+  font-size: 11px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.hr-selector-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.hr-selector-buttons button {
+  border: 1px solid #060a0e;
+  background: #656d75;
+  color: #eff3f6;
+  border-radius: 5px;
+  padding: 7px 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.hr-selector-buttons button.active {
+  background: #f2be61;
+  color: #1b1b1b;
+}
+
+.hr-keypad {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-rows: minmax(46px, 1fr);
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+}
+
+.hr-keypad button {
+  min-height: 46px;
+  border-radius: 8px;
+  border: 1px solid #090e11;
+  background: linear-gradient(180deg, #efefef, #d3d3d3);
+  color: #111;
+  font-family: "Courier Prime", "Courier New", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hr-keypad .key-fn {
+  background: linear-gradient(180deg, #7fa7cb, #5d7b95);
+  color: #f6f8fa;
+  font-size: 12px;
+}
+
+.hr-keypad .key-op {
+  background: linear-gradient(180deg, #c98352, #a2663f);
+  color: #fff;
+}
+
+.hr-keypad .key-equals {
+  background: linear-gradient(180deg, #d74d4d, #a83636);
+  color: #fff;
+}
+
+.hr-keypad .key-plus {
+  grid-row: span 2;
+}
+
+.hr-keypad .key-wide {
+  grid-column: span 2;
+}
+
+.hr-keypad .key-warn {
+  background: linear-gradient(180deg, #a2a13e, #7d7d30);
+  color: #fff;
+}
+
+.import-error {
+  margin: 8px 0 0;
+  color: #ffb3b3;
+  font-size: 12px;
+}
+
+@media (min-width: 769px) {
+  .hr-container {
+    grid-template-columns: minmax(0, 60%) minmax(0, 40%);
+    grid-template-rows: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .hr-calculator {
+    order: 1;
+    padding: 16px;
+  }
+
+  .hr-paper-tape {
+    order: 2;
+    min-height: 0;
+  }
+
+  .hr-keypad {
+    grid-auto-rows: minmax(52px, 1fr);
+    gap: 8px;
+  }
+
+  .hr-keypad button {
+    min-height: 52px;
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .hr-container {
+    grid-template-columns: minmax(640px, 65%) minmax(320px, 35%);
+    gap: 20px;
+    padding: 24px;
+  }
+
+  .hr-calculator,
+  .hr-paper-tape {
+    max-height: calc(100dvh - 48px);
+  }
+
+  .hr-keypad {
+    grid-auto-rows: minmax(56px, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .hr-topbar {
+    flex-direction: column;
+  }
+
+  .hr-selector-buttons {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .hr-keypad {
+    grid-auto-rows: minmax(44px, 1fr);
+  }
+
+  .hr-keypad button {
+    min-height: 44px;
+    font-size: 12px;
+  }
+}
