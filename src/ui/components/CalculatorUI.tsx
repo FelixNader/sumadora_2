@@ -7,6 +7,7 @@ import { CalculatorApplicationService } from "../../application/services/Calcula
 import { BrowserCalculatorSnapshotFileGateway } from "../../infrastructure/files/BrowserCalculatorSnapshotFileGateway";
 import { LocalStorageCalculatorSnapshotRepository } from "../../infrastructure/persistence/LocalStorageCalculatorSnapshotRepository";
 import { Calculator } from "../../domain/calculator/Calculator";
+import { translateCalculatorKeyboardEvent } from "../keyboard/translateCalculatorKeyboardEvent";
 import "./CalculatorUI.css";
 
 const CalculatorUI: React.FC = () => {
@@ -92,56 +93,16 @@ const CalculatorUI: React.FC = () => {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey || event.metaKey || event.altKey) {
+      const keyboardAction = translateCalculatorKeyboardEvent(event);
+      if (!keyboardAction) {
         return;
       }
 
-      const key = event.key;
-      if (/^[0-9]$/.test(key)) {
-        handleButtonClick(key);
-        return;
-      }
-
-      if (key === ".") {
-        handleButtonClick(".");
-        return;
-      }
-
-      if (key === "+") {
-        handleButtonClick("+");
-        return;
-      }
-
-      if (key === "-") {
-        handleButtonClick("-");
-        return;
-      }
-
-      if (key === "*") {
-        handleButtonClick("x");
-        return;
-      }
-
-      if (key === "/") {
+      if (keyboardAction.preventDefault) {
         event.preventDefault();
-        handleButtonClick("/");
-        return;
       }
 
-      if (key === "Enter" || key === "=") {
-        event.preventDefault();
-        handleButtonClick("=");
-        return;
-      }
-
-      if (key === "Escape") {
-        handleButtonClick("CA");
-        return;
-      }
-
-      if (key === "Backspace") {
-        handleButtonClick("CE");
-      }
+      handleButtonClick(keyboardAction.action);
     };
 
     window.addEventListener('keydown', onKeyDown);

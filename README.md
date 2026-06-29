@@ -135,6 +135,9 @@ src/
     components/
       CalculatorUI.tsx
       CalculatorUI.css
+    keyboard/
+      translateCalculatorKeyboardEvent.ts
+      translateCalculatorKeyboardEvent.test.ts
   App.tsx
   App.test.tsx
   index.tsx
@@ -194,6 +197,8 @@ Si mañana cambia el almacenamiento o el mecanismo de archivos, el dominio no ne
 
 Renderiza la replica visual, captura eventos de botones y teclado, y delega la logica al servicio de aplicacion.
 
+La traduccion de teclado fisico vive en `src/ui/keyboard/translateCalculatorKeyboardEvent.ts`, con pruebas dedicadas para `typing`, numpad, separador decimal y teclas de control.
+
 ## Scripts
 
 ```bash
@@ -206,7 +211,7 @@ npm run build
 
 - Tests de dominio para `ADD2`, conversion, items, impuestos, negocio y precedencia
 - Tests de aplicacion para hidratacion y persistencia
-- Tests de UI para render y operacion basica
+- Tests de UI para render, operacion basica y typing de teclado fisico
 - Build de produccion valido con `react-scripts build`
 
 ## Limites actuales
