@@ -1,37 +1,35 @@
-import React, { useCallback, useState, useEffect, useRef } from 'react';
-import { Calculator, CalculatorSnapshot, Mode, DecimalMode } from '../Calculator';
-import './CalculatorUI.css';
-
-const STORAGE_KEY = 'casio-hr100tm-state-v1';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  CalculatorSnapshot,
+  DecimalMode,
+  Mode,
+} from "../../domain/calculator/Calculator";
+import { CalculatorApplicationService } from "../../application/services/CalculatorApplicationService";
+import { LocalStorageCalculatorSnapshotRepository } from "../../infrastructure/persistence/LocalStorageCalculatorSnapshotRepository";
+import { Calculator } from "../../domain/calculator/Calculator";
+import "./CalculatorUI.css";
 
 const CalculatorUI: React.FC = () => {
-  const [calculator] = useState(() => new Calculator());
-  const [state, setState] = useState(calculator.getState());
-  const [importError, setImportError] = useState('');
+  const [service] = useState(
+    () =>
+      new CalculatorApplicationService(
+        new Calculator(),
+        new LocalStorageCalculatorSnapshotRepository()
+      )
+  );
+  const [state, setState] = useState(service.getState());
+  const [importError, setImportError] = useState("");
   const [isTapePinned, setIsTapePinned] = useState(true);
   const paperTapeRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      setState(calculator.getState());
-      return;
-    }
-
-    try {
-      const snapshot = JSON.parse(raw) as CalculatorSnapshot;
-      calculator.loadSnapshot(snapshot);
-      setState(calculator.getState());
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-      setState(calculator.getState());
-    }
-  }, [calculator]);
+    setState(service.hydrate());
+  }, [service]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(calculator.getSnapshot()));
-  }, [calculator, state]);
+    service.persist();
+  }, [service, state]);
 
   useEffect(() => {
     if (paperTapeRef.current && isTapePinned) {
@@ -57,126 +55,22 @@ const CalculatorUI: React.FC = () => {
   }, []);
 
   const handleButtonClick = useCallback((action: string) => {
-    switch (action) {
-      case '0': case '1': case '2': case '3': case '4':
-      case '5': case '6': case '7': case '8': case '9':
-        calculator.inputDigit(action);
-        break;
-      case '.':
-        calculator.inputDecimal();
-        break;
-      case '+/-':
-        calculator.toggleSign();
-        break;
-      case 'CE':
-        calculator.clearEntry();
-        break;
-      case 'CA':
-        calculator.clearAll();
-        break;
-      case '+':
-        calculator.add();
-        break;
-      case '+=':
-        calculator.add();
-        break;
-      case '-':
-        calculator.subtract();
-        break;
-      case 'x':
-        calculator.multiply();
-        break;
-      case '/':
-        calculator.divide();
-        break;
-      case '=':
-        calculator.equals();
-        break;
-      case 'M+':
-        calculator.memoryAdd();
-        break;
-      case 'M-':
-        calculator.memorySubtract();
-        break;
-      case 'MR':
-        calculator.memoryRecall();
-        break;
-      case 'MC':
-        calculator.memoryClear();
-        break;
-      case 'REF':
-        calculator.printReference();
-        break;
-      case 'GT':
-        calculator.grandTotalRecall();
-        break;
-      case 'ITM':
-        calculator.addSpecifiedItemCount();
-        break;
-      case 'ITM TOTAL':
-        calculator.printItemTotal();
-        break;
-      case 'SUBT':
-        calculator.subtotal();
-        break;
-      case 'AVG':
-        calculator.printItemAverage();
-        break;
-      case '%':
-        calculator.percent();
-        break;
-      case 'TAX+':
-        calculator.addTax();
-        break;
-      case 'TAX-':
-        calculator.subtractTax();
-        break;
-      case 'TAX SET':
-        calculator.setTaxRate();
-        break;
-      case 'RATE':
-        calculator.setConversionRate();
-        break;
-      case 'CONV ->':
-        calculator.convertDomesticToForeign();
-        break;
-      case '<- CONV':
-        calculator.convertForeignToDomestic();
-        break;
-      case 'COST':
-        calculator.businessFunction('COST');
-        break;
-      case 'SELL':
-        calculator.businessFunction('SELL');
-        break;
-      case 'MGN':
-        calculator.businessFunction('MGN');
-        break;
-      case 'TAPE CLR':
-        calculator.clearTape();
-        break;
-      default:
-        break;
-    }
-
-    setState(calculator.getState());
-  }, [calculator]);
+    setState(service.dispatch(action));
+  }, [service]);
 
   const handleModeChange = (mode: Mode) => {
-    calculator.setMode(mode);
-    setState(calculator.getState());
+    setState(service.setMode(mode));
   };
 
   const handleDecimalModeChange = (decimalMode: DecimalMode) => {
-    calculator.setDecimalMode(decimalMode);
-    setState(calculator.getState());
+    setState(service.setDecimalMode(decimalMode));
   };
 
   const handleExport = () => {
-    const blob = new Blob([JSON.stringify(calculator.getSnapshot(), null, 2)], {
-      type: 'application/json',
+    const blob = new Blob([JSON.stringify(service.exportSnapshot(), null, 2)], {
+      type: "application/json",
     });
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `casio-hr100tm-backup-${Date.now()}.json`;
     link.click();
@@ -197,11 +91,10 @@ const CalculatorUI: React.FC = () => {
     try {
       const text = await file.text();
       const snapshot = JSON.parse(text) as CalculatorSnapshot;
-      calculator.loadSnapshot(snapshot);
-      setState(calculator.getState());
-      setImportError('');
+      setState(service.importSnapshot(snapshot));
+      setImportError("");
     } catch {
-      setImportError('Archivo invalido. Debe ser un backup JSON exportado por la app.');
+      setImportError("Archivo invalido. Debe ser un backup JSON exportado por la app.");
     }
   };
 
@@ -217,51 +110,51 @@ const CalculatorUI: React.FC = () => {
         return;
       }
 
-      if (key === '.') {
-        handleButtonClick('.');
+      if (key === ".") {
+        handleButtonClick(".");
         return;
       }
 
-      if (key === '+') {
-        handleButtonClick('+');
+      if (key === "+") {
+        handleButtonClick("+");
         return;
       }
 
-      if (key === '-') {
-        handleButtonClick('-');
+      if (key === "-") {
+        handleButtonClick("-");
         return;
       }
 
-      if (key === '*') {
-        handleButtonClick('x');
+      if (key === "*") {
+        handleButtonClick("x");
         return;
       }
 
-      if (key === '/') {
+      if (key === "/") {
         event.preventDefault();
-        handleButtonClick('/');
+        handleButtonClick("/");
         return;
       }
 
-      if (key === 'Enter' || key === '=') {
+      if (key === "Enter" || key === "=") {
         event.preventDefault();
-        handleButtonClick('=');
+        handleButtonClick("=");
         return;
       }
 
-      if (key === 'Escape') {
-        handleButtonClick('CA');
+      if (key === "Escape") {
+        handleButtonClick("CA");
         return;
       }
 
-      if (key === 'Backspace') {
-        handleButtonClick('CE');
+      if (key === "Backspace") {
+        handleButtonClick("CE");
       }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [calculator, handleButtonClick]);
+  }, [handleButtonClick]);
 
   return (
     <div className="hr-container">

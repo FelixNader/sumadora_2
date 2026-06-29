@@ -1,46 +1,188 @@
-# Getting Started with Create React App
+# Casio HR-100TM Calculation Engine
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Replica web de una calculadora contable de escritorio inspirada en la `CASIO HR-100TM`. El proyecto no intenta verse como una "demo de botones": su foco es un motor de calculo con reglas operativas, financieras y de persistencia de sesion, expuesto mediante una interfaz React.
 
-## Available Scripts
+## Que hace
 
-In the project directory, you can run:
+- Operaciones aritmeticas con precedencia real entre `+`, `-`, `x` y `/`
+- Selector decimal `F`, `3`, `2`, `0` y `ADD2`
+- Modos `OFF`, `ON`, `PRINT`, `ITEM` y `CONVERSION`
+- Memoria independiente, `grand total`, subtotales y conteo de items
+- Impuestos, conversion de moneda y calculos `COST / SELL / MGN`
+- Cinta de papel simulada
+- Persistencia local con exportacion e importacion de snapshots JSON
 
-### `npm start`
+## Arquitectura
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+La implementacion actual sigue una **Clean Architecture ligera**:
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- `domain`: reglas puras de la calculadora
+- `application`: coordinacion de casos de uso y persistencia
+- `infrastructure`: detalles concretos del navegador
+- `ui`: adaptadores React para botones, teclado y render
 
-### `npm test`
+No es una arquitectura corporativa sobredimensionada. El sistema sigue siendo pequeno, pero ahora la separacion entre dominio, aplicacion e infraestructura existe en el codigo y no solo en los diagramas.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Mapa de bounded contexts
 
-### `npm run build`
+```mermaid
+flowchart LR
+    Core["BC1 Core Calculation"]
+    Accounting["BC2 Accounting and Tape"]
+    Memory["BC3 Independent Memory"]
+    Tax["BC4 Tax Calculation"]
+    FX["BC5 Currency Conversion"]
+    Business["BC6 Business Margin"]
+    Persistence["BC7 Snapshot Persistence"]
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+    Core --> Accounting
+    Core --> Memory
+    Core --> Tax
+    Core --> FX
+    Core --> Business
+    Core --> Persistence
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Vista de Clean Architecture
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```mermaid
+flowchart LR
+    subgraph Domain["Domain"]
+        Calc["Calculator"]
+    end
 
-### `npm run eject`
+    subgraph Application["Application"]
+        Service["CalculatorApplicationService"]
+        Port["CalculatorSnapshotRepository"]
+    end
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+    subgraph Infrastructure["Infrastructure"]
+        LocalRepo["LocalStorageCalculatorSnapshotRepository"]
+    end
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+    subgraph UI["UI"]
+        Screen["CalculatorUI"]
+        App["App"]
+    end
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+    App --> Screen
+    Screen --> Service
+    Service --> Calc
+    Service --> Port
+    LocalRepo --> Port
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Regla de dependencia
 
-## Learn More
+```mermaid
+flowchart TB
+    Details["Framework and Browser Details"]
+    Adapters["UI and Infrastructure Adapters"]
+    Application["Application Coordination"]
+    Domain["Domain Rules"]
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+    Details --> Adapters
+    Adapters --> Application
+    Application --> Domain
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Estructura del codigo
+
+```text
+src/
+  application/
+    ports/
+      CalculatorSnapshotRepository.ts
+    services/
+      CalculatorApplicationService.ts
+      CalculatorApplicationService.test.ts
+  domain/
+    calculator/
+      Calculator.ts
+      Calculator.test.ts
+  infrastructure/
+    persistence/
+      LocalStorageCalculatorSnapshotRepository.ts
+  ui/
+    components/
+      CalculatorUI.tsx
+      CalculatorUI.css
+  App.tsx
+  App.test.tsx
+  index.tsx
+```
+
+## Responsabilidades reales por capa
+
+### Domain
+
+`src/domain/calculator/Calculator.ts`
+
+Aqui vive la logica importante:
+
+- evaluacion de expresiones
+- redondeo por modo
+- reglas de disponibilidad por modo
+- errores y overflow
+- impuestos
+- conversion
+- memoria
+- subtotales
+- cinta
+- snapshots del estado
+
+Esta capa no depende de React ni de APIs del navegador.
+
+### Application
+
+`src/application/services/CalculatorApplicationService.ts`
+
+Coordina la sesion de calculo:
+
+- hidrata el dominio desde un repositorio
+- traduce acciones de UI a metodos del dominio
+- persiste snapshots cuando cambia el estado
+
+Aqui estan los casos de uso ligeros del sistema. No es una capa enorme, pero ya evita que la UI coordine directamente al dominio y la persistencia al mismo tiempo.
+
+### Infrastructure
+
+`src/infrastructure/persistence/LocalStorageCalculatorSnapshotRepository.ts`
+
+Implementa el puerto de persistencia usando `localStorage`. Si mañana el almacenamiento cambia, el dominio no necesita enterarse.
+
+### UI
+
+`src/ui/components/CalculatorUI.tsx`
+
+Renderiza la replica visual, captura eventos de botones y teclado, y delega la logica al servicio de aplicacion.
+
+## Scripts
+
+```bash
+npm start
+npm test -- --watchAll=false
+npm run build
+```
+
+## Verificacion actual
+
+- Tests de dominio para `ADD2`, conversion, items, impuestos, negocio y precedencia
+- Tests de aplicacion para hidratacion y persistencia
+- Tests de UI para render y operacion basica
+- Build de produccion valido con `react-scripts build`
+
+## Limites actuales
+
+- El dominio sigue concentrado en una sola entidad fuerte: `Calculator`
+- Los casos de uso existen como servicio de aplicacion, no como un archivo por comando
+- La persistencia actual es local al navegador, sin backend ni sincronizacion externa
+
+Ese alcance es intencional. El proyecto busca una direccion de arquitectura profesional sin fingir complejidad que todavia no existe.
+
+## Siguiente etapa razonable
+
+- separar casos de uso por comando si el dominio sigue creciendo
+- extraer politicas de redondeo y error a modulos propios
+- agregar pruebas de infraestructura y flujos de importacion/exportacion
+- documentar decisiones arquitectonicas como ADRs pequenas
