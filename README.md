@@ -107,6 +107,8 @@ src/
         tapePolicy.ts
       services/
         businessMath.ts
+        expressionEvaluator.ts
+        expressionEvaluator.test.ts
   infrastructure/
     persistence/
       LocalStorageCalculatorSnapshotRepository.ts
@@ -133,6 +135,7 @@ Aqui vive la logica importante:
 - `policies/numericPolicy.ts`: redondeo, formato y validacion numerica
 - `policies/tapePolicy.ts`: reglas de impresion y recorte de cinta
 - `services/businessMath.ts`: resolucion de `COST / SELL / MGN`
+- `services/expressionEvaluator.ts`: evaluacion y precedencia de expresiones
 
 Esta capa no depende de React ni de APIs del navegador.
 
@@ -186,6 +189,6 @@ Ese alcance es intencional. El proyecto busca una direccion de arquitectura prof
 ## Siguiente etapa razonable
 
 - separar casos de uso por comando si el dominio sigue creciendo
-- extraer el evaluador de expresiones a un servicio de dominio dedicado
+- seguir fragmentando `Calculator` en agregados o servicios si aparecen nuevos flujos
 - agregar pruebas de infraestructura y flujos de importacion/exportacion
 - documentar decisiones arquitectonicas como ADRs pequenas

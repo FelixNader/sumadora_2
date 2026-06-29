@@ -9,6 +9,11 @@ import {
 } from "./policies/numericPolicy";
 import { appendTapeLine, canPrintToTape } from "./policies/tapePolicy";
 import {
+  evaluateExpression,
+  executeOperation,
+  resolveMulDivLeftOperand,
+} from "./services/expressionEvaluator";
+import {
   createInitialCalculatorState,
   sanitizeSnapshot,
 } from "./state";
@@ -196,8 +201,11 @@ export class Calculator {
           : this.normalizeOperandForCurrentDisplay(current, lastToken);
 
         if (lastToken === "*" || lastToken === "/") {
-          const leftOperand = this.resolveMulDivLeftOperand(expression);
-          const mulDivResult = this.executeOperation(leftOperand, secondOperand, lastToken);
+          const leftOperand = this.resolveMulDivLeftOperandSafely(expression);
+          if (leftOperand === null) {
+            return;
+          }
+          const mulDivResult = this.executeOperationSafely(leftOperand, secondOperand, lastToken);
           if (mulDivResult === null) {
             return;
           }
@@ -213,7 +221,7 @@ export class Calculator {
         this.state.lastOperand = secondOperand;
       }
 
-      const result = this.evaluateExpression(expression);
+      const result = this.evaluateExpressionSafely(expression);
       if (result === null) {
         return;
       }
@@ -239,7 +247,11 @@ export class Calculator {
     }
 
     if (this.state.lastOperator && this.state.lastOperand !== null) {
-      const result = this.executeOperation(current, this.state.lastOperand, this.state.lastOperator);
+      const result = this.executeOperationSafely(
+        current,
+        this.state.lastOperand,
+        this.state.lastOperator
+      );
       if (result === null) {
         return;
       }
@@ -570,8 +582,15 @@ export class Calculator {
     const previousOperator = this.state.expressionTokens[this.state.expressionTokens.length - 1];
 
     if (previousOperator === "*" || previousOperator === "/") {
-      const leftOperand = this.resolveMulDivLeftOperand(this.state.expressionTokens);
-      const mulDivResult = this.executeOperation(leftOperand, operand, previousOperator);
+      const leftOperand = this.resolveMulDivLeftOperandSafely(this.state.expressionTokens);
+      if (leftOperand === null) {
+        return;
+      }
+      const mulDivResult = this.executeOperationSafely(
+        leftOperand,
+        operand,
+        previousOperator
+      );
       if (mulDivResult === null) {
         return;
       }
@@ -587,7 +606,9 @@ export class Calculator {
     this.state.lastOperator = operation;
     this.state.lastOperand = operand;
 
-    const preview = this.evaluateExpression(this.state.expressionTokens.slice(0, -1));
+    const preview = this.evaluateExpressionSafely(
+      this.state.expressionTokens.slice(0, -1)
+    );
     if (preview !== null) {
       this.state.displayValue = formatForDisplay(preview);
       this.state.totalMemory = preview;
@@ -628,31 +649,6 @@ export class Calculator {
     }
   }
 
-  private executeOperation(first: number, second: number, operation: Operation): number | null {
-    if (operation === "/" && second === 0) {
-      this.setError();
-      return null;
-    }
-
-    let rawResult = second;
-    if (operation === "+") {
-      rawResult = first + second;
-    } else if (operation === "-") {
-      rawResult = first - second;
-    } else if (operation === "*") {
-      rawResult = first * second;
-    } else if (operation === "/") {
-      rawResult = first / second;
-    }
-
-    const result = this.roundForCurrentMode(rawResult, operation);
-    if (!Number.isFinite(result) || isOverflow(result)) {
-      this.setError();
-      return null;
-    }
-    return result;
-  }
-
   private canOperate(): boolean {
     return this.state.mode !== "OFF";
   }
@@ -680,7 +676,7 @@ export class Calculator {
         }
       }
 
-      const resolved = this.evaluateExpression(tokens);
+      const resolved = this.evaluateExpressionSafely(tokens);
       if (resolved !== null) {
         return resolved;
       }
@@ -697,7 +693,11 @@ export class Calculator {
       }
 
       const secondOperand = this.normalizeOperandForCurrentDisplay(current, this.state.pendingOperation);
-      const computed = this.executeOperation(this.state.firstOperand, secondOperand, this.state.pendingOperation);
+      const computed = this.executeOperationSafely(
+        this.state.firstOperand,
+        secondOperand,
+        this.state.pendingOperation
+      );
       if (computed === null) {
         return this.state.totalMemory;
       }
@@ -710,92 +710,6 @@ export class Calculator {
 
     const current = this.parseDisplayValue();
     return current ?? 0;
-  }
-
-  private resolveMulDivLeftOperand(expressionWithTrailingOperator: ExpressionToken[]): number {
-    const tokens = [...expressionWithTrailingOperator];
-    if (tokens.length > 0 && typeof tokens[tokens.length - 1] === "string") {
-      tokens.pop();
-    }
-
-    let segmentStart = 0;
-    for (let i = tokens.length - 1; i >= 0; i -= 1) {
-      const token = tokens[i];
-      if (token === "+" || token === "-") {
-        segmentStart = i + 1;
-        break;
-      }
-    }
-
-    const segment = tokens.slice(segmentStart);
-    const evaluated = this.evaluateExpression(segment);
-    if (evaluated === null) {
-      return 0;
-    }
-    return evaluated;
-  }
-
-  private evaluateExpression(tokens: ExpressionToken[]): number | null {
-    if (tokens.length === 0) {
-      return 0;
-    }
-
-    const noMulDiv: ExpressionToken[] = [];
-    let index = 0;
-
-    while (index < tokens.length) {
-      const token = tokens[index];
-      if (typeof token !== "number") {
-        this.setError();
-        return null;
-      }
-
-      if (index + 1 < tokens.length && (tokens[index + 1] === "*" || tokens[index + 1] === "/")) {
-        let current = token;
-        let cursor = index;
-        while (cursor + 1 < tokens.length && (tokens[cursor + 1] === "*" || tokens[cursor + 1] === "/")) {
-          const operator = tokens[cursor + 1] as Operation;
-          const nextToken = tokens[cursor + 2];
-          if (typeof nextToken !== "number") {
-            this.setError();
-            return null;
-          }
-          const result = this.executeOperation(current, nextToken, operator);
-          if (result === null) {
-            return null;
-          }
-          current = result;
-          cursor += 2;
-        }
-        noMulDiv.push(current);
-        if (cursor + 1 < tokens.length) {
-          noMulDiv.push(tokens[cursor + 1] as Operation);
-        }
-        index = cursor + 2;
-      } else {
-        noMulDiv.push(token);
-        if (index + 1 < tokens.length) {
-          noMulDiv.push(tokens[index + 1] as Operation);
-        }
-        index += 2;
-      }
-    }
-
-    let result = noMulDiv[0] as number;
-    for (let i = 1; i < noMulDiv.length; i += 2) {
-      const operator = noMulDiv[i] as Operation;
-      const next = noMulDiv[i + 1] as number;
-      if (operator !== "+" && operator !== "-") {
-        continue;
-      }
-      const partial = this.executeOperation(result, next, operator);
-      if (partial === null) {
-        return null;
-      }
-      result = partial;
-    }
-
-    return result;
   }
 
   private normalizeOperandForCurrentDisplay(value: number, operation: Operation): number {
@@ -843,5 +757,48 @@ export class Calculator {
     operation: Operation | "+" | "-"
   ): number {
     return roundByMode(this.state.decimalMode, value, operation);
+  }
+
+  private executeOperationSafely(
+    first: number,
+    second: number,
+    operation: Operation
+  ): number | null {
+    try {
+      return executeOperation(first, second, operation, {
+        isOverflow,
+        round: (value, currentOperation) =>
+          this.roundForCurrentMode(value, currentOperation),
+      });
+    } catch {
+      this.setError();
+      return null;
+    }
+  }
+
+  private evaluateExpressionSafely(tokens: ExpressionToken[]): number | null {
+    try {
+      return evaluateExpression(tokens, {
+        isOverflow,
+        round: (value, operation) => this.roundForCurrentMode(value, operation),
+      });
+    } catch {
+      this.setError();
+      return null;
+    }
+  }
+
+  private resolveMulDivLeftOperandSafely(
+    tokens: ExpressionToken[]
+  ): number | null {
+    try {
+      return resolveMulDivLeftOperand(tokens, {
+        isOverflow,
+        round: (value, operation) => this.roundForCurrentMode(value, operation),
+      });
+    } catch {
+      this.setError();
+      return null;
+    }
   }
 }
