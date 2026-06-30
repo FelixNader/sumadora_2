@@ -18,6 +18,7 @@ export function createInitialCalculatorState(): CalculatorState {
     taxRate: 16,
     paperTape: [],
     error: null,
+    lastPercentInput: null,
     pendingOperation: null,
     firstOperand: null,
     lastOperand: null,
@@ -59,6 +60,10 @@ export function sanitizeSnapshot(snapshot: CalculatorSnapshot): CalculatorState 
     paperTape: Array.isArray(snapshot.state.paperTape)
       ? [...snapshot.state.paperTape].slice(-MAX_TAPE_LINES)
       : [],
+    lastPercentInput:
+      typeof snapshot.state.lastPercentInput === "number"
+        ? snapshot.state.lastPercentInput
+        : null,
     businessCost:
       typeof snapshot.state.businessCost === "number"
         ? snapshot.state.businessCost

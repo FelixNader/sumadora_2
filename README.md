@@ -15,6 +15,30 @@ Replica web de una calculadora contable de escritorio. El proyecto no intenta ve
 - Persistencia automatica entre sesiones solo para `M`, `RATE` y `TAX`
 - Copia del valor mostrado mediante doble clic sobre el display
 
+## Regla de porcentaje
+
+La tecla `%` ya no se interpreta como un atajo ambiguo. En esta app sigue una regla de sumadora contable:
+
+- `%` solo: convierte la entrada actual a fraccion porcentual
+  Ejemplo: `10 %` => pantalla `0.1`
+- `A + B %`: usa **base acumulada**
+  Ejemplo: `10 + 10% = 11`
+- `A - B %`: usa **base acumulada**
+  Ejemplo: `10 - 10% = 9`
+- `A x B %`: usa porcentaje directo del segundo operando
+  Ejemplo: `10 x 10% = 1`
+- `A / B %`: usa porcentaje directo del segundo operando
+  Ejemplo: `10 / 10% = 100`
+- En cadenas aditivas, cada nuevo `%` toma como base el acumulado vigente
+  Ejemplo: `10 + 10% + 10% = 12.1`
+
+La cinta conserva intencion contable:
+
+- en flujos aditivos imprime la entrada porcentual, por ejemplo `10 %`, y luego el total final
+- en flujos multiplicativos y divisivos imprime tanto la entrada porcentual como la operacion resuelta completa
+
+Esta decision de dominio quedo formalizada en [ADR 0009](./docs/adr/0009-percentage-uses-accumulated-base-in-additive-flows.md).
+
 ## Arquitectura
 
 La implementacion actual sigue una **Clean Architecture ligera**:
@@ -31,6 +55,8 @@ Las decisiones principales quedaron documentadas en [docs/adr/README.md](./docs/
 La decision mas reciente sobre el flujo contable de `+ =` quedo registrada en [ADR 0007](./docs/adr/0007-combined-plus-equals-belongs-to-the-domain.md): esa tecla ya no se entiende como un parche de interfaz, sino como comportamiento propio del dominio.
 
 La persistencia local automatica tambien quedo acotada por producto en [ADR 0008](./docs/adr/0008-persist-only-configuration-across-sessions.md): `M`, `RATE` y `TAX` sobreviven entre sesiones, pero la cinta, `GT`, `OPS`, `SUB` y el estado operativo se reinician al abrir la app.
+
+La semantica de `%` para flujos aditivos, multiplicativos y de cinta quedo cerrada en [ADR 0009](./docs/adr/0009-percentage-uses-accumulated-base-in-additive-flows.md): suma y resta usan base acumulada, mientras multiplicacion y division usan porcentaje directo.
 
 ### Mapa de bounded contexts
 

@@ -18,6 +18,7 @@ export interface CalculatorState {
   taxRate: number;
   paperTape: string[];
   error: string | null;
+  lastPercentInput: number | null;
   pendingOperation: Operation | null;
   firstOperand: number | null;
   lastOperand: number | null;

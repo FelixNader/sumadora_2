@@ -103,6 +103,8 @@ export class Calculator {
       return;
     }
 
+    this.state.lastPercentInput = null;
+
     if (this.state.waitingForNewEntry || this.state.displayValue === "E") {
       this.state.displayValue = "0";
       this.state.waitingForNewEntry = false;
@@ -127,6 +129,8 @@ export class Calculator {
       return;
     }
 
+    this.state.lastPercentInput = null;
+
     if (this.state.waitingForNewEntry) {
       this.state.displayValue = "0";
       this.state.waitingForNewEntry = false;
@@ -141,6 +145,8 @@ export class Calculator {
     if (!this.canOperate() || this.state.error || this.state.displayValue === "0") {
       return;
     }
+
+    this.state.lastPercentInput = null;
 
     this.state.displayValue = this.state.displayValue.startsWith("-")
       ? this.state.displayValue.slice(1)
@@ -208,6 +214,10 @@ export class Calculator {
             ? this.state.lastOperand ?? this.normalizeOperandForCurrentDisplay(current, lastToken)
             : this.normalizeOperandForCurrentDisplay(current, lastToken);
 
+          const shouldSuppressAdditiveOperandLine =
+            (lastToken === "+" || lastToken === "-") &&
+            this.state.lastPercentInput !== null;
+
           if (lastToken === "*" || lastToken === "/") {
             const leftOperand = this.resolveMulDivLeftOperandSafely(expression);
             if (leftOperand === null) {
@@ -220,7 +230,7 @@ export class Calculator {
             this.printToTape(
               `${formatForTape(leftOperand)} ${symbolFor(lastToken)} ${formatForTape(secondOperand)} = ${formatForTape(mulDivResult)}`
             );
-          } else {
+          } else if (!shouldSuppressAdditiveOperandLine) {
             this.printToTape(`${formatForTape(secondOperand)} ${symbolFor(lastToken)}`);
           }
 
@@ -242,6 +252,7 @@ export class Calculator {
       this.state.displayValue = formatForDisplay(result);
       this.state.totalMemory = result;
       this.state.firstOperand = result;
+      this.state.lastPercentInput = null;
       this.state.pendingOperation = null;
       this.state.expressionTokens = [result];
       this.state.waitingForNewEntry = true;
@@ -270,6 +281,7 @@ export class Calculator {
       }
       this.finalizeResult(result, this.state.lastOperator, this.state.lastOperand, false);
       this.state.firstOperand = result;
+      this.state.lastPercentInput = null;
       this.state.expressionTokens = [result];
       this.state.waitingForNewEntry = true;
     }
@@ -364,20 +376,27 @@ export class Calculator {
       return;
     }
 
+    const pendingOperation = this.state.pendingOperation;
+    const firstOperand = this.state.firstOperand;
+    const usesBasePercentage =
+      firstOperand !== null &&
+      (pendingOperation === "+" || pendingOperation === "-");
+
     let result = current / 100;
-    if (this.state.firstOperand !== null) {
-      result = (this.state.firstOperand * current) / 100;
+    if (usesBasePercentage) {
+      result = (firstOperand * current) / 100;
     }
 
-    result = this.roundForCurrentMode(result, this.state.pendingOperation ?? "+");
+    result = this.roundForCurrentMode(result, pendingOperation ?? "+");
     if (isOverflow(result)) {
       this.setError();
       return;
     }
 
     this.state.displayValue = formatForDisplay(result);
-    this.state.waitingForNewEntry = true;
-    this.printToTape(`% ${formatForTape(result)}`);
+    this.state.waitingForNewEntry = pendingOperation === null;
+    this.state.lastPercentInput = current;
+    this.printToTape(`${formatForTape(current)} %`);
     this.state.totalMemory = result;
   }
 
@@ -593,6 +612,9 @@ export class Calculator {
 
     const operand = this.normalizeOperandForCurrentDisplay(rawCurrent, operation);
     const previousOperator = this.state.expressionTokens[this.state.expressionTokens.length - 1];
+    const shouldSuppressAdditivePercentLine =
+      (previousOperator === "+" || previousOperator === "-") &&
+      this.state.lastPercentInput !== null;
 
     if (previousOperator === "*" || previousOperator === "/") {
       const leftOperand = this.resolveMulDivLeftOperandSafely(this.state.expressionTokens);
@@ -610,7 +632,7 @@ export class Calculator {
       this.printToTape(
         `${formatForTape(leftOperand)} ${symbolFor(previousOperator)} ${formatForTape(operand)} = ${formatForTape(mulDivResult)}`
       );
-    } else {
+    } else if (!shouldSuppressAdditivePercentLine) {
       this.printToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
     }
 
@@ -636,6 +658,7 @@ export class Calculator {
 
     this.state.pendingOperation = operation;
     this.state.waitingForNewEntry = true;
+    this.state.lastPercentInput = null;
     this.state.pendingBusiness = null;
     this.state.businessBase = null;
     this.state.businessCost = null;
@@ -686,6 +709,7 @@ export class Calculator {
 
     this.state.pendingOperation = operation;
     this.state.waitingForNewEntry = true;
+    this.state.lastPercentInput = null;
     this.state.pendingBusiness = null;
     this.state.businessBase = null;
     this.state.businessCost = null;
@@ -708,6 +732,7 @@ export class Calculator {
     this.state.totalMemory = result;
     this.state.lastOperator = operation;
     this.state.lastOperand = secondOperand;
+    this.state.lastPercentInput = null;
 
     if (accumulateGrandTotal) {
       this.state.grandTotal = this.roundForCurrentMode(this.state.grandTotal + result, "+");

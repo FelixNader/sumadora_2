@@ -3,6 +3,7 @@ import { CalculatorState, ExpressionToken, Operation } from "../types";
 interface SessionStateBase {
   displayValue: string;
   error: string | null;
+  lastPercentInput: number | null;
   pendingOperation: Operation | null;
   firstOperand: number | null;
   lastOperand: number | null;
@@ -22,11 +23,12 @@ interface SessionStateBase {
 
 export function createClearedEntryState(): Pick<
   CalculatorState,
-  "displayValue" | "error"
+  "displayValue" | "error" | "lastPercentInput"
 > {
   return {
     displayValue: "0",
     error: null,
+    lastPercentInput: null,
   };
 }
 
@@ -34,6 +36,7 @@ export function createClearAllState(): SessionStateBase {
   return {
     displayValue: "0",
     error: null,
+    lastPercentInput: null,
     pendingOperation: null,
     firstOperand: null,
     lastOperand: null,
@@ -75,6 +78,7 @@ export function createErrorState(): Pick<
   CalculatorState,
   | "error"
   | "displayValue"
+  | "lastPercentInput"
   | "pendingOperation"
   | "firstOperand"
   | "waitingForNewEntry"
@@ -88,6 +92,7 @@ export function createErrorState(): Pick<
   return {
     error: "E",
     displayValue: "E",
+    lastPercentInput: null,
     pendingOperation: null,
     firstOperand: null,
     waitingForNewEntry: false,

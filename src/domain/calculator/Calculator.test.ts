@@ -238,6 +238,92 @@ test('additive total can continue accumulating from the printed total', () => {
   expect(calculator.getState().displayValue).toBe('450');
 });
 
+test('percent in additive flow uses the first operand as base and equals resolves the total', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.percent();
+
+  expect(calculator.getState().displayValue).toBe('1');
+
+  calculator.equals();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+10\s+%/);
+  expect(tape).not.toMatch(/\s+1\s+\+/);
+  expect(tape).toMatch(/\s+11/);
+  expect(calculator.getState().displayValue).toBe('11');
+});
+
+test('chained additive percent flow does not print the materialized percent operand on tape', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.percent();
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.equals();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+10\s+\+/);
+  expect(tape).toMatch(/\s+10\s+%/);
+  expect(tape).not.toMatch(/\s+1\s+\+/);
+  expect(tape).toMatch(/\s+5\s+\+/);
+  expect(tape).toMatch(/\s+16/);
+  expect(calculator.getState().displayValue).toBe('16');
+});
+
+test('repeated additive percent flow keeps accumulated-base math but preserves percent intent on tape', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.percent();
+  calculator.add();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.percent();
+  calculator.equals();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+10\s+\+/);
+  expect(tape.match(/\s+10\s+%/g)?.length).toBe(2);
+  expect(tape).not.toMatch(/\s+1\s+\+/);
+  expect(tape).toMatch(/\s+12\.1/);
+  expect(calculator.getState().displayValue).toBe('12.1');
+});
+
+test('percent in multiplicative flow uses the current operand percentage', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.multiply();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.percent();
+
+  expect(calculator.getState().displayValue).toBe('0.1');
+
+  calculator.equals();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+10\s+%/);
+  expect(tape).toMatch(/10\s+x\s+0\.1\s+=\s+1/);
+  expect(calculator.getState().displayValue).toBe('1');
+});
+
 test('grand total accumulates subtotals and clears with CA', () => {
   const calculator = new Calculator();
 
