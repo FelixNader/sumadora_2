@@ -1,7 +1,7 @@
 import { CalculatorSnapshot } from "../../domain/calculator/Calculator";
 import { CalculatorSnapshotRepository } from "../../application/ports/CalculatorSnapshotRepository";
 
-export const DEFAULT_CALCULATOR_STORAGE_KEY = "casio-hr100tm-state-v1";
+export const DEFAULT_CALCULATOR_STORAGE_KEY = "sumadora-hr100tm-state-v1";
 
 export class LocalStorageCalculatorSnapshotRepository
   implements CalculatorSnapshotRepository {
