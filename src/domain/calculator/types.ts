@@ -1,11 +1,9 @@
-export type Mode = "NORMAL" | "CONVERSION";
 export type DecimalMode = "F" | "3" | "2" | "0" | "ADD2";
 export type Operation = "+" | "-" | "*" | "/";
 export type BusinessMode = "COST" | "SELL" | "MGN" | null;
 export type ExpressionToken = number | Operation;
 
 export interface CalculatorState {
-  mode: Mode;
   decimalMode: DecimalMode;
   displayValue: string;
   totalMemory: number;
@@ -33,6 +31,6 @@ export interface CalculatorState {
 }
 
 export interface CalculatorSnapshot {
-  version: 1;
+  version: 2;
   state: CalculatorState;
 }

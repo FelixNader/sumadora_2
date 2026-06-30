@@ -110,7 +110,8 @@
         <p>
           Vista HTML generada desde el estado actual del repo. Las graficas
           reflejan la app como esta hoy: dominio contable, bounded contexts
-          logicos, persistencia filtrada y Clean Architecture ligera.
+          logicos, persistencia filtrada, snapshots v2 y Clean Architecture
+          ligera.
         </p>
       </header>
 
@@ -148,15 +149,57 @@ flowchart LR
           <code>domain</code> decide, <code>infrastructure</code> adapta.
         </p>
         <pre class="mermaid">
-flowchart TB
-    UI["UI: React, DOM, teclado, display"]
-    APP["Application: use cases y service facade"]
-    DOMAIN["Domain: Calculator, services, policies"]
-    INFRA["Infrastructure: localStorage, files, clipboard"]
+flowchart LR
+    subgraph UI["UI / React"]
+        Screen["CalculatorUI.tsx"]
+        Keyboard["translateCalculatorKeyboardEvent.ts"]
+        Display["doble clic sobre display"]
+        SnapshotButtons["botones importar y exportar"]
+    end
 
-    UI --> APP
-    APP --> DOMAIN
-    INFRA --> APP
+    subgraph APP["Application"]
+        Service["CalculatorApplicationService.ts"]
+        Dispatch["dispatchCalculatorAction.ts"]
+        Copy["copyDisplayValue.ts"]
+        Transfer["transferCalculatorSnapshot.ts"]
+        Hydrate["hydrateCalculatorState.ts"]
+        Persist["persistCalculatorState.ts"]
+        Ports["ports/*"]
+    end
+
+    subgraph DOMAIN["Domain"]
+        Calc["Calculator.ts"]
+        Rules["services/* y policies/*"]
+    end
+
+    subgraph INFRA["Infrastructure"]
+        Clip["BrowserClipboardGateway.ts"]
+        Repo["LocalStorageCalculatorSnapshotRepository.ts"]
+        Files["BrowserCalculatorSnapshotFileGateway.ts"]
+    end
+
+    Screen --> Service
+    Screen --> Calc
+    Screen --> Clip
+    Screen --> Repo
+    Screen --> Files
+    Keyboard --> Dispatch
+    Display --> Copy
+    SnapshotButtons --> Transfer
+    Service --> Dispatch
+    Service --> Copy
+    Service --> Transfer
+    Service --> Hydrate
+    Service --> Persist
+    Dispatch --> Calc
+    Copy --> Calc
+    Transfer --> Calc
+    Hydrate --> Calc
+    Persist --> Calc
+    Calc --> Rules
+    Clip --> Ports
+    Repo --> Ports
+    Files --> Ports
         </pre>
       </section>
 
@@ -232,7 +275,6 @@ flowchart TB
         <pre class="mermaid">
 flowchart LR
     subgraph Session["Sesion actual"]
-        Mode["mode"]
         Dec["decimalMode"]
         Display["displayValue"]
         Error["error"]
@@ -245,6 +287,7 @@ flowchart LR
         First["firstOperand"]
         LastOp["lastOperator"]
         LastOperand["lastOperand"]
+        LastPct["lastPercentInput"]
         Wait["waitingForNewEntry"]
         Total["totalMemory"]
     end
@@ -306,8 +349,9 @@ stateDiagram-v2
         <pre class="mermaid">
 stateDiagram-v2
     [*] --> SesionNueva
-    SesionNueva --> SesionActiva: hydrate
-    SesionActiva --> SesionActiva: dispatch / setMode / setDecimalMode
+    SesionNueva --> SesionActiva: hydrate snapshot v2
+    SesionNueva --> SesionNueva: hydrate snapshot viejo y limpiar persistencia
+    SesionActiva --> SesionActiva: dispatch / setDecimalMode
     SesionActiva --> PersistenciaFiltrada: persist
     PersistenciaFiltrada --> SesionActiva: solo guarda M RATE TAX
     SesionActiva --> SnapshotCompleto: export / import
@@ -316,16 +360,17 @@ stateDiagram-v2
       </section>
 
       <section>
-        <h2>Modos Vigentes</h2>
+        <h2>Capacidades Siempre Disponibles</h2>
         <p>
-          El producto actual opera solo con <code>NORMAL</code> y
-          <code>CONVERSION</code>.
+          La conversion ya no es un modo global. Memoria y conversion quedan
+          disponibles como capacidades directas. El indicador
+          <code>M ON/OFF</code> solo describe el estado de la memoria.
         </p>
         <pre class="mermaid">
-stateDiagram-v2
-    [*] --> NORMAL
-    NORMAL --> CONVERSION: setMode(CONVERSION)
-    CONVERSION --> NORMAL: setMode(NORMAL)
+flowchart LR
+    Memory["Memoria independiente"] --> Core["Sesion operativa"]
+    Fx["RATE / CONV -> / <- CONV"] --> Core
+    Decimal["Selector decimal"] --> Core
         </pre>
       </section>
 
@@ -339,14 +384,14 @@ flowchart LR
     UI["CalculatorUI / teclado / display"] --> Service["CalculatorApplicationService"]
 
     Service --> Dispatch["dispatchCalculatorAction"]
-    Service --> Mode["configureCalculatorMode"]
+    Service --> Decimal["configureCalculatorDecimalMode"]
     Service --> Copy["copyDisplayValue"]
     Service --> Hydrate["hydrateCalculatorState"]
     Service --> Persist["persistCalculatorState"]
     Service --> Transfer["transferCalculatorSnapshot"]
 
     Dispatch --> Calc["Calculator"]
-    Mode --> Calc
+    Decimal --> Calc
     Copy --> Calc
     Hydrate --> Calc
     Persist --> Calc
@@ -387,6 +432,10 @@ flowchart TB
     end
 
     U1 --> A1
+    U1 --> D1
+    U1 --> I1
+    U1 --> I2
+    U1 --> I3
     U2 --> A2
     A1 --> A2
     A2 --> D1

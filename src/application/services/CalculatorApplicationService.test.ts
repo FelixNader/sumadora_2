@@ -55,7 +55,6 @@ test("hydrates calculator state from snapshot repository", () => {
   seededCalculator.inputDigit("2");
   seededCalculator.memoryAdd();
   seededCalculator.clearEntry();
-  seededCalculator.setMode("CONVERSION");
   seededCalculator.inputDigit("8");
   seededCalculator.setConversionRate();
   seededCalculator.inputDigit("1");
@@ -147,7 +146,6 @@ test("persists only memory, rate and tax across sessions", () => {
   service.dispatch("2");
   service.dispatch("M+");
   service.dispatch("CE");
-  service.setMode("CONVERSION");
   service.dispatch("9");
   service.dispatch("RATE");
   service.dispatch("2");
@@ -158,6 +156,20 @@ test("persists only memory, rate and tax across sessions", () => {
   expect(repository.saved?.state.independentMemory).toBe(42);
   expect(repository.saved?.state.conversionRate).toBe(9);
   expect(repository.saved?.state.taxRate).toBe(20);
+});
+
+test("clears persisted local state when an old snapshot version is found", () => {
+  const repository = new InMemorySnapshotRepository();
+  repository.loadValue = {
+    version: 1 as never,
+    state: new Calculator().getState(),
+  };
+
+  const service = new CalculatorApplicationService(new Calculator(), repository);
+  const state = service.hydrate();
+
+  expect(repository.cleared).toBe(true);
+  expect(state.displayValue).toBe("0");
 });
 
 test("exports snapshots through the configured file gateway", () => {

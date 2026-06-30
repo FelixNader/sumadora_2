@@ -3,13 +3,11 @@ import {
   CalculatorSnapshot,
   CalculatorState,
   DecimalMode,
-  Mode,
 } from "../../domain/calculator/Calculator";
 import { dispatchCalculatorAction } from "../usecases/dispatchCalculatorAction";
 import {
   configureCalculatorDecimalMode,
-  configureCalculatorMode,
-} from "../usecases/configureCalculatorMode";
+} from "../usecases/configureCalculatorDecimalMode";
 import { ClipboardGateway } from "../ports/ClipboardGateway";
 import { copyDisplayValue } from "../usecases/copyDisplayValue";
 import { hydrateCalculatorState } from "../usecases/hydrateCalculatorState";
@@ -44,10 +42,6 @@ export class CalculatorApplicationService {
 
   dispatch(action: string): CalculatorState {
     return dispatchCalculatorAction(this.calculator, action);
-  }
-
-  setMode(mode: Mode): CalculatorState {
-    return configureCalculatorMode(this.calculator, mode);
   }
 
   setDecimalMode(decimalMode: DecimalMode): CalculatorState {

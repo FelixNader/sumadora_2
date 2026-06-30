@@ -9,6 +9,7 @@ test("createClearedEntryState resets only entry and error", () => {
   expect(createClearedEntryState()).toEqual({
     displayValue: "0",
     error: null,
+    lastPercentInput: null,
   });
 });
 
@@ -46,6 +47,7 @@ test("createErrorState forces calculator error display and clears flow state", (
   expect(createErrorState()).toEqual({
     error: "E",
     displayValue: "E",
+    lastPercentInput: null,
     pendingOperation: null,
     firstOperand: null,
     waitingForNewEntry: false,

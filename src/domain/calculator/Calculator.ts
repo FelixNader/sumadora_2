@@ -45,7 +45,6 @@ import {
   CalculatorState,
   DecimalMode,
   ExpressionToken,
-  Mode,
   Operation,
 } from "./types";
 
@@ -55,7 +54,6 @@ export type {
   CalculatorState,
   DecimalMode,
   ExpressionToken,
-  Mode,
   Operation,
 } from "./types";
 
@@ -75,22 +73,17 @@ export class Calculator {
 
   getSnapshot(): CalculatorSnapshot {
     return {
-      version: 1,
+      version: 2,
       state: this.getState(),
     };
   }
 
   loadSnapshot(snapshot: CalculatorSnapshot): void {
-    if (!snapshot || snapshot.version !== 1) {
+    if (!snapshot || snapshot.version !== 2) {
       throw new Error("Unsupported snapshot format");
     }
 
     this.state = sanitizeSnapshot(snapshot);
-  }
-
-  setMode(mode: Mode): void {
-    this.state.mode = mode;
-    this.printToTape(`[MODE ${mode}]`);
   }
 
   setDecimalMode(decimalMode: DecimalMode): void {
@@ -298,9 +291,6 @@ export class Calculator {
   }
 
   memoryAdd(): void {
-    if (!this.canIndependentMemory()) {
-      return;
-    }
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -310,9 +300,6 @@ export class Calculator {
   }
 
   memorySubtract(): void {
-    if (!this.canIndependentMemory()) {
-      return;
-    }
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -322,17 +309,11 @@ export class Calculator {
   }
 
   memoryRecall(): void {
-    if (!this.canIndependentMemory()) {
-      return;
-    }
     this.state.displayValue = formatForDisplay(this.state.independentMemory);
     this.state.waitingForNewEntry = true;
   }
 
   memoryClear(): void {
-    if (!this.canIndependentMemory()) {
-      return;
-    }
     this.state.independentMemory = 0;
     this.printToTape("MC");
   }
@@ -471,9 +452,6 @@ export class Calculator {
   }
 
   setConversionRate(): void {
-    if (!this.canConvertCurrency()) {
-      return;
-    }
     const rate = this.parseDisplayValue();
     if (rate === null) {
       return;
@@ -489,9 +467,6 @@ export class Calculator {
   }
 
   convertDomesticToForeign(): void {
-    if (!this.canConvertCurrency()) {
-      return;
-    }
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -513,9 +488,6 @@ export class Calculator {
   }
 
   convertForeignToDomestic(): void {
-    if (!this.canConvertCurrency()) {
-      return;
-    }
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -751,14 +723,6 @@ export class Calculator {
 
   private canOperate(): boolean {
     return true;
-  }
-
-  private canIndependentMemory(): boolean {
-    return this.state.mode !== "CONVERSION";
-  }
-
-  private canConvertCurrency(): boolean {
-    return this.state.mode === "CONVERSION";
   }
 
   private resolveRunningTotal(): number {

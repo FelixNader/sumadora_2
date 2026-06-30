@@ -88,15 +88,57 @@ La regla aplicada en este repo es simple:
 - `ui` renderiza, captura eventos y delega
 
 ```mermaid
-flowchart TB
-    UI["UI: React, DOM, teclado, display"]
-    APP["Application: use cases y service facade"]
-    DOMAIN["Domain: Calculator, services, policies"]
-    INFRA["Infrastructure: localStorage, files, clipboard"]
+flowchart LR
+    subgraph UI["UI / React"]
+        Screen["CalculatorUI.tsx"]
+        Keyboard["translateCalculatorKeyboardEvent.ts"]
+        Display["doble clic sobre display"]
+        SnapshotButtons["botones importar y exportar"]
+    end
 
-    UI --> APP
-    APP --> DOMAIN
-    INFRA --> APP
+    subgraph APP["Application"]
+        Service["CalculatorApplicationService.ts"]
+        Dispatch["dispatchCalculatorAction.ts"]
+        Copy["copyDisplayValue.ts"]
+        Transfer["transferCalculatorSnapshot.ts"]
+        Hydrate["hydrateCalculatorState.ts"]
+        Persist["persistCalculatorState.ts"]
+        Ports["ports/*"]
+    end
+
+    subgraph DOMAIN["Domain"]
+        Calc["Calculator.ts"]
+        Rules["services/* y policies/*"]
+    end
+
+    subgraph INFRA["Infrastructure"]
+        Clip["BrowserClipboardGateway.ts"]
+        Repo["LocalStorageCalculatorSnapshotRepository.ts"]
+        Files["BrowserCalculatorSnapshotFileGateway.ts"]
+    end
+
+    Screen --> Service
+    Screen --> Calc
+    Screen --> Clip
+    Screen --> Repo
+    Screen --> Files
+    Keyboard --> Dispatch
+    Display --> Copy
+    SnapshotButtons --> Transfer
+    Service --> Dispatch
+    Service --> Copy
+    Service --> Transfer
+    Service --> Hydrate
+    Service --> Persist
+    Dispatch --> Calc
+    Copy --> Calc
+    Transfer --> Calc
+    Hydrate --> Calc
+    Persist --> Calc
+    Calc --> Rules
+    Clip --> Ports
+    Repo --> Ports
+    Files --> Ports
 ```
 
 ## 3. Mapa real por capas
@@ -128,7 +170,7 @@ Archivos principales:
 
 - `src/application/services/CalculatorApplicationService.ts`
 - `src/application/usecases/dispatchCalculatorAction.ts`
-- `src/application/usecases/configureCalculatorMode.ts`
+- `src/application/usecases/configureCalculatorDecimalMode.ts`
 - `src/application/usecases/copyDisplayValue.ts`
 - `src/application/usecases/hydrateCalculatorState.ts`
 - `src/application/usecases/persistCalculatorState.ts`
@@ -236,8 +278,6 @@ flowchart TB
 
 Conceptos vigentes en el repo:
 
-- `NORMAL`
-- `CONVERSION`
 - `ADD2`
 - `OPS`
 - `SUB`
@@ -249,15 +289,18 @@ Conceptos vigentes en el repo:
 - `conversion rate`
 - `business cost sell margin`
 - `plus-equals`
+- `percentage intent`
 
-Conceptos historicos soportados solo por compatibilidad de snapshot:
+Conceptos historicos removidos del modelo actual:
 
 - `PRINT`
 - `ON`
 - `OFF`
 - `ITEM`
+- `NORMAL`
+- `CONVERSION`
 
-Eso se ve en `sanitizeSnapshot()` de `src/domain/calculator/state.ts`.
+La app actual ya no normaliza esos conceptos para snapshots viejos. Los snapshots anteriores a la version `2` se rechazan por diseno.
 
 ## 6. Estado del agregado
 
@@ -266,7 +309,6 @@ El agregado `Calculator` mantiene un estado unico con cuatro grupos principales:
 ```mermaid
 flowchart LR
     subgraph Session["Sesion actual"]
-        Mode["mode"]
         Dec["decimalMode"]
         Display["displayValue"]
         Error["error"]
@@ -279,6 +321,7 @@ flowchart LR
         First["firstOperand"]
         LastOp["lastOperator"]
         LastOperand["lastOperand"]
+        LastPct["lastPercentInput"]
         Wait["waitingForNewEntry"]
         Total["totalMemory"]
     end
@@ -342,8 +385,9 @@ La sesion operativa y la persistencia automatica ya no son la misma cosa.
 ```mermaid
 stateDiagram-v2
     [*] --> SesionNueva
-    SesionNueva --> SesionActiva: hydrate
-    SesionActiva --> SesionActiva: dispatch / setMode / setDecimalMode
+    SesionNueva --> SesionActiva: hydrate snapshot v2
+    SesionNueva --> SesionNueva: hydrate snapshot viejo y limpiar persistencia
+    SesionActiva --> SesionActiva: dispatch / setDecimalMode
     SesionActiva --> PersistenciaFiltrada: persist
     PersistenciaFiltrada --> SesionActiva: solo guarda M RATE TAX
     SesionActiva --> SnapshotCompleto: export / import
@@ -363,22 +407,16 @@ Eso se implementa en:
 - `src/application/usecases/persistCalculatorState.ts`
 - `src/application/usecases/transferCalculatorSnapshot.ts`
 
-## 9. Estados de modo
+## 9. Capacidades siempre disponibles
 
-El producto actual ya no modela hardware encendido/apagado ni un modo ITEM operativo.
-
-```mermaid
-stateDiagram-v2
-    [*] --> NORMAL
-    NORMAL --> CONVERSION: setMode(CONVERSION)
-    CONVERSION --> NORMAL: setMode(NORMAL)
-```
+El producto actual ya no usa modos globales de trabajo.
 
 Reglas asociadas:
 
-- en `NORMAL` la memoria independiente esta permitida
-- en `CONVERSION` la memoria independiente se bloquea
-- `RATE`, `CONV ->` y `<- CONV` pertenecen al contexto de conversion
+- la memoria independiente esta siempre disponible
+- `RATE`, `CONV ->` y `<- CONV` son capacidades directas
+- la conversion no cambia la personalidad de la maquina; solo ejecuta una funcion
+- el indicador `M ON/OFF` del display solo informa si la memoria independiente esta vacia o no
 
 ## 10. Casos de uso de aplicacion
 
@@ -387,14 +425,14 @@ flowchart LR
     UI["CalculatorUI / teclado / display"] --> Service["CalculatorApplicationService"]
 
     Service --> Dispatch["dispatchCalculatorAction"]
-    Service --> Mode["configureCalculatorMode"]
+    Service --> Decimal["configureCalculatorDecimalMode"]
     Service --> Copy["copyDisplayValue"]
     Service --> Hydrate["hydrateCalculatorState"]
     Service --> Persist["persistCalculatorState"]
     Service --> Transfer["transferCalculatorSnapshot"]
 
     Dispatch --> Calc["Calculator"]
-    Mode --> Calc
+    Decimal --> Calc
     Copy --> Calc
     Hydrate --> Calc
     Persist --> Calc
@@ -501,6 +539,10 @@ flowchart TB
     end
 
     U1 --> A1
+    U1 --> D1
+    U1 --> I1
+    U1 --> I2
+    U1 --> I3
     U2 --> A2
     A1 --> A2
     A2 --> D1
@@ -537,6 +579,12 @@ El segundo ejemplo es persistencia:
 - al inicio "persistir snapshot" parecia equivalente a "persistir sesion"
 - despues se descubrio que `GT`, `SUB`, `OPS` y cinta no debian sobrevivir
 - finalmente se separo backup completo de persistencia automatica filtrada
+
+El tercer ejemplo es modo de trabajo:
+
+- primero parecia razonable conservar `NORMAL` y `CONVERSION`
+- despues se observo que conversion ya tenia teclas propias y memoria no debia bloquearse
+- finalmente se eliminaron los modos y se acepto ruptura de snapshots viejos para limpiar el dominio
 
 ## 14. Que parte si es DDD y que parte no
 

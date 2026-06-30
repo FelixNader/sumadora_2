@@ -7,13 +7,15 @@ Replica web de una calculadora contable de escritorio. El proyecto no intenta ve
 - Operaciones aritmeticas con precedencia real entre `+`, `-`, `x` y `/`
 - Flujo de sumadora para la tecla combinada `+ =`: registra linea, totaliza la secuencia y permite seguir acumulando desde el total impreso
 - Selector decimal `F`, `3`, `2`, `0` y `ADD2`
-- Modos visibles `NORMAL` y `CONVERSION`
+- Conversion y memoria como capacidades directas, sin selector global de modo
 - Memoria independiente, `grand total`, subtotales y contadores `OPS` y `SUB`
 - Impuestos, conversion de moneda y calculos `COST / SELL / MGN`
 - Cinta de papel siempre activa
-- Persistencia local con exportacion e importacion de snapshots JSON
+- Persistencia local con exportacion e importacion de snapshots JSON en formato actual `v2`
 - Persistencia automatica entre sesiones solo para `M`, `RATE` y `TAX`
 - Copia del valor mostrado mediante doble clic sobre el display
+
+Nota visual: el indicador `M ON/OFF` del display no representa encendido de la calculadora. Solo indica si la memoria independiente contiene un valor distinto de cero.
 
 ## Regla de porcentaje
 
@@ -58,6 +60,8 @@ La decision mas reciente sobre el flujo contable de `+ =` quedo registrada en [A
 La persistencia local automatica tambien quedo acotada por producto en [ADR 0008](./docs/adr/0008-persist-only-configuration-across-sessions.md): `M`, `RATE` y `TAX` sobreviven entre sesiones, pero la cinta, `GT`, `OPS`, `SUB` y el estado operativo se reinician al abrir la app.
 
 La semantica de `%` para flujos aditivos, multiplicativos y de cinta quedo cerrada en [ADR 0009](./docs/adr/0009-percentage-uses-accumulated-base-in-additive-flows.md): suma y resta usan base acumulada, mientras multiplicacion y division usan porcentaje directo.
+
+La simplificacion mas reciente quito los modos `NORMAL` y `CONVERSION` del dominio y rompio compatibilidad con snapshots viejos de forma deliberada en [ADR 0010](./docs/adr/0010-remove-working-modes-and-drop-legacy-snapshots.md): conversion y memoria ahora son capacidades directas, y solo se aceptan snapshots `v2`.
 
 ### Mapa de bounded contexts
 
@@ -114,6 +118,10 @@ flowchart LR
     end
 
     Screen --> Service
+    Screen --> Calc
+    Screen --> ClipboardAdapter
+    Screen --> LocalRepo
+    Screen --> FileAdapter
     Keyboard --> Dispatch
     Display --> Copy
     SnapshotButtons --> Transfer
@@ -201,7 +209,7 @@ src/
       CalculatorApplicationService.ts
       CalculatorApplicationService.test.ts
     usecases/
-      configureCalculatorMode.ts
+      configureCalculatorDecimalMode.ts
       copyDisplayValue.ts
       buildPersistedSessionSnapshot.ts
       dispatchCalculatorAction.ts
@@ -284,7 +292,7 @@ Coordina la sesion de calculo:
 - `usecases/buildPersistedSessionSnapshot.ts`: filtro de persistencia automatica para conservar solo configuracion reutilizable
 - `usecases/hydrateCalculatorState.ts`: restauracion de estado
 - `usecases/persistCalculatorState.ts`: persistencia de estado
-- `usecases/configureCalculatorMode.ts`: cambio de modo y selector decimal
+- `usecases/configureCalculatorDecimalMode.ts`: cambio de selector decimal
 - `usecases/transferCalculatorSnapshot.ts`: importacion y exportacion de snapshots
 - `ports/ClipboardGateway.ts`: puerto de portapapeles
 - `ports/CalculatorSnapshotRepository.ts`: puerto de persistencia
@@ -314,7 +322,8 @@ Renderiza la replica visual, captura eventos de botones y teclado, y delega la l
 
 La traduccion de teclado fisico vive en `src/ui/keyboard/translateCalculatorKeyboardEvent.ts`, con pruebas dedicadas para `typing`, numpad, separador decimal y teclas de control. El display tambien expone doble clic para copiar el valor mostrado como capacidad propia de la app web/PWA.
 
-La ayuda visible de la interfaz ya no presenta `PRINT` como modo. La cinta se considera siempre activa y los modos visibles quedan reducidos a `NORMAL` y `CONVERSION`.
+La ayuda visible de la interfaz ya no presenta `PRINT`, `NORMAL` ni `CONVERSION` como modos operativos. La cinta se considera siempre activa y la conversion queda disponible como capacidad directa.
+El texto `M ON/OFF` que sigue apareciendo en la barra superior solo describe el estado de la memoria independiente.
 
 ## Scripts
 

@@ -5,7 +5,6 @@ export const MAX_TAPE_LINES = 800;
 
 export function createInitialCalculatorState(): CalculatorState {
   return {
-    mode: "NORMAL",
     decimalMode: "F",
     displayValue: "0",
     totalMemory: 0,
@@ -34,28 +33,15 @@ export function createInitialCalculatorState(): CalculatorState {
 }
 
 export function sanitizeSnapshot(snapshot: CalculatorSnapshot): CalculatorState {
-  const legacyMode = snapshot.state.mode as string;
-  const sanitizedMode =
-    legacyMode === "CONVERSION"
-      ? legacyMode
-      : "NORMAL";
-  const legacyState = snapshot.state as CalculatorState & {
-    itemCount?: number;
-    subtotalCount?: number;
-  };
-
   return {
     ...snapshot.state,
-    mode: sanitizedMode,
     operationCount:
-      typeof legacyState.operationCount === "number"
-        ? legacyState.operationCount
-        : typeof legacyState.itemCount === "number"
-          ? legacyState.itemCount
-          : 0,
+      typeof snapshot.state.operationCount === "number"
+        ? snapshot.state.operationCount
+        : 0,
     subtotalCount:
-      typeof legacyState.subtotalCount === "number"
-        ? legacyState.subtotalCount
+      typeof snapshot.state.subtotalCount === "number"
+        ? snapshot.state.subtotalCount
         : 0,
     paperTape: Array.isArray(snapshot.state.paperTape)
       ? [...snapshot.state.paperTape].slice(-MAX_TAPE_LINES)

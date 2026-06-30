@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   DecimalMode,
-  Mode,
 } from "../../domain/calculator/Calculator";
 import { CalculatorApplicationService } from "../../application/services/CalculatorApplicationService";
 import { BrowserClipboardGateway } from "../../infrastructure/clipboard/BrowserClipboardGateway";
@@ -62,10 +61,6 @@ const CalculatorUI: React.FC = () => {
   const handleButtonClick = useCallback((action: string) => {
     setState(service.dispatch(action));
   }, [service]);
-
-  const handleModeChange = (mode: Mode) => {
-    setState(service.setMode(mode));
-  };
 
   const handleDecimalModeChange = (decimalMode: DecimalMode) => {
     setState(service.setDecimalMode(decimalMode));
@@ -157,7 +152,6 @@ const CalculatorUI: React.FC = () => {
 
         <div className="hr-display-section">
           <div className="hr-leds">
-            <span>{state.mode}</span>
             <span>DEC {state.decimalMode}</span>
             <span>OPS {state.operationCount}</span>
             <span>SUB {state.subtotalCount}</span>
@@ -178,21 +172,6 @@ const CalculatorUI: React.FC = () => {
         </div>
 
         <div className="hr-selectors">
-          <div className="hr-selector-group">
-            <label>Modo de trabajo</label>
-            <div className="hr-selector-buttons">
-              {(['NORMAL', 'CONVERSION'] as Mode[]).map((mode) => (
-                <button
-                  key={mode}
-                  className={state.mode === mode ? 'active' : ''}
-                  onClick={() => handleModeChange(mode)}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div className="hr-selector-group">
             <label>Selector decimal</label>
             <div className="hr-selector-buttons">

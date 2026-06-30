@@ -9,3 +9,4 @@
 - [0007 - Model the combined plus-equals key as domain behavior](./0007-combined-plus-equals-belongs-to-the-domain.md)
 - [0008 - Persist only configuration across sessions](./0008-persist-only-configuration-across-sessions.md)
 - [0009 - Use accumulated base for percentage in additive flows](./0009-percentage-uses-accumulated-base-in-additive-flows.md)
+- [0010 - Remove working modes and drop legacy snapshot compatibility](./0010-remove-working-modes-and-drop-legacy-snapshots.md)

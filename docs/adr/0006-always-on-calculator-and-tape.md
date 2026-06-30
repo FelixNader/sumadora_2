@@ -1,6 +1,6 @@
 # ADR 0006: Model the calculator as always-on with always-active tape
 
-- Status: accepted
+- Status: superseded by ADR 0010
 - Date: 2026-06-29
 
 ## Context
@@ -23,6 +23,8 @@ Keeping `ON`, `OFF`, and `PRINT` in the product model created noise:
 This also made the UI harder to justify, because mode selection mixed product-relevant workflows with dead hardware metaphors.
 
 ## Decision
+
+Historical note: this decision was later superseded when `NORMAL` and `CONVERSION` were also removed from the product model.
 
 Simplify the mode model and related flows:
 

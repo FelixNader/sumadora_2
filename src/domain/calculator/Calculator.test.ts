@@ -12,58 +12,35 @@ test('ADD2 treats integer input as cents for add/sub operations', () => {
   expect(calculator.getState().displayValue).toBe('0.03');
 });
 
-test('legacy PRINT, ON, OFF and ITEM snapshots are normalized to NORMAL mode', () => {
+test('rejects old snapshot versions after removing working modes from the model', () => {
   const calculator = new Calculator();
 
-  calculator.loadSnapshot({
-    version: 1,
-    state: {
-      ...calculator.getState(),
-      mode: "PRINT" as never,
-    },
-  });
-  expect(calculator.getState().mode).toBe('NORMAL');
-
-  calculator.loadSnapshot({
-    version: 1,
-    state: {
-      ...calculator.getState(),
-      mode: "ON" as never,
-    },
-  });
-  expect(calculator.getState().mode).toBe('NORMAL');
-
-  calculator.loadSnapshot({
-    version: 1,
-    state: {
-      ...calculator.getState(),
-      mode: "OFF" as never,
-    },
-  });
-  expect(calculator.getState().mode).toBe('NORMAL');
-
-  calculator.loadSnapshot({
-    version: 1,
-    state: {
-      ...calculator.getState(),
-      mode: "ITEM" as never,
-    },
-  });
-  expect(calculator.getState().mode).toBe('NORMAL');
+  expect(() =>
+    calculator.loadSnapshot({
+      version: 1 as never,
+      state: calculator.getState(),
+    })
+  ).toThrow("Unsupported snapshot format");
 });
 
-test('CONVERSION mode disables independent memory operations', () => {
+test('conversion and independent memory remain available without a working mode switch', () => {
   const calculator = new Calculator();
 
   calculator.inputDigit('9');
   calculator.memoryAdd();
   expect(calculator.getState().independentMemory).toBe(9);
 
-  calculator.setMode('CONVERSION');
+  calculator.clearEntry();
   calculator.inputDigit('1');
   calculator.memoryAdd();
+  calculator.clearEntry();
+  calculator.inputDigit('2');
+  calculator.setConversionRate();
+  calculator.inputDigit('4');
+  calculator.convertDomesticToForeign();
 
-  expect(calculator.getState().independentMemory).toBe(9);
+  expect(calculator.getState().independentMemory).toBe(10);
+  expect(calculator.getState().displayValue).toBe('2');
 });
 
 test('subtotal resets operation count and increments subtotal count', () => {
