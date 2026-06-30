@@ -14,10 +14,10 @@ interface SessionStateBase {
   businessSell: number | null;
   businessMargin: number | null;
   expressionTokens: ExpressionToken[];
-  resetItemCountOnNextOp: boolean;
   totalMemory: number;
   grandTotal: number;
-  itemCount: number;
+  operationCount: number;
+  subtotalCount: number;
 }
 
 export function createClearedEntryState(): Pick<
@@ -45,10 +45,10 @@ export function createClearAllState(): SessionStateBase {
     businessSell: null,
     businessMargin: null,
     expressionTokens: [],
-    resetItemCountOnNextOp: false,
     totalMemory: 0,
     grandTotal: 0,
-    itemCount: 0,
+    operationCount: 0,
+    subtotalCount: 0,
   };
 }
 

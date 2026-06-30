@@ -242,6 +242,11 @@
   cursor: pointer;
 }
 
+.hr-keypad .key-spacer {
+  min-height: 46px;
+  pointer-events: none;
+}
+
 .hr-keypad .key-fn {
   background: linear-gradient(180deg, #7fa7cb, #5d7b95);
   color: #f6f8fa;
@@ -313,6 +318,10 @@
     min-height: 52px;
     font-size: 15px;
   }
+
+  .hr-keypad .key-spacer {
+    min-height: 52px;
+  }
 }
 
 @media (min-width: 1200px) {
@@ -364,6 +373,10 @@
     font-size: 12px;
   }
 
+  .hr-keypad .key-spacer {
+    min-height: 44px;
+  }
+
   .hr-paper-tape {
     max-height: min(32dvh, 240px);
   }
@@ -397,5 +410,9 @@
   .hr-keypad button {
     min-height: 42px;
     font-size: 11px;
+  }
+
+  .hr-keypad .key-spacer {
+    min-height: 42px;
   }
 }

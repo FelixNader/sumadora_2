@@ -6,3 +6,4 @@
 - [0004 - Keep React as a UI detail instead of migrating this project to plain JavaScript](./0004-react-as-ui-detail-not-primary-architecture.md)
 - [0005 - Keep browser capabilities behind application ports](./0005-browser-capabilities-behind-application-ports.md)
 - [0006 - Model the calculator as always-on with always-active tape](./0006-always-on-calculator-and-tape.md)
+- [0007 - Model the combined plus-equals key as domain behavior](./0007-combined-plus-equals-belongs-to-the-domain.md)

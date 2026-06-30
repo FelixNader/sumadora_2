@@ -1,8 +1,7 @@
-import { CalculatorState, ExpressionToken, Mode, Operation } from "../types";
+import { CalculatorState, ExpressionToken, Operation } from "../types";
 
-export interface ItemCountUpdate {
-  itemCount: number;
-  resetItemCountOnNextOp: boolean;
+export interface OperationCounterUpdate {
+  operationCount: number;
 }
 
 export interface SubtotalTransition {
@@ -15,71 +14,29 @@ export interface SubtotalTransition {
   lastOperand: number | null;
   expressionTokens: ExpressionToken[];
   totalMemory: number;
-  itemCount: number;
-  resetItemCountOnNextOp: boolean;
+  operationCount: number;
+  subtotalCount: number;
 }
 
-export function applyExpressionItemCount(
-  mode: Mode,
-  itemCount: number,
-  resetItemCountOnNextOp: boolean,
-  expression: ExpressionToken[]
-): ItemCountUpdate {
-  if (mode !== "ITEM") {
-    return { itemCount, resetItemCountOnNextOp };
-  }
-
-  const itemOps = expression.filter(
-    (token) => token === "+" || token === "-"
-  ).length;
-
-  if (itemOps === 0) {
-    return { itemCount, resetItemCountOnNextOp };
-  }
-
-  if (resetItemCountOnNextOp) {
-    return {
-      itemCount: itemOps,
-      resetItemCountOnNextOp: false,
-    };
-  }
-
-  return {
-    itemCount: itemCount + itemOps,
-    resetItemCountOnNextOp,
-  };
-}
-
-export function applyFinalizedOperationItemCount(
-  mode: Mode,
-  itemCount: number,
-  resetItemCountOnNextOp: boolean,
+export function incrementOperationCount(
+  operationCount: number,
   operation: Operation
-): ItemCountUpdate {
-  if (mode !== "ITEM" || (operation !== "+" && operation !== "-")) {
-    return { itemCount, resetItemCountOnNextOp };
-  }
-
-  if (resetItemCountOnNextOp) {
-    return {
-      itemCount: 1,
-      resetItemCountOnNextOp: false,
-    };
+): OperationCounterUpdate {
+  if (operation !== "+" && operation !== "-") {
+    return { operationCount };
   }
 
   return {
-    itemCount: itemCount + 1,
-    resetItemCountOnNextOp,
+    operationCount: operationCount + 1,
   };
 }
 
 export function createSubtotalTransition(
   state: Pick<
     CalculatorState,
-    | "mode"
     | "grandTotal"
-    | "resetItemCountOnNextOp"
-    | "itemCount"
+    | "subtotalCount"
+    | "operationCount"
   >,
   subtotalValue: number,
   round: (value: number, operation: "+" | "-") => number
@@ -94,24 +51,14 @@ export function createSubtotalTransition(
     lastOperand: null,
     expressionTokens: [],
     totalMemory: 0,
-    itemCount: state.mode === "ITEM" ? 0 : state.itemCount,
-    resetItemCountOnNextOp:
-      state.mode === "ITEM" ? false : state.resetItemCountOnNextOp,
+    operationCount: 0,
+    subtotalCount: state.subtotalCount + 1,
   };
 }
 
-export function calculateItemAverage(
-  itemCount: number,
+export function calculateOperationAverage(
+  operationCount: number,
   totalMemory: number
 ): number {
-  return itemCount > 0 ? totalMemory / itemCount : 0;
-}
-
-export function addSpecifiedItemCount(
-  currentItemCount: number,
-  value: number
-): number {
-  const integerPart = Math.trunc(Math.abs(value));
-  const addValue = integerPart % 1000;
-  return currentItemCount + addValue;
+  return operationCount > 0 ? totalMemory / operationCount : 0;
 }

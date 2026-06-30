@@ -1,4 +1,4 @@
-export type Mode = "NORMAL" | "ITEM" | "CONVERSION";
+export type Mode = "NORMAL" | "CONVERSION";
 export type DecimalMode = "F" | "3" | "2" | "0" | "ADD2";
 export type Operation = "+" | "-" | "*" | "/";
 export type BusinessMode = "COST" | "SELL" | "MGN" | null;
@@ -11,7 +11,8 @@ export interface CalculatorState {
   totalMemory: number;
   grandTotal: number;
   independentMemory: number;
-  itemCount: number;
+  operationCount: number;
+  subtotalCount: number;
   referenceNumber: number;
   conversionRate: number;
   taxRate: number;
@@ -28,7 +29,6 @@ export interface CalculatorState {
   businessSell: number | null;
   businessMargin: number | null;
   expressionTokens: ExpressionToken[];
-  resetItemCountOnNextOp: boolean;
 }
 
 export interface CalculatorSnapshot {

@@ -19,11 +19,9 @@ import {
 } from "./state";
 import { solveBusinessValues } from "./services/businessMath";
 import {
-  addSpecifiedItemCount,
-  applyExpressionItemCount,
-  applyFinalizedOperationItemCount,
-  calculateItemAverage,
+  calculateOperationAverage,
   createSubtotalTransition,
+  incrementOperationCount,
 } from "./services/accountingService";
 import {
   convertDomesticToForeign,
@@ -166,6 +164,15 @@ export class Calculator {
     this.performOperation("+");
   }
 
+  plusEquals(): void {
+    if (this.state.waitingForNewEntry && this.hasOpenAdditiveSequence()) {
+      this.equals();
+      return;
+    }
+
+    this.add();
+  }
+
   subtract(): void {
     this.performOperation("-");
   }
@@ -193,29 +200,34 @@ export class Calculator {
       const lastToken = expression[expression.length - 1];
 
       if (typeof lastToken === "string") {
-        const secondOperand = this.state.waitingForNewEntry
-          ? this.state.lastOperand ?? this.normalizeOperandForCurrentDisplay(current, lastToken)
-          : this.normalizeOperandForCurrentDisplay(current, lastToken);
-
-        if (lastToken === "*" || lastToken === "/") {
-          const leftOperand = this.resolveMulDivLeftOperandSafely(expression);
-          if (leftOperand === null) {
-            return;
-          }
-          const mulDivResult = this.executeOperationSafely(leftOperand, secondOperand, lastToken);
-          if (mulDivResult === null) {
-            return;
-          }
-          this.printToTape(
-            `${formatForTape(leftOperand)} ${symbolFor(lastToken)} ${formatForTape(secondOperand)} = ${formatForTape(mulDivResult)}`
-          );
+        if (this.state.waitingForNewEntry && (lastToken === "+" || lastToken === "-")) {
+          expression.pop();
+          this.state.lastOperator = lastToken;
         } else {
-          this.printToTape(`${formatForTape(secondOperand)} ${symbolFor(lastToken)}`);
-        }
+          const secondOperand = this.state.waitingForNewEntry
+            ? this.state.lastOperand ?? this.normalizeOperandForCurrentDisplay(current, lastToken)
+            : this.normalizeOperandForCurrentDisplay(current, lastToken);
 
-        expression.push(secondOperand);
-        this.state.lastOperator = lastToken;
-        this.state.lastOperand = secondOperand;
+          if (lastToken === "*" || lastToken === "/") {
+            const leftOperand = this.resolveMulDivLeftOperandSafely(expression);
+            if (leftOperand === null) {
+              return;
+            }
+            const mulDivResult = this.executeOperationSafely(leftOperand, secondOperand, lastToken);
+            if (mulDivResult === null) {
+              return;
+            }
+            this.printToTape(
+              `${formatForTape(leftOperand)} ${symbolFor(lastToken)} ${formatForTape(secondOperand)} = ${formatForTape(mulDivResult)}`
+            );
+          } else {
+            this.printToTape(`${formatForTape(secondOperand)} ${symbolFor(lastToken)}`);
+          }
+
+          expression.push(secondOperand);
+          this.state.lastOperator = lastToken;
+          this.state.lastOperand = secondOperand;
+        }
       }
 
       const result = this.evaluateExpressionSafely(expression);
@@ -223,15 +235,9 @@ export class Calculator {
         return;
       }
 
-      const itemCountUpdate = applyExpressionItemCount(
-        this.state.mode,
-        this.state.itemCount,
-        this.state.resetItemCountOnNextOp,
-        expression
-      );
-      this.state.itemCount = itemCountUpdate.itemCount;
-      this.state.resetItemCountOnNextOp =
-        itemCountUpdate.resetItemCountOnNextOp;
+      if (typeof lastToken === "string" && (lastToken === "+" || lastToken === "-")) {
+        this.printToTape(`${formatForTape(result)}`);
+      }
 
       this.state.displayValue = formatForDisplay(result);
       this.state.totalMemory = result;
@@ -256,6 +262,7 @@ export class Calculator {
         this.printToTape(
           `${formatForTape(this.state.lastOperand)} ${symbolFor(this.state.lastOperator)}`
         );
+        this.printToTape(`${formatForTape(result)}`);
       } else {
         this.printToTape(
           `${formatForTape(current)} ${symbolFor(this.state.lastOperator)} ${formatForTape(this.state.lastOperand)} = ${formatForTape(result)}`
@@ -311,7 +318,7 @@ export class Calculator {
   grandTotalRecall(): void {
     this.state.displayValue = formatForDisplay(this.state.grandTotal);
     this.state.waitingForNewEntry = true;
-    this.printToTape(`GRAND TOTAL ${formatForTape(this.state.grandTotal)}`);
+    this.printToTape(`SUBTOTALS ${this.state.subtotalCount} GT ${formatForTape(this.state.grandTotal)}`);
   }
 
   printReference(): void {
@@ -319,19 +326,9 @@ export class Calculator {
     this.printToTape(`REF# ${this.state.referenceNumber.toString().padStart(4, "0")}`);
   }
 
-  printItemTotal(): void {
-    if (this.state.mode !== "ITEM") {
-      return;
-    }
-    this.printToTape(`ITEMS ${this.state.itemCount} TOTAL ${formatForTape(this.state.totalMemory)}`);
-    this.state.displayValue = formatForDisplay(this.state.totalMemory);
-    this.state.waitingForNewEntry = true;
-    this.state.resetItemCountOnNextOp = true;
-  }
-
   subtotal(): void {
     const subtotalValue = this.resolveRunningTotal();
-    this.printToTape(`SUBTOTAL ${formatForTape(subtotalValue)}`);
+    this.printToTape(`SUBTOTAL ${this.state.subtotalCount + 1} OPS ${this.state.operationCount} ${formatForTape(subtotalValue)}`);
     const transition = createSubtotalTransition(this.state, subtotalValue, (value, operation) =>
       this.roundForCurrentMode(value, operation)
     );
@@ -344,36 +341,17 @@ export class Calculator {
     this.state.lastOperand = transition.lastOperand;
     this.state.expressionTokens = transition.expressionTokens;
     this.state.totalMemory = transition.totalMemory;
-    this.state.itemCount = transition.itemCount;
-    this.state.resetItemCountOnNextOp =
-      transition.resetItemCountOnNextOp;
+    this.state.operationCount = transition.operationCount;
+    this.state.subtotalCount = transition.subtotalCount;
   }
 
-  printItemAverage(): void {
-    if (this.state.mode !== "ITEM") {
-      return;
-    }
-    const average = calculateItemAverage(
-      this.state.itemCount,
+  printOperationAverage(): void {
+    const average = calculateOperationAverage(
+      this.state.operationCount,
       this.state.totalMemory
     );
     this.printToTape(`AVG ${formatForTape(average)}`);
     this.state.displayValue = formatForDisplay(average);
-    this.state.waitingForNewEntry = true;
-  }
-
-  addSpecifiedItemCount(): void {
-    if (this.state.mode !== "ITEM") {
-      return;
-    }
-    const value = this.parseDisplayValue();
-    if (value === null) {
-      return;
-    }
-    const nextItemCount = addSpecifiedItemCount(this.state.itemCount, value);
-    const added = nextItemCount - this.state.itemCount;
-    this.state.itemCount = nextItemCount;
-    this.printToTape(`ITEM +${added} => ${this.state.itemCount}`);
     this.state.waitingForNewEntry = true;
   }
 
@@ -608,6 +586,11 @@ export class Calculator {
       }
     }
 
+    if (this.shouldContinueFromClosedResult(operation)) {
+      this.continueFromClosedResult(operation, rawCurrent);
+      return;
+    }
+
     const operand = this.normalizeOperandForCurrentDisplay(rawCurrent, operation);
     const previousOperator = this.state.expressionTokens[this.state.expressionTokens.length - 1];
 
@@ -636,6 +619,12 @@ export class Calculator {
     this.state.lastOperator = operation;
     this.state.lastOperand = operand;
 
+    const operationCounterUpdate = incrementOperationCount(
+      this.state.operationCount,
+      operation
+    );
+    this.state.operationCount = operationCounterUpdate.operationCount;
+
     const preview = this.evaluateExpressionSafely(
       this.state.expressionTokens.slice(0, -1)
     );
@@ -654,6 +643,61 @@ export class Calculator {
     this.state.businessMargin = null;
   }
 
+  private shouldContinueFromClosedResult(operation: Operation): boolean {
+    return (
+      (operation === "+" || operation === "-") &&
+      !this.state.waitingForNewEntry &&
+      this.state.expressionTokens.length === 1 &&
+      typeof this.state.expressionTokens[0] === "number"
+    );
+  }
+
+  private continueFromClosedResult(operation: Operation, rawCurrent: number): void {
+    if (operation !== "+" && operation !== "-") {
+      return;
+    }
+
+    const base = this.state.expressionTokens[0];
+    if (typeof base !== "number") {
+      return;
+    }
+
+    const operand = this.normalizeOperandForCurrentDisplay(rawCurrent, operation);
+    this.printToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
+
+    this.state.expressionTokens = [base, operation, operand, operation];
+    this.state.lastOperator = operation;
+    this.state.lastOperand = operand;
+
+    const operationCounterUpdate = incrementOperationCount(
+      this.state.operationCount,
+      operation
+    );
+    this.state.operationCount = operationCounterUpdate.operationCount;
+
+    const preview = this.evaluateExpressionSafely(
+      this.state.expressionTokens.slice(0, -1)
+    );
+    if (preview !== null) {
+      this.state.displayValue = formatForDisplay(preview);
+      this.state.totalMemory = preview;
+      this.state.firstOperand = preview;
+    }
+
+    this.state.pendingOperation = operation;
+    this.state.waitingForNewEntry = true;
+    this.state.pendingBusiness = null;
+    this.state.businessBase = null;
+    this.state.businessCost = null;
+    this.state.businessSell = null;
+    this.state.businessMargin = null;
+  }
+
+  private hasOpenAdditiveSequence(): boolean {
+    const lastToken = this.state.expressionTokens[this.state.expressionTokens.length - 1];
+    return lastToken === "+" || lastToken === "-";
+  }
+
   private finalizeResult(
     result: number,
     operation: Operation,
@@ -664,16 +708,6 @@ export class Calculator {
     this.state.totalMemory = result;
     this.state.lastOperator = operation;
     this.state.lastOperand = secondOperand;
-
-    const itemCountUpdate = applyFinalizedOperationItemCount(
-      this.state.mode,
-      this.state.itemCount,
-      this.state.resetItemCountOnNextOp,
-      operation
-    );
-    this.state.itemCount = itemCountUpdate.itemCount;
-    this.state.resetItemCountOnNextOp =
-      itemCountUpdate.resetItemCountOnNextOp;
 
     if (accumulateGrandTotal) {
       this.state.grandTotal = this.roundForCurrentMode(this.state.grandTotal + result, "+");

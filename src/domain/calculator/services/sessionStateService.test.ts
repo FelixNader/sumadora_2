@@ -27,7 +27,8 @@ test("createClearAllState clears arithmetic and accounting session state", () =>
     expressionTokens: [],
     totalMemory: 0,
     grandTotal: 0,
-    itemCount: 0,
+    operationCount: 0,
+    subtotalCount: 0,
   });
 });
 

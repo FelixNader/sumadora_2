@@ -159,7 +159,8 @@ const CalculatorUI: React.FC = () => {
           <div className="hr-leds">
             <span>{state.mode}</span>
             <span>DEC {state.decimalMode}</span>
-            <span>ITM {state.itemCount}</span>
+            <span>OPS {state.operationCount}</span>
+            <span>SUB {state.subtotalCount}</span>
             <span>M {state.independentMemory !== 0 ? 'ON' : 'OFF'}</span>
           </div>
           <div
@@ -180,7 +181,7 @@ const CalculatorUI: React.FC = () => {
           <div className="hr-selector-group">
             <label>Modo de trabajo</label>
             <div className="hr-selector-buttons">
-              {(['NORMAL', 'ITEM', 'CONVERSION'] as Mode[]).map((mode) => (
+              {(['NORMAL', 'CONVERSION'] as Mode[]).map((mode) => (
                 <button
                   key={mode}
                   className={state.mode === mode ? 'active' : ''}
@@ -207,12 +208,12 @@ const CalculatorUI: React.FC = () => {
             </div>
           </div>
         </div>
-        <p className="hr-helper-line">La cinta esta siempre activa; el modo solo cambia la logica contable o de conversion.</p>
+        <p className="hr-helper-line">Los contadores OPS y SUB estan siempre activos; el modo solo cambia si trabajas normal o en conversion.</p>
 
         <div className="hr-keypad">
           <button className="key-fn" onClick={() => handleButtonClick('REF')}>REF</button>
           <button className="key-fn" onClick={() => handleButtonClick('GT')}>GT</button>
-          <button className="key-fn" onClick={() => handleButtonClick('ITM')}>ITM+</button>
+          <div className="key-spacer" aria-hidden="true" />
           <button className="key-fn" onClick={() => handleButtonClick('SUBT')}>SUBT</button>
           <button className="key-fn" onClick={() => handleButtonClick('AVG')}>AVG</button>
 
@@ -250,7 +251,7 @@ const CalculatorUI: React.FC = () => {
           <button onClick={() => handleButtonClick('2')}>2</button>
           <button onClick={() => handleButtonClick('3')}>3</button>
           <button className="key-op key-plus" onClick={() => handleButtonClick('+=')}>+ =</button>
-          <button className="key-fn" onClick={() => handleButtonClick('ITM TOTAL')}>ITM Σ</button>
+          <div className="key-spacer" aria-hidden="true" />
 
           <button className="key-wide" onClick={() => handleButtonClick('0')}>0</button>
           <button onClick={() => handleButtonClick('.')}>.</button>

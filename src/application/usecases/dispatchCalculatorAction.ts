@@ -32,8 +32,10 @@ export function dispatchCalculatorAction(
       calculator.clearAll();
       break;
     case "+":
-    case "+=":
       calculator.add();
+      break;
+    case "+=":
+      calculator.plusEquals();
       break;
     case "-":
       calculator.subtract();
@@ -65,17 +67,11 @@ export function dispatchCalculatorAction(
     case "GT":
       calculator.grandTotalRecall();
       break;
-    case "ITM":
-      calculator.addSpecifiedItemCount();
-      break;
-    case "ITM TOTAL":
-      calculator.printItemTotal();
-      break;
     case "SUBT":
       calculator.subtotal();
       break;
     case "AVG":
-      calculator.printItemAverage();
+      calculator.printOperationAverage();
       break;
     case "%":
       calculator.percent();

@@ -5,6 +5,7 @@ Replica web de una calculadora contable de escritorio inspirada en la `CASIO HR-
 ## Que hace
 
 - Operaciones aritmeticas con precedencia real entre `+`, `-`, `x` y `/`
+- Flujo de sumadora para la tecla combinada `+ =`: registra linea, totaliza la secuencia y permite seguir acumulando desde el total impreso
 - Selector decimal `F`, `3`, `2`, `0` y `ADD2`
 - Modos visibles `NORMAL`, `ITEM` y `CONVERSION`
 - Memoria independiente, `grand total`, subtotales y conteo de items
@@ -25,6 +26,8 @@ La implementacion actual sigue una **Clean Architecture ligera**:
 No es una arquitectura corporativa sobredimensionada. El sistema sigue siendo pequeno, pero ahora la separacion entre dominio, aplicacion e infraestructura existe en el codigo y no solo en los diagramas.
 
 Las decisiones principales quedaron documentadas en [docs/adr/README.md](./docs/adr/README.md).
+
+La decision mas reciente sobre el flujo contable de `+ =` quedo registrada en [ADR 0007](./docs/adr/0007-combined-plus-equals-belongs-to-the-domain.md): esa tecla ya no se entiende como un parche de interfaz, sino como comportamiento propio del dominio.
 
 ### Mapa de bounded contexts
 

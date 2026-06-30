@@ -11,7 +11,8 @@ export function createInitialCalculatorState(): CalculatorState {
     totalMemory: 0,
     grandTotal: 0,
     independentMemory: 0,
-    itemCount: 0,
+    operationCount: 0,
+    subtotalCount: 0,
     referenceNumber: 0,
     conversionRate: 1,
     taxRate: 16,
@@ -28,21 +29,33 @@ export function createInitialCalculatorState(): CalculatorState {
     businessSell: null,
     businessMargin: null,
     expressionTokens: [],
-    resetItemCountOnNextOp: false,
   };
 }
 
 export function sanitizeSnapshot(snapshot: CalculatorSnapshot): CalculatorState {
   const legacyMode = snapshot.state.mode as string;
   const sanitizedMode =
-    legacyMode === "ITEM" ||
     legacyMode === "CONVERSION"
       ? legacyMode
       : "NORMAL";
+  const legacyState = snapshot.state as CalculatorState & {
+    itemCount?: number;
+    subtotalCount?: number;
+  };
 
   return {
     ...snapshot.state,
     mode: sanitizedMode,
+    operationCount:
+      typeof legacyState.operationCount === "number"
+        ? legacyState.operationCount
+        : typeof legacyState.itemCount === "number"
+          ? legacyState.itemCount
+          : 0,
+    subtotalCount:
+      typeof legacyState.subtotalCount === "number"
+        ? legacyState.subtotalCount
+        : 0,
     paperTape: Array.isArray(snapshot.state.paperTape)
       ? [...snapshot.state.paperTape].slice(-MAX_TAPE_LINES)
       : [],
@@ -68,9 +81,5 @@ export function sanitizeSnapshot(snapshot: CalculatorSnapshot): CalculatorState 
             token === "/"
         )
       : [],
-    resetItemCountOnNextOp:
-      typeof snapshot.state.resetItemCountOnNextOp === "boolean"
-        ? snapshot.state.resetItemCountOnNextOp
-        : false,
   };
 }
