@@ -1,5 +1,6 @@
 import { Calculator, CalculatorState } from "../../domain/calculator/Calculator";
 import { CalculatorSnapshotRepository } from "../ports/CalculatorSnapshotRepository";
+import { buildPersistedSessionSnapshot } from "./buildPersistedSessionSnapshot";
 
 export function hydrateCalculatorState(
   calculator: Calculator,
@@ -8,7 +9,7 @@ export function hydrateCalculatorState(
   try {
     const snapshot = snapshotRepository.load();
     if (snapshot) {
-      calculator.loadSnapshot(snapshot);
+      calculator.loadSnapshot(buildPersistedSessionSnapshot(snapshot));
     }
   } catch {
     snapshotRepository.clear();

@@ -262,6 +262,41 @@ test('grand total accumulates subtotals and clears with CA', () => {
   expect(calculator.getState().displayValue).toBe('0');
 });
 
+test('subtotal and grand total reflect each additive block independently after subtotal reset', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.plusEquals();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.plusEquals();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.plusEquals();
+  calculator.subtotal();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.plusEquals();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.plusEquals();
+  calculator.subtotal();
+  calculator.grandTotalRecall();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/SUBTOTAL 1 OPS 3\s+350/);
+  expect(tape).toMatch(/SUBTOTAL 2 OPS 2\s+250/);
+  expect(tape).toMatch(/SUBTOTALS 2 GT\s+600/);
+  expect(calculator.getState().displayValue).toBe('600');
+});
+
 test('tax operations print full breakdown on tape', () => {
   const calculator = new Calculator();
 

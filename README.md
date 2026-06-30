@@ -12,6 +12,7 @@ Replica web de una calculadora contable de escritorio inspirada en la `CASIO HR-
 - Impuestos, conversion de moneda y calculos `COST / SELL / MGN`
 - Cinta de papel siempre activa
 - Persistencia local con exportacion e importacion de snapshots JSON
+- Persistencia automatica entre sesiones solo para `M`, `RATE` y `TAX`
 - Copia del valor mostrado mediante doble clic sobre el display
 
 ## Arquitectura
@@ -28,6 +29,8 @@ No es una arquitectura corporativa sobredimensionada. El sistema sigue siendo pe
 Las decisiones principales quedaron documentadas en [docs/adr/README.md](./docs/adr/README.md).
 
 La decision mas reciente sobre el flujo contable de `+ =` quedo registrada en [ADR 0007](./docs/adr/0007-combined-plus-equals-belongs-to-the-domain.md): esa tecla ya no se entiende como un parche de interfaz, sino como comportamiento propio del dominio.
+
+La persistencia local automatica tambien quedo acotada por producto en [ADR 0008](./docs/adr/0008-persist-only-configuration-across-sessions.md): `M`, `RATE` y `TAX` sobreviven entre sesiones, pero la cinta, `GT`, `OPS`, `SUB` y el estado operativo se reinician al abrir la app.
 
 ### Mapa de bounded contexts
 

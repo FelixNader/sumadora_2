@@ -7,3 +7,4 @@
 - [0005 - Keep browser capabilities behind application ports](./0005-browser-capabilities-behind-application-ports.md)
 - [0006 - Model the calculator as always-on with always-active tape](./0006-always-on-calculator-and-tape.md)
 - [0007 - Model the combined plus-equals key as domain behavior](./0007-combined-plus-equals-belongs-to-the-domain.md)
+- [0008 - Persist only configuration across sessions](./0008-persist-only-configuration-across-sessions.md)

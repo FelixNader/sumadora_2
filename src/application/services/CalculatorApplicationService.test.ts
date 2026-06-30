@@ -53,12 +53,55 @@ test("hydrates calculator state from snapshot repository", () => {
   const seededCalculator = new Calculator();
   seededCalculator.inputDigit("4");
   seededCalculator.inputDigit("2");
+  seededCalculator.memoryAdd();
+  seededCalculator.clearEntry();
+  seededCalculator.setMode("CONVERSION");
+  seededCalculator.inputDigit("8");
+  seededCalculator.setConversionRate();
+  seededCalculator.inputDigit("1");
+  seededCalculator.inputDigit("9");
+  seededCalculator.setTaxRate();
   repository.loadValue = seededCalculator.getSnapshot();
 
   const service = new CalculatorApplicationService(new Calculator(), repository);
   const state = service.hydrate();
 
-  expect(state.displayValue).toBe("42");
+  expect(state.displayValue).toBe("0");
+  expect(state.independentMemory).toBe(42);
+  expect(state.conversionRate).toBe(8);
+  expect(state.taxRate).toBe(19);
+});
+
+test("hydrate drops session counters, tape and grand total from persisted local state", () => {
+  const repository = new InMemorySnapshotRepository();
+  const seededCalculator = new Calculator();
+
+  seededCalculator.inputDigit("1");
+  seededCalculator.inputDigit("5");
+  seededCalculator.inputDigit("0");
+  seededCalculator.plusEquals();
+  seededCalculator.inputDigit("1");
+  seededCalculator.inputDigit("0");
+  seededCalculator.inputDigit("0");
+  seededCalculator.plusEquals();
+  seededCalculator.inputDigit("1");
+  seededCalculator.inputDigit("0");
+  seededCalculator.inputDigit("0");
+  seededCalculator.plusEquals();
+  seededCalculator.subtotal();
+  seededCalculator.grandTotalRecall();
+
+  repository.loadValue = seededCalculator.getSnapshot();
+
+  const service = new CalculatorApplicationService(new Calculator(), repository);
+  const state = service.hydrate();
+
+  expect(state.paperTape).toEqual([]);
+  expect(state.operationCount).toBe(0);
+  expect(state.subtotalCount).toBe(0);
+  expect(state.grandTotal).toBe(0);
+  expect(state.totalMemory).toBe(0);
+  expect(state.displayValue).toBe("0");
 });
 
 test("clears repository when snapshot loading fails", () => {
@@ -89,7 +132,32 @@ test("persists updated snapshots through the repository", () => {
   service.dispatch("=");
   service.persist();
 
-  expect(repository.saved?.state.displayValue).toBe("12");
+  expect(repository.saved?.state.displayValue).toBe("0");
+  expect(repository.saved?.state.paperTape).toEqual([]);
+  expect(repository.saved?.state.grandTotal).toBe(0);
+  expect(repository.saved?.state.operationCount).toBe(0);
+  expect(repository.saved?.state.subtotalCount).toBe(0);
+});
+
+test("persists only memory, rate and tax across sessions", () => {
+  const repository = new InMemorySnapshotRepository();
+  const service = new CalculatorApplicationService(new Calculator(), repository);
+
+  service.dispatch("4");
+  service.dispatch("2");
+  service.dispatch("M+");
+  service.dispatch("CE");
+  service.setMode("CONVERSION");
+  service.dispatch("9");
+  service.dispatch("RATE");
+  service.dispatch("2");
+  service.dispatch("0");
+  service.dispatch("TAX SET");
+  service.persist();
+
+  expect(repository.saved?.state.independentMemory).toBe(42);
+  expect(repository.saved?.state.conversionRate).toBe(9);
+  expect(repository.saved?.state.taxRate).toBe(20);
 });
 
 test("exports snapshots through the configured file gateway", () => {
