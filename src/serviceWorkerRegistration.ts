@@ -11,6 +11,9 @@ type Config = {
   onUpdate?: (registration: ServiceWorkerRegistration) => void;
 };
 
+let controllerRefreshPending = false;
+let updateHooksRegistered = false;
+
 export function register(config?: Config): void {
   if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
     const publicUrl = new URL(process.env.PUBLIC_URL, window.location.href);
@@ -38,6 +41,9 @@ function registerValidSW(swUrl: string, config?: Config): void {
   navigator.serviceWorker
     .register(swUrl)
     .then((registration) => {
+      attachAutomaticUpdateChecks(registration);
+      attachControllerReload();
+
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
         if (installingWorker == null) {
@@ -48,6 +54,8 @@ function registerValidSW(swUrl: string, config?: Config): void {
             if (navigator.serviceWorker.controller) {
               if (config && config.onUpdate) {
                 config.onUpdate(registration);
+              } else {
+                activateUpdate(registration);
               }
             } else if (config && config.onSuccess) {
               config.onSuccess(registration);
@@ -59,6 +67,54 @@ function registerValidSW(swUrl: string, config?: Config): void {
     .catch((error) => {
       console.error('Service worker registration failed:', error);
     });
+}
+
+function attachAutomaticUpdateChecks(
+  registration: ServiceWorkerRegistration
+): void {
+  if (updateHooksRegistered) {
+    return;
+  }
+
+  updateHooksRegistered = true;
+
+  const updateRegistration = () => {
+    registration.update().catch(() => {
+      console.log('Unable to refresh the installed PWA version.');
+    });
+  };
+
+  window.addEventListener('focus', updateRegistration);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      updateRegistration();
+    }
+  });
+
+  updateRegistration();
+}
+
+function attachControllerReload(): void {
+  if (controllerRefreshPending) {
+    return;
+  }
+
+  controllerRefreshPending = true;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
+
+function activateUpdate(registration: ServiceWorkerRegistration): void {
+  if (registration.waiting) {
+    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    return;
+  }
+
+  registration.update().catch(() => {
+    console.log('Unable to activate the latest PWA version.');
+  });
 }
 
 function checkValidServiceWorker(swUrl: string, config?: Config): void {
