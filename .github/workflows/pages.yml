@@ -6,6 +6,7 @@ on:
       - main
   workflow_dispatch:
 
+# This workflow only takes effect when GitHub Pages uses "GitHub Actions" as source.
 permissions:
   contents: read
   pages: write
