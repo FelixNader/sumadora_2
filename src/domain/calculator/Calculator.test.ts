@@ -103,8 +103,49 @@ test('subtotal and grand total summaries print to tape', () => {
   calculator.grandTotalRecall();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toContain('SUBTOTAL 1 OPS 2');
-  expect(tape).toContain('SUBTOTALS 1 GT');
+  expect(tape).toContain('SUB 0001 OPS 2');
+  expect(tape).toContain('SUB 0002 GT 1');
+});
+
+test('paper tape uses separate domain sequences for operation and subtotal lines', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('2');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.subtotal();
+  calculator.grandTotalRecall();
+
+  const tape = calculator.getState().paperTape;
+  expect(tape[0]).toContain('OP 0001');
+  expect(tape[1]).toContain('OP 0002');
+  expect(tape[2]).toContain('SUB 0001');
+  expect(tape[3]).toContain('SUB 0002');
+});
+
+test('clear all preserves tape id sequences until the tape itself is cleared', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('5');
+  calculator.add();
+  calculator.clearAll();
+  calculator.inputDigit('7');
+  calculator.add();
+
+  let tape = calculator.getState().paperTape;
+  expect(tape[0]).toContain('OP 0001');
+  expect(tape[2]).toContain('OP 0002');
+
+  calculator.clearTape();
+  calculator.inputDigit('9');
+  calculator.add();
+
+  tape = calculator.getState().paperTape;
+  expect(tape).toHaveLength(1);
+  expect(tape[0]).toContain('OP 0001');
 });
 
 test('addition tape prints addends and subtotal prints total', () => {
@@ -126,7 +167,29 @@ test('addition tape prints addends and subtotal prints total', () => {
   calculator.subtotal();
 
   const afterSubtotalTape = calculator.getState().paperTape.join('\n');
-  expect(afterSubtotalTape).toContain('SUBTOTAL');
+  expect(afterSubtotalTape).toContain('SUB 0001 OPS 3');
+  expect(calculator.getState().displayValue).toBe('0');
+});
+
+test('subtotal commits the last open additive line before printing the subtotal row', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.subtotal();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toContain('OP 0001');
+  expect(tape).toContain('150 +');
+  expect(tape).toContain('OP 0002');
+  expect(tape).toContain('100 +');
+  expect(tape).toContain('SUB 0001 OPS 2');
+  expect(tape).toContain('250');
   expect(calculator.getState().displayValue).toBe('0');
 });
 
@@ -354,9 +417,9 @@ test('subtotal and grand total reflect each additive block independently after s
   calculator.grandTotalRecall();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toMatch(/SUBTOTAL 1 OPS 3\s+350/);
-  expect(tape).toMatch(/SUBTOTAL 2 OPS 2\s+250/);
-  expect(tape).toMatch(/SUBTOTALS 2 GT\s+600/);
+  expect(tape).toMatch(/SUB 0001 OPS 3\s+350/);
+  expect(tape).toMatch(/SUB 0002 OPS 2\s+250/);
+  expect(tape).toMatch(/SUB 0003 GT 2\s+600/);
   expect(calculator.getState().displayValue).toBe('600');
 });
 
@@ -405,7 +468,48 @@ test('business keys solve with chained different keys', () => {
   calculator.inputDigit('0');
   calculator.businessFunction('SELL');
 
-  expect(calculator.getState().displayValue).toBe('30');
+  expect(calculator.getState().displayValue).toBe('30%');
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toContain('MGN IN');
+  expect(tape).toContain('30%');
+  expect(tape).toContain('MGN OUT');
+});
+
+test('margin remains explicitly percentage-shaped in display and tape', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('7');
+  calculator.inputDigit('0');
+  calculator.businessFunction('COST');
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.businessFunction('SELL');
+
+  expect(calculator.getState().displayValue).toBe('30%');
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toContain('MGN OUT');
+  expect(tape).toContain('30%');
+});
+
+test('percentage-shaped margin display still participates in numeric operations', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('7');
+  calculator.inputDigit('0');
+  calculator.businessFunction('COST');
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.businessFunction('SELL');
+  calculator.add();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('40');
 });
 
 test('multiply chain prints operation result on tape', () => {

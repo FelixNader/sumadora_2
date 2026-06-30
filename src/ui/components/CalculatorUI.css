@@ -23,6 +23,7 @@
 .hr-paper-tape {
   order: 2;
   width: 100%;
+  min-width: 0;
   margin: 0;
   background: #f4f0e8;
   border: 2px solid #bfb3a3;
@@ -47,6 +48,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: auto;
   padding-right: 2px;
 }
 
@@ -61,6 +63,7 @@
   padding: 8px;
   border-radius: 6px;
   min-height: 100%;
+  min-width: 0;
 }
 
 .hr-tape-line {
@@ -91,6 +94,7 @@
 .hr-calculator {
   order: 1;
   width: 100%;
+  min-width: 0;
   margin: 0;
   background: linear-gradient(180deg, #40474d, #2e3438);
   border: 2px solid #1c2125;

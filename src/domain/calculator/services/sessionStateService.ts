@@ -63,6 +63,8 @@ export function createResetAllState(): Pick<
   | "conversionRate"
   | "taxRate"
   | "paperTape"
+  | "tapeOperationSequence"
+  | "tapeSubtotalSequence"
 > {
   return {
     ...createClearAllState(),
@@ -71,6 +73,8 @@ export function createResetAllState(): Pick<
     conversionRate: 1,
     taxRate: 16,
     paperTape: [],
+    tapeOperationSequence: 0,
+    tapeSubtotalSequence: 0,
   };
 }
 

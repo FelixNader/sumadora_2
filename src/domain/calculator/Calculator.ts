@@ -7,7 +7,12 @@ import {
   symbolFor,
   exceedsDigitLimit,
 } from "./policies/numericPolicy";
-import { appendTapeLine, canPrintToTape } from "./policies/tapePolicy";
+import {
+  appendTapeLine,
+  canPrintToTape,
+  formatTapeOperationLabel,
+  formatTapeSubtotalLabel,
+} from "./policies/tapePolicy";
 import {
   evaluateExpression,
   executeOperation,
@@ -220,11 +225,11 @@ export class Calculator {
             if (mulDivResult === null) {
               return;
             }
-            this.printToTape(
+            this.printOperationToTape(
               `${formatForTape(leftOperand)} ${symbolFor(lastToken)} ${formatForTape(secondOperand)} = ${formatForTape(mulDivResult)}`
             );
           } else if (!shouldSuppressAdditiveOperandLine) {
-            this.printToTape(`${formatForTape(secondOperand)} ${symbolFor(lastToken)}`);
+            this.printOperationToTape(`${formatForTape(secondOperand)} ${symbolFor(lastToken)}`);
           }
 
           expression.push(secondOperand);
@@ -243,13 +248,13 @@ export class Calculator {
       );
 
       if (typeof lastToken === "string" && (lastToken === "+" || lastToken === "-")) {
-        this.printToTape(`${formatForTape(result)}`);
+        this.printOperationToTape(`${formatForTape(result)}`);
       } else if (
         typeof lastToken === "string" &&
         (lastToken === "*" || lastToken === "/") &&
         hasAdditiveOperators
       ) {
-        this.printToTape(`${formatForTape(result)}`);
+        this.printOperationToTape(`${formatForTape(result)}`);
       }
 
       this.state.displayValue = formatForDisplay(result);
@@ -273,12 +278,12 @@ export class Calculator {
       }
 
       if (this.state.lastOperator === "+" || this.state.lastOperator === "-") {
-        this.printToTape(
+        this.printOperationToTape(
           `${formatForTape(this.state.lastOperand)} ${symbolFor(this.state.lastOperator)}`
         );
-        this.printToTape(`${formatForTape(result)}`);
+        this.printOperationToTape(`${formatForTape(result)}`);
       } else {
-        this.printToTape(
+        this.printOperationToTape(
           `${formatForTape(current)} ${symbolFor(this.state.lastOperator)} ${formatForTape(this.state.lastOperand)} = ${formatForTape(result)}`
         );
       }
@@ -296,7 +301,7 @@ export class Calculator {
       return;
     }
     this.state.independentMemory = this.roundForCurrentMode(this.state.independentMemory + value, "+");
-    this.printToTape(`M+ ${formatForTape(value)} => ${formatForTape(this.state.independentMemory)}`);
+    this.printOperationToTape(`M+ ${formatForTape(value)} => ${formatForTape(this.state.independentMemory)}`);
   }
 
   memorySubtract(): void {
@@ -305,7 +310,7 @@ export class Calculator {
       return;
     }
     this.state.independentMemory = this.roundForCurrentMode(this.state.independentMemory - value, "-");
-    this.printToTape(`M- ${formatForTape(value)} => ${formatForTape(this.state.independentMemory)}`);
+    this.printOperationToTape(`M- ${formatForTape(value)} => ${formatForTape(this.state.independentMemory)}`);
   }
 
   memoryRecall(): void {
@@ -315,13 +320,15 @@ export class Calculator {
 
   memoryClear(): void {
     this.state.independentMemory = 0;
-    this.printToTape("MC");
+    this.printOperationToTape("MC");
   }
 
   grandTotalRecall(): void {
     this.state.displayValue = formatForDisplay(this.state.grandTotal);
     this.state.waitingForNewEntry = true;
-    this.printToTape(`SUBTOTALS ${this.state.subtotalCount} GT ${formatForTape(this.state.grandTotal)}`);
+    this.printSubtotalToTape(
+      `GT ${this.state.subtotalCount} ${formatForTape(this.state.grandTotal)}`
+    );
   }
 
   printReference(): void {
@@ -330,8 +337,11 @@ export class Calculator {
   }
 
   subtotal(): void {
+    this.commitPendingAdditiveOperandForSubtotal();
     const subtotalValue = this.resolveRunningTotal();
-    this.printToTape(`SUBTOTAL ${this.state.subtotalCount + 1} OPS ${this.state.operationCount} ${formatForTape(subtotalValue)}`);
+    this.printSubtotalToTape(
+      `OPS ${this.state.operationCount} ${formatForTape(subtotalValue)}`
+    );
     const transition = createSubtotalTransition(this.state, subtotalValue, (value, operation) =>
       this.roundForCurrentMode(value, operation)
     );
@@ -353,7 +363,7 @@ export class Calculator {
       this.state.operationCount,
       this.state.totalMemory
     );
-    this.printToTape(`AVG ${formatForTape(average)}`);
+    this.printOperationToTape(`AVG ${formatForTape(average)}`);
     this.state.displayValue = formatForDisplay(average);
     this.state.waitingForNewEntry = true;
   }
@@ -387,7 +397,7 @@ export class Calculator {
     this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = pendingOperation === null;
     this.state.lastPercentInput = current;
-    this.printToTape(`${formatForTape(current)} %`);
+    this.printOperationToTape(`${formatForTape(current)} %`);
     this.state.totalMemory = result;
   }
 
@@ -398,7 +408,7 @@ export class Calculator {
     }
     this.state.taxRate = normalizeTaxRate(value);
     this.state.waitingForNewEntry = true;
-    this.printToTape(`TAX RATE ${formatForTape(value)}%`);
+    this.printOperationToTape(`TAX RATE ${formatForTape(value)}%`);
   }
 
   addTax(): void {
@@ -420,10 +430,10 @@ export class Calculator {
     this.state.displayValue = formatForDisplay(computation.result);
     this.state.waitingForNewEntry = true;
     this.state.totalMemory = computation.result;
-    this.printToTape(`TAX+`);
-    this.printToTape(`BASE  ${formatForTape(value)}`);
-    this.printToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(computation.taxAmount)}`);
-    this.printToTape(`TOTAL ${formatForTape(computation.result)}`);
+    this.printOperationToTape(`TAX+`);
+    this.printOperationToTape(`BASE  ${formatForTape(value)}`);
+    this.printOperationToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(computation.taxAmount)}`);
+    this.printOperationToTape(`TOTAL ${formatForTape(computation.result)}`);
   }
 
   subtractTax(): void {
@@ -445,10 +455,10 @@ export class Calculator {
     this.state.displayValue = formatForDisplay(computation.result);
     this.state.waitingForNewEntry = true;
     this.state.totalMemory = computation.result;
-    this.printToTape(`TAX-`);
-    this.printToTape(`TOTAL ${formatForTape(value)}`);
-    this.printToTape(`BASE  ${formatForTape(computation.result)}`);
-    this.printToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(computation.taxAmount)}`);
+    this.printOperationToTape(`TAX-`);
+    this.printOperationToTape(`TOTAL ${formatForTape(value)}`);
+    this.printOperationToTape(`BASE  ${formatForTape(computation.result)}`);
+    this.printOperationToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(computation.taxAmount)}`);
   }
 
   setConversionRate(): void {
@@ -463,7 +473,7 @@ export class Calculator {
       return;
     }
     this.state.waitingForNewEntry = true;
-    this.printToTape(`RATE ${formatForTape(this.state.conversionRate)}`);
+    this.printOperationToTape(`RATE ${formatForTape(this.state.conversionRate)}`);
   }
 
   convertDomesticToForeign(): void {
@@ -484,7 +494,7 @@ export class Calculator {
     }
     this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = true;
-    this.printToTape(`${formatForTape(value)} -> ${formatForTape(result)} FC`);
+    this.printOperationToTape(`${formatForTape(value)} -> ${formatForTape(result)} FC`);
   }
 
   convertForeignToDomestic(): void {
@@ -505,7 +515,7 @@ export class Calculator {
     }
     this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = true;
-    this.printToTape(`${formatForTape(value)} FC -> ${formatForTape(result)} DC`);
+    this.printOperationToTape(`${formatForTape(value)} FC -> ${formatForTape(result)} DC`);
   }
 
   businessFunction(fn: Exclude<BusinessMode, null>): void {
@@ -522,7 +532,9 @@ export class Calculator {
       this.state.businessMargin = value;
     }
 
-    this.printToTape(`${fn} IN ${formatForTape(value)}`);
+    this.printOperationToTape(
+      `${fn} IN ${this.formatBusinessValueForTape(fn, value)}`
+    );
 
     let solution;
     try {
@@ -559,13 +571,20 @@ export class Calculator {
       this.state.businessMargin = solution.result;
     }
 
-    this.state.displayValue = formatForDisplay(solution.result);
+    this.state.displayValue = this.formatBusinessValueForDisplay(
+      solution.solvedKey,
+      solution.result
+    );
     this.state.totalMemory = solution.result;
-    this.printToTape(`${solution.solvedKey} OUT ${formatForTape(solution.result)}`);
+    this.printOperationToTape(
+      `${solution.solvedKey} OUT ${this.formatBusinessValueForTape(solution.solvedKey, solution.result)}`
+    );
   }
 
   clearTape(): void {
     this.state.paperTape = [];
+    this.state.tapeOperationSequence = 0;
+    this.state.tapeSubtotalSequence = 0;
   }
 
   private performOperation(operation: Operation): void {
@@ -611,11 +630,11 @@ export class Calculator {
       if (mulDivResult === null) {
         return;
       }
-      this.printToTape(
+      this.printOperationToTape(
         `${formatForTape(leftOperand)} ${symbolFor(previousOperator)} ${formatForTape(operand)} = ${formatForTape(mulDivResult)}`
       );
     } else if (!shouldSuppressAdditivePercentLine) {
-      this.printToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
+      this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
     }
 
     this.state.expressionTokens.push(operand);
@@ -668,7 +687,7 @@ export class Calculator {
     }
 
     const operand = this.normalizeOperandForCurrentDisplay(rawCurrent, operation);
-    this.printToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
+    this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
 
     this.state.expressionTokens = [base, operation, operand, operation];
     this.state.lastOperator = operation;
@@ -702,6 +721,34 @@ export class Calculator {
   private hasOpenAdditiveSequence(): boolean {
     const lastToken = this.state.expressionTokens[this.state.expressionTokens.length - 1];
     return lastToken === "+" || lastToken === "-";
+  }
+
+  private commitPendingAdditiveOperandForSubtotal(): void {
+    const lastToken = this.state.expressionTokens[this.state.expressionTokens.length - 1];
+    if (
+      (lastToken !== "+" && lastToken !== "-") ||
+      this.state.waitingForNewEntry
+    ) {
+      return;
+    }
+
+    const current = this.parseDisplayValue();
+    if (current === null) {
+      return;
+    }
+
+    const operand = this.normalizeOperandForCurrentDisplay(current, lastToken);
+    const shouldSuppressAdditivePercentLine = this.state.lastPercentInput !== null;
+
+    if (!shouldSuppressAdditivePercentLine) {
+      this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(lastToken)}`);
+    }
+
+    const operationCounterUpdate = incrementOperationCount(
+      this.state.operationCount,
+      lastToken
+    );
+    this.state.operationCount = operationCounterUpdate.operationCount;
   }
 
   private finalizeResult(
@@ -800,6 +847,32 @@ export class Calculator {
     }
 
     this.state.paperTape = appendTapeLine(this.state.paperTape, text);
+  }
+
+  private printOperationToTape(text: string): void {
+    this.state.tapeOperationSequence += 1;
+    this.printToTape(`${formatTapeOperationLabel(this.state.tapeOperationSequence)} ${text}`);
+  }
+
+  private printSubtotalToTape(text: string): void {
+    this.state.tapeSubtotalSequence += 1;
+    this.printToTape(`${formatTapeSubtotalLabel(this.state.tapeSubtotalSequence)} ${text}`);
+  }
+
+  private formatBusinessValueForDisplay(
+    key: Exclude<BusinessMode, null>,
+    value: number
+  ): string {
+    const formatted = formatForDisplay(value);
+    return key === "MGN" ? `${formatted}%` : formatted;
+  }
+
+  private formatBusinessValueForTape(
+    key: Exclude<BusinessMode, null>,
+    value: number
+  ): string {
+    const formatted = formatForTape(value);
+    return key === "MGN" ? `${formatted}%` : formatted;
   }
 
   private setError(): void {

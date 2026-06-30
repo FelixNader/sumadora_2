@@ -11,6 +11,7 @@ Replica web de una calculadora contable de escritorio. El proyecto no intenta ve
 - Memoria independiente, `grand total`, subtotales y contadores `OPS` y `SUB`
 - Impuestos, conversion de moneda y calculos `COST / SELL / MGN`
 - Cinta de papel siempre activa
+- Cinta con dos secuencias de dominio: `OP` para renglones operativos y `SUB` para subtotales y gran total
 - Persistencia local con exportacion e importacion de snapshots JSON en formato actual `v2`
 - Persistencia automatica entre sesiones solo para `M`, `RATE` y `TAX`
 - Copia del valor mostrado mediante doble clic sobre el display
@@ -39,6 +40,16 @@ La cinta conserva intencion contable:
 - en flujos aditivos imprime la entrada porcentual, por ejemplo `10 %`, y luego el total final
 - en flujos multiplicativos y divisivos imprime tanto la entrada porcentual como la operacion resuelta completa
 - en expresiones mixtas con precedencia, por ejemplo `5 + 8 + 3 x 2 =`, imprime el subbloque multiplicativo `3 x 2 = 6` y tambien el total global `19`
+- los renglones operativos avanzan como `OP 0001`, `OP 0002`, etc.
+- los renglones de subtotal y gran total avanzan por otra cadena, `SUB 0001`, `SUB 0002`, etc.
+- los cierres de subtotal ya no repiten la palabra `SUBTOTAL` dentro del cuerpo; hoy usan el formato `SUB nnnn OPS x valor`
+- los cierres de gran total usan el formato `SUB nnnn GT x valor`
+
+En calculos de negocio, `MGN` significa margen porcentual en todos los casos:
+
+- `COST` y `SELL` son importes
+- `MGN` es porcentaje
+- cuando la app imprime o muestra un margen, lo expresa explicitamente con `%`
 
 Esta decision de dominio quedo formalizada en [ADR 0009](./docs/adr/0009-percentage-uses-accumulated-base-in-additive-flows.md).
 
@@ -62,6 +73,8 @@ La persistencia local automatica tambien quedo acotada por producto en [ADR 0008
 La semantica de `%` para flujos aditivos, multiplicativos y de cinta quedo cerrada en [ADR 0009](./docs/adr/0009-percentage-uses-accumulated-base-in-additive-flows.md): suma y resta usan base acumulada, mientras multiplicacion y division usan porcentaje directo.
 
 La simplificacion mas reciente quito los modos `NORMAL` y `CONVERSION` del dominio y rompio compatibilidad con snapshots viejos de forma deliberada en [ADR 0010](./docs/adr/0010-remove-working-modes-and-drop-legacy-snapshots.md): conversion y memoria ahora son capacidades directas, y solo se aceptan snapshots `v2`.
+
+La convencion actual de cinta y el significado porcentual de `MGN` quedaron fijados en [ADR 0011](./docs/adr/0011-explicit-tape-sequences-and-percentage-margin.md): `OP` y `SUB` son secuencias independientes de la cinta, y el margen de negocio se expresa siempre como porcentaje.
 
 ### Mapa de bounded contexts
 

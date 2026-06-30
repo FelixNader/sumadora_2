@@ -16,3 +16,11 @@ export function appendTapeLine(
 
   return next.slice(-MAX_TAPE_LINES);
 }
+
+export function formatTapeOperationLabel(sequence: number): string {
+  return `OP ${sequence.toString().padStart(4, "0")}`;
+}
+
+export function formatTapeSubtotalLabel(sequence: number): string {
+  return `SUB ${sequence.toString().padStart(4, "0")}`;
+}

@@ -110,8 +110,8 @@
         <p>
           Vista HTML generada desde el estado actual del repo. Las graficas
           reflejan la app como esta hoy: dominio contable, bounded contexts
-          logicos, persistencia filtrada, snapshots v2 y Clean Architecture
-          ligera.
+          logicos, persistencia filtrada, snapshots v2, secuencias de cinta
+          OP/SUB y Clean Architecture ligera.
         </p>
       </header>
 
@@ -294,6 +294,8 @@ flowchart LR
 
     subgraph Accounting["Contabilidad"]
         GT["grandTotal"]
+        TapeOp["tapeOperationSequence"]
+        TapeSub["tapeSubtotalSequence"]
         Ops["operationCount"]
         Sub["subtotalCount"]
         Ref["referenceNumber"]
@@ -303,7 +305,7 @@ flowchart LR
         Mem["independentMemory"]
         Rate["conversionRate"]
         Tax["taxRate"]
-        Biz["businessCost / businessSell / businessMargin"]
+        Biz["businessCost / businessSell / businessMargin%"]
     end
         </pre>
       </section>

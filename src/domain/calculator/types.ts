@@ -9,6 +9,8 @@ export interface CalculatorState {
   totalMemory: number;
   grandTotal: number;
   independentMemory: number;
+  tapeOperationSequence: number;
+  tapeSubtotalSequence: number;
   operationCount: number;
   subtotalCount: number;
   referenceNumber: number;

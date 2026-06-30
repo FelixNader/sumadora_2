@@ -10,6 +10,8 @@ export function createInitialCalculatorState(): CalculatorState {
     totalMemory: 0,
     grandTotal: 0,
     independentMemory: 0,
+    tapeOperationSequence: 0,
+    tapeSubtotalSequence: 0,
     operationCount: 0,
     subtotalCount: 0,
     referenceNumber: 0,
@@ -35,6 +37,14 @@ export function createInitialCalculatorState(): CalculatorState {
 export function sanitizeSnapshot(snapshot: CalculatorSnapshot): CalculatorState {
   return {
     ...snapshot.state,
+    tapeOperationSequence:
+      typeof snapshot.state.tapeOperationSequence === "number"
+        ? snapshot.state.tapeOperationSequence
+        : 0,
+    tapeSubtotalSequence:
+      typeof snapshot.state.tapeSubtotalSequence === "number"
+        ? snapshot.state.tapeSubtotalSequence
+        : 0,
     operationCount:
       typeof snapshot.state.operationCount === "number"
         ? snapshot.state.operationCount

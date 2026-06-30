@@ -283,11 +283,13 @@ Conceptos vigentes en el repo:
 - `SUB`
 - `GT`
 - `paper tape`
+- `tape operation sequence`
+- `tape subtotal sequence`
 - `independent memory`
 - `reference number`
 - `tax rate`
 - `conversion rate`
-- `business cost sell margin`
+- `business cost sell margin percentage`
 - `plus-equals`
 - `percentage intent`
 
@@ -328,6 +330,8 @@ flowchart LR
 
     subgraph Accounting["Contabilidad"]
         GT["grandTotal"]
+        TapeOp["tapeOperationSequence"]
+        TapeSub["tapeSubtotalSequence"]
         Ops["operationCount"]
         Sub["subtotalCount"]
         Ref["referenceNumber"]
@@ -337,9 +341,16 @@ flowchart LR
         Mem["independentMemory"]
         Rate["conversionRate"]
         Tax["taxRate"]
-        Biz["businessCost / businessSell / businessMargin"]
+        Biz["businessCost / businessSell / businessMargin%"]
     end
 ```
+
+La distincion importante es esta:
+
+- `operationCount` y `subtotalCount` describen la sesion contable visible en display
+- `tapeOperationSequence` y `tapeSubtotalSequence` describen identidad de renglones impresos en cinta
+- `businessMargin` representa porcentaje, no importe monetario
+- la forma actual de impresion para cierres contables es `SUB nnnn OPS x valor` y `SUB nnnn GT x valor`
 
 ## 7. Maquina de estados del flujo aditivo
 
@@ -397,6 +408,7 @@ stateDiagram-v2
 Regla de negocio vigente:
 
 - la sesion actual contiene cinta, `GT`, `OPS`, `SUB`, display y expresion
+- la cinta mantiene dos secuencias de dominio: `OP` para renglones operativos y `SUB` para cierres contables
 - entre sesiones solo sobreviven `M`, `RATE` y `TAX`
 - import/export si mueve snapshots completos
 

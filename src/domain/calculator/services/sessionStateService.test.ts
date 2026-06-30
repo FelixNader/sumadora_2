@@ -40,6 +40,8 @@ test("createResetAllState also clears registers and persisted tape", () => {
     conversionRate: 1,
     taxRate: 16,
     paperTape: [],
+    tapeOperationSequence: 0,
+    tapeSubtotalSequence: 0,
   });
 });
 
