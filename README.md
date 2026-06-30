@@ -1,6 +1,6 @@
-# Sumadora HR-100TM Calculation Engine
+# Sumadora Calculation Engine
 
-Replica web de una calculadora contable de escritorio inspirada en la `SUMADORA HR-100TM`. El proyecto no intenta verse como una "demo de botones": su foco es un motor de calculo con reglas operativas, financieras y de persistencia de sesion, expuesto mediante una interfaz React.
+Replica web de una calculadora contable de escritorio. El proyecto no intenta verse como una "demo de botones": su foco es un motor de calculo con reglas operativas, financieras y de persistencia de sesion, expuesto mediante una interfaz React.
 
 ## Que hace
 

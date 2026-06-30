@@ -10,7 +10,7 @@ export class BrowserCalculatorSnapshotFileGateway
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `sumadora-hr100tm-backup-${Date.now()}.json`;
+    link.download = `sumadora-backup-${Date.now()}.json`;
     link.click();
     URL.revokeObjectURL(link.href);
   }
