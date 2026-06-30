@@ -7,8 +7,8 @@ Replica web de una calculadora contable de escritorio inspirada en la `CASIO HR-
 - Operaciones aritmeticas con precedencia real entre `+`, `-`, `x` y `/`
 - Flujo de sumadora para la tecla combinada `+ =`: registra linea, totaliza la secuencia y permite seguir acumulando desde el total impreso
 - Selector decimal `F`, `3`, `2`, `0` y `ADD2`
-- Modos visibles `NORMAL`, `ITEM` y `CONVERSION`
-- Memoria independiente, `grand total`, subtotales y conteo de items
+- Modos visibles `NORMAL` y `CONVERSION`
+- Memoria independiente, `grand total`, subtotales y contadores `OPS` y `SUB`
 - Impuestos, conversion de moneda y calculos `COST / SELL / MGN`
 - Cinta de papel siempre activa
 - Persistencia local con exportacion e importacion de snapshots JSON
@@ -122,12 +122,14 @@ flowchart TB
         C4 --> C5["Clipboard API"]
     end
 
-    subgraph Snapshot["3. Backup local"]
-        S1["Click importar / exportar"] --> S2["transferCalculatorSnapshot"]
+    subgraph Snapshot["3. Persistencia y backup local"]
+        S1["Apertura o cambio de estado"] --> S2["hydrate/persist session use cases"]
         S2 --> S3["CalculatorSnapshotRepository"]
-        S2 --> S4["CalculatorSnapshotFileGateway"]
-        S3 --> S5["localStorage"]
-        S4 --> S6["Browser File APIs"]
+        S3 --> S4["localStorage"]
+        S5["Click importar / exportar"] --> S6["transferCalculatorSnapshot"]
+        S6 --> S3
+        S6 --> S7["CalculatorSnapshotFileGateway"]
+        S7 --> S8["Browser File APIs"]
     end
 ```
 
@@ -174,6 +176,7 @@ src/
     usecases/
       configureCalculatorMode.ts
       copyDisplayValue.ts
+      buildPersistedSessionSnapshot.ts
       dispatchCalculatorAction.ts
       hydrateCalculatorState.ts
       persistCalculatorState.ts
@@ -233,7 +236,7 @@ Aqui vive la logica importante:
 - `state.ts`: estado inicial y saneamiento de snapshots
 - `policies/numericPolicy.ts`: redondeo, formato y validacion numerica
 - `policies/tapePolicy.ts`: reglas de disponibilidad y recorte de cinta
-- `services/accountingService.ts`: subtotal, conteo de items y grand total
+- `services/accountingService.ts`: subtotal, contadores operativos y grand total
 - `services/businessMath.ts`: resolucion de `COST / SELL / MGN`
 - `services/currencyConversionService.ts`: conversion monetaria
 - `services/expressionEvaluator.ts`: evaluacion y precedencia de expresiones
@@ -251,6 +254,7 @@ Coordina la sesion de calculo:
 - `services/CalculatorApplicationService.ts`: fachada de aplicacion
 - `usecases/dispatchCalculatorAction.ts`: despacho de acciones de calculadora
 - `usecases/copyDisplayValue.ts`: copia del display al portapapeles
+- `usecases/buildPersistedSessionSnapshot.ts`: filtro de persistencia automatica para conservar solo configuracion reutilizable
 - `usecases/hydrateCalculatorState.ts`: restauracion de estado
 - `usecases/persistCalculatorState.ts`: persistencia de estado
 - `usecases/configureCalculatorMode.ts`: cambio de modo y selector decimal
@@ -283,7 +287,7 @@ Renderiza la replica visual, captura eventos de botones y teclado, y delega la l
 
 La traduccion de teclado fisico vive en `src/ui/keyboard/translateCalculatorKeyboardEvent.ts`, con pruebas dedicadas para `typing`, numpad, separador decimal y teclas de control. El display tambien expone doble clic para copiar el valor mostrado como capacidad propia de la app web/PWA.
 
-La ayuda visible de la interfaz ya no presenta `PRINT` como modo. La cinta se considera siempre activa y los modos visibles quedan reducidos a `NORMAL`, `ITEM` y `CONVERSION`.
+La ayuda visible de la interfaz ya no presenta `PRINT` como modo. La cinta se considera siempre activa y los modos visibles quedan reducidos a `NORMAL` y `CONVERSION`.
 
 ## Scripts
 
@@ -295,7 +299,7 @@ npm run build
 
 ## Verificacion actual
 
-- Tests de dominio para `ADD2`, conversion, items, impuestos, negocio y precedencia
+- Tests de dominio para `ADD2`, conversion, contadores `OPS/SUB`, impuestos, negocio y precedencia
 - Tests de aplicacion para hidratacion, persistencia y copiado del display
 - Tests de UI para render, operacion basica, typing de teclado fisico y doble clic de copiado
 - Build de produccion valido con `react-scripts build`

@@ -208,7 +208,6 @@ const CalculatorUI: React.FC = () => {
             </div>
           </div>
         </div>
-        <p className="hr-helper-line">Los contadores OPS y SUB estan siempre activos; el modo solo cambia si trabajas normal o en conversion.</p>
 
         <div className="hr-keypad">
           <button className="key-fn" onClick={() => handleButtonClick('REF')}>REF</button>

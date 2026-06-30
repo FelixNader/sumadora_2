@@ -11,7 +11,7 @@ The calculator behavior is stateful. Operations depend on:
 - expression tokens
 - pending operators
 - mode and decimal selector
-- item count and grand total
+- operation counters, subtotal counters, and grand total
 - business calculation registers
 
 Splitting every rule into independent classes too early would make the domain harder to follow because many operations need coordinated state transitions.

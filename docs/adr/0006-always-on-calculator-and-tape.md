@@ -26,7 +26,7 @@ This also made the UI harder to justify, because mode selection mixed product-re
 
 Simplify the mode model and related flows:
 
-- keep only `NORMAL`, `ITEM`, and `CONVERSION` as valid working modes
+- keep only `NORMAL` and `CONVERSION` as valid working modes
 - treat the calculator as always operational after app load
 - treat tape output as always available
 - migrate legacy snapshots containing `PRINT`, `ON`, or `OFF` to `NORMAL` during hydration

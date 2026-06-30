@@ -215,12 +215,6 @@
   color: #1b1b1b;
 }
 
-.hr-helper-line {
-  margin: 0 0 8px;
-  color: #c8ced5;
-  font-size: 11px;
-}
-
 .hr-keypad {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -391,7 +385,6 @@
   .hr-brand p,
   .hr-leds,
   .hr-status-line,
-  .hr-helper-line,
   .hr-storage-actions button,
   .hr-selector-group label,
   .hr-selector-buttons button {
