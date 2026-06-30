@@ -188,52 +188,67 @@ const CalculatorUI: React.FC = () => {
           </div>
         </div>
 
-        <div className="hr-keypad">
-          <button className="key-fn" onClick={() => handleButtonClick('REF')}>REF</button>
-          <button className="key-fn" onClick={() => handleButtonClick('GT')}>GT</button>
-          <div className="key-spacer" aria-hidden="true" />
-          <button className="key-fn" onClick={() => handleButtonClick('SUBT')}>SUBT</button>
-          <button className="key-fn" onClick={() => handleButtonClick('AVG')}>AVG</button>
+        <div className="hr-keypad-layout">
+          <div className="hr-keypad hr-keypad-utility">
+            <button className="key-fn" onClick={() => handleButtonClick('REF')}>REF</button>
+            <button className="key-fn" onClick={() => handleButtonClick('AVG')}>AVG</button>
+            <button className="key-fn key-memory" onClick={() => handleButtonClick('M+')}>M+</button>
+            <button className="key-fn key-memory" onClick={() => handleButtonClick('M-')}>M-</button>
+            <button className="key-fn key-memory" onClick={() => handleButtonClick('MR')}>MR</button>
 
-          <button className="key-fn" onClick={() => handleButtonClick('M+')}>M+</button>
-          <button className="key-fn" onClick={() => handleButtonClick('M-')}>M-</button>
-          <button className="key-fn" onClick={() => handleButtonClick('MR')}>MR</button>
-          <button className="key-fn" onClick={() => handleButtonClick('MC')}>MC</button>
-          <button className="key-warn" onClick={() => handleButtonClick('CA')}>CA</button>
+            <button className="key-fn key-memory" onClick={() => handleButtonClick('MC')}>MC</button>
+            <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX SET')}>TAX SET</button>
+            <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX+')}>TAX+</button>
+            <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX-')}>TAX-</button>
+            <button className="key-fn" onClick={() => handleButtonClick('%')}>%</button>
 
-          <button className="key-fn" onClick={() => handleButtonClick('TAX SET')}>TAX SET</button>
-          <button className="key-fn" onClick={() => handleButtonClick('TAX+')}>TAX+</button>
-          <button className="key-fn" onClick={() => handleButtonClick('TAX-')}>TAX-</button>
-          <button className="key-fn" onClick={() => handleButtonClick('%')}>%</button>
-          <button className="key-warn" onClick={() => handleButtonClick('CE')}>CE</button>
+            <button className="key-fn key-conv" onClick={() => handleButtonClick('RATE')}>RATE</button>
+            <button className="key-fn key-conv" onClick={() => handleButtonClick('CONV ->')}>CONV -&gt;</button>
+            <button className="key-fn key-conv" onClick={() => handleButtonClick('<- CONV')}>&lt;- CONV</button>
+            <button className="key-fn" onClick={() => handleButtonClick('COST')}>COST</button>
+            <button className="key-fn" onClick={() => handleButtonClick('SELL')}>SELL</button>
 
-          <button className="key-fn" onClick={() => handleButtonClick('RATE')}>RATE</button>
-          <button className="key-fn" onClick={() => handleButtonClick('CONV ->')}>CONV -&gt;</button>
-          <button className="key-fn" onClick={() => handleButtonClick('<- CONV')}>&lt;- CONV</button>
-          <button className="key-fn" onClick={() => handleButtonClick('COST')}>COST</button>
-          <button className="key-fn" onClick={() => handleButtonClick('SELL')}>SELL</button>
+            <button className="key-fn" onClick={() => handleButtonClick('MGN')}>MGN</button>
+            <button className="key-fn" onClick={() => handleButtonClick('+/-')}>+/-</button>
+            <div className="key-spacer" aria-hidden="true" />
+            <div className="key-spacer" aria-hidden="true" />
+            <div className="key-spacer" aria-hidden="true" />
+          </div>
 
-          <button onClick={() => handleButtonClick('7')}>7</button>
-          <button onClick={() => handleButtonClick('8')}>8</button>
-          <button onClick={() => handleButtonClick('9')}>9</button>
-          <button className="key-op" onClick={() => handleButtonClick('/')}>/</button>
-          <button className="key-fn" onClick={() => handleButtonClick('MGN')}>MGN</button>
+          <div className="hr-keypad hr-keypad-primary">
+            <div className="hr-keypad-primary-top">
+              <button className="key-fn" onClick={() => handleButtonClick('GT')}>GT</button>
+              <button className="key-fn" onClick={() => handleButtonClick('SUBT')}>SUBT</button>
+              <button className="key-warn" onClick={() => handleButtonClick('CE')}>CE</button>
+              <button className="key-warn" onClick={() => handleButtonClick('CA')}>CA</button>
+            </div>
 
-          <button onClick={() => handleButtonClick('4')}>4</button>
-          <button onClick={() => handleButtonClick('5')}>5</button>
-          <button onClick={() => handleButtonClick('6')}>6</button>
-          <button className="key-op" onClick={() => handleButtonClick('x')}>x</button>
-          <button className="key-op" onClick={() => handleButtonClick('-')}>-</button>
+            <div className="hr-keypad-primary-main">
+              <div className="hr-keypad-primary-numeric">
+                <button className="key-num" onClick={() => handleButtonClick('7')}>7</button>
+                <button className="key-num" onClick={() => handleButtonClick('8')}>8</button>
+                <button className="key-num" onClick={() => handleButtonClick('9')}>9</button>
 
-          <button onClick={() => handleButtonClick('1')}>1</button>
-          <button onClick={() => handleButtonClick('2')}>2</button>
-          <button onClick={() => handleButtonClick('3')}>3</button>
-          <button className="key-op key-plus" onClick={() => handleButtonClick('+=')}>+ =</button>
-          <div className="key-spacer" aria-hidden="true" />
+                <button className="key-num" onClick={() => handleButtonClick('4')}>4</button>
+                <button className="key-num" onClick={() => handleButtonClick('5')}>5</button>
+                <button className="key-num" onClick={() => handleButtonClick('6')}>6</button>
 
-          <button className="key-wide" onClick={() => handleButtonClick('0')}>0</button>
-          <button onClick={() => handleButtonClick('.')}>.</button>
-          <button onClick={() => handleButtonClick('+/-')}>+/-</button>
+                <button className="key-num" onClick={() => handleButtonClick('1')}>1</button>
+                <button className="key-num" onClick={() => handleButtonClick('2')}>2</button>
+                <button className="key-num" onClick={() => handleButtonClick('3')}>3</button>
+
+                <button className="key-num key-wide" onClick={() => handleButtonClick('0')}>0</button>
+                <button className="key-num" onClick={() => handleButtonClick('.')}>.</button>
+              </div>
+
+              <div className="hr-keypad-primary-symbols">
+                <button className="key-op" onClick={() => handleButtonClick('/')}>/</button>
+                <button className="key-op" onClick={() => handleButtonClick('x')}>x</button>
+                <button className="key-op" onClick={() => handleButtonClick('-')}>-</button>
+                <button className="key-op key-equals key-commit" onClick={() => handleButtonClick('+=')}>+ =</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {importError && <p className="import-error">{importError}</p>}

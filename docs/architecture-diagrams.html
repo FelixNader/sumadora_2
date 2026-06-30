@@ -111,7 +111,7 @@
           Vista HTML generada desde el estado actual del repo. Las graficas
           reflejan la app como esta hoy: dominio contable, bounded contexts
           logicos, persistencia filtrada, snapshots v2, secuencias de cinta
-          OP/SUB y Clean Architecture ligera.
+          OP/SUB, teclado jerarquizado por frecuencia y Clean Architecture ligera.
         </p>
       </header>
 
@@ -373,6 +373,39 @@ flowchart LR
     Memory["Memoria independiente"] --> Core["Sesion operativa"]
     Fx["RATE / CONV -> / <- CONV"] --> Core
     Decimal["Selector decimal"] --> Core
+        </pre>
+      </section>
+
+      <section>
+        <h2>Teclado y Jerarquia Visual</h2>
+        <p>
+          El significado contable de <code>+ =</code> pertenece al dominio,
+          pero su prominencia visual y la agrupacion por color pertenecen a la
+          UI. El tablero actual separa bloque utilitario, bloque primario,
+          bloque numerico y columna de simbolos.
+        </p>
+        <pre class="mermaid">
+flowchart TB
+    Keypad["CalculatorUI keypad"]
+    Utility["hr-keypad-utility"]
+    Primary["hr-keypad-primary"]
+    Top["hr-keypad-primary-top"]
+    Numeric["hr-keypad-primary-numeric"]
+    Symbols["hr-keypad-primary-symbols"]
+    Commit["+= dominant key"]
+    Memory["memory color family"]
+    Tax["tax color family"]
+    Conv["conversion color family"]
+
+    Keypad --> Utility
+    Keypad --> Primary
+    Primary --> Top
+    Primary --> Numeric
+    Primary --> Symbols
+    Symbols --> Commit
+    Utility --> Memory
+    Utility --> Tax
+    Utility --> Conv
         </pre>
       </section>
 

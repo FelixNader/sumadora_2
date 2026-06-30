@@ -219,13 +219,60 @@
   color: #1b1b1b;
 }
 
-.hr-keypad {
+.hr-keypad-layout {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  grid-auto-rows: minmax(46px, 1fr);
-  gap: 6px;
+  grid-template-columns: 1fr;
+  gap: 8px;
   flex: 1;
   min-height: 0;
+}
+
+.hr-keypad {
+  display: grid;
+  gap: 6px;
+  min-height: 0;
+}
+
+.hr-keypad-utility {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-rows: minmax(38px, auto);
+}
+
+.hr-keypad-primary {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  flex: 1;
+}
+
+.hr-keypad-primary-top {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.hr-keypad-primary-main {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1.22fr);
+  gap: 6px;
+  min-height: 0;
+}
+
+.hr-keypad-primary-numeric {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(48px, 1fr));
+  gap: 6px;
+}
+
+.hr-keypad-primary-symbols {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows:
+    minmax(48px, 1fr)
+    minmax(48px, 1fr)
+    minmax(48px, 1fr)
+    minmax(64px, 1.33fr);
+  gap: 6px;
 }
 
 .hr-keypad button {
@@ -245,10 +292,42 @@
   pointer-events: none;
 }
 
+.hr-keypad .key-num {
+  min-height: 54px;
+  font-size: 17px;
+  border-radius: 10px;
+}
+
+.hr-keypad-utility button {
+  min-height: 38px;
+  font-size: 11px;
+}
+
+.hr-keypad-primary-top button,
+.hr-keypad-primary-numeric button,
+.hr-keypad-primary-symbols button {
+  min-height: 100%;
+}
+
 .hr-keypad .key-fn {
   background: linear-gradient(180deg, #7fa7cb, #5d7b95);
   color: #f6f8fa;
   font-size: 12px;
+}
+
+.hr-keypad .key-memory {
+  background: linear-gradient(180deg, #7db6a0, #547e6c);
+  color: #f4fbf7;
+}
+
+.hr-keypad .key-tax {
+  background: linear-gradient(180deg, #c59a72, #8b6240);
+  color: #fff8f1;
+}
+
+.hr-keypad .key-conv {
+  background: linear-gradient(180deg, #8f87c7, #60599a);
+  color: #f7f5ff;
 }
 
 .hr-keypad .key-op {
@@ -259,6 +338,12 @@
 .hr-keypad .key-equals {
   background: linear-gradient(180deg, #d74d4d, #a83636);
   color: #fff;
+}
+
+.hr-keypad .key-commit {
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 0 0 1px rgba(70, 21, 21, 0.35);
 }
 
 .hr-keypad .key-plus {
@@ -307,14 +392,61 @@
     max-height: calc(100dvh - 32px);
   }
 
+  .hr-keypad-layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.4fr);
+    align-items: stretch;
+    gap: 10px;
+  }
+
   .hr-keypad {
-    grid-auto-rows: minmax(52px, 1fr);
     gap: 8px;
+  }
+
+  .hr-keypad-utility {
+    grid-auto-rows: minmax(44px, auto);
+  }
+
+  .hr-keypad-primary {
+    grid-template-rows: auto 1fr;
+  }
+
+  .hr-keypad-primary-top,
+  .hr-keypad-primary-main,
+  .hr-keypad-primary-numeric,
+  .hr-keypad-primary-symbols {
+    gap: 8px;
+  }
+
+  .hr-keypad-primary-numeric {
+    grid-template-rows: repeat(4, minmax(52px, 1fr));
+  }
+
+  .hr-keypad-primary-symbols {
+    grid-template-columns: 1fr;
+    grid-template-rows:
+      minmax(52px, 1fr)
+      minmax(52px, 1fr)
+      minmax(52px, 1fr)
+      minmax(70px, 1.33fr);
   }
 
   .hr-keypad button {
     min-height: 52px;
     font-size: 15px;
+  }
+
+  .hr-keypad .key-num {
+    min-height: 64px;
+    font-size: 19px;
+  }
+
+  .hr-keypad .key-commit {
+    font-size: 18px;
+  }
+
+  .hr-keypad-utility button {
+    min-height: 44px;
+    font-size: 12px;
   }
 
   .hr-keypad .key-spacer {
@@ -335,19 +467,56 @@
     max-height: calc(100dvh - 48px);
   }
 
-  .hr-keypad {
-    grid-auto-rows: minmax(56px, 1fr);
+  .hr-keypad-primary {
+    grid-template-rows: auto 1fr;
+  }
+
+  .hr-keypad-primary-numeric {
+    grid-template-rows: repeat(4, minmax(56px, 1fr));
+  }
+
+  .hr-keypad-primary-symbols {
+    grid-template-rows:
+      minmax(56px, 1fr)
+      minmax(56px, 1fr)
+      minmax(56px, 1fr)
+      minmax(74px, 1.33fr);
   }
 }
 
 @media (max-width: 640px) {
   .hr-container {
-    padding: 10px;
-    gap: 10px;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .hr-calculator {
+    padding: 8px;
   }
 
   .hr-topbar {
     flex-direction: column;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .hr-brand h2 {
+    font-size: 17px;
+    letter-spacing: 0.5px;
+  }
+
+  .hr-brand p {
+    font-size: 9px;
+  }
+
+  .hr-storage-actions {
+    gap: 4px;
+  }
+
+  .hr-storage-actions button {
+    padding: 4px 6px;
+    font-size: 9px;
+    border-radius: 5px;
   }
 
   .hr-storage-actions {
@@ -355,24 +524,105 @@
   }
 
   .hr-display-section {
+    padding: 6px;
+    margin-bottom: 6px;
+  }
+
+  .hr-leds,
+  .hr-status-line {
+    font-size: 10px;
+    gap: 6px;
+  }
+
+  .hr-display {
+    min-height: 38px;
     padding: 8px;
+    margin: 5px 0;
+    font-size: clamp(18px, 6vw, 28px);
+  }
+
+  .hr-selectors {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .hr-selector-group label {
+    margin-bottom: 4px;
+    font-size: 10px;
   }
 
   .hr-selector-buttons {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
   }
 
-  .hr-keypad {
-    grid-auto-rows: minmax(44px, 1fr);
+  .hr-selector-buttons button {
+    min-height: 28px;
+    padding: 4px 3px;
+    font-size: 9px;
+  }
+
+  .hr-keypad-layout {
+    gap: 5px;
+  }
+
+  .hr-keypad-utility {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-auto-rows: minmax(28px, auto);
+    gap: 4px;
+  }
+
+  .hr-keypad-primary {
+    grid-template-rows: auto 1fr;
+  }
+
+  .hr-keypad-primary-top,
+  .hr-keypad-primary-main,
+  .hr-keypad-primary-numeric,
+  .hr-keypad-primary-symbols {
+    gap: 4px;
+  }
+
+  .hr-keypad-primary-main {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1.3fr);
+  }
+
+  .hr-keypad-primary-numeric {
+    grid-template-rows: repeat(4, minmax(40px, 1fr));
+  }
+
+  .hr-keypad-primary-symbols {
+    grid-template-rows:
+      minmax(40px, 1fr)
+      minmax(40px, 1fr)
+      minmax(40px, 1fr)
+      minmax(54px, 1.33fr);
   }
 
   .hr-keypad button {
-    min-height: 44px;
-    font-size: 12px;
+    min-height: 36px;
+    font-size: 11px;
+  }
+
+  .hr-keypad .key-num {
+    min-height: 50px;
+    font-size: 17px;
+  }
+
+  .hr-keypad .key-commit {
+    font-size: 18px;
+    letter-spacing: 0.5px;
+  }
+
+  .hr-keypad-utility button {
+    min-height: 28px;
+    font-size: 8px;
+    padding: 3px 2px;
+    border-radius: 6px;
   }
 
   .hr-keypad .key-spacer {
-    min-height: 44px;
+    min-height: 28px;
   }
 
   .hr-paper-tape {
@@ -382,7 +632,7 @@
 
 @media (max-width: 420px) {
   .hr-brand h2 {
-    font-size: 18px;
+    font-size: 16px;
     letter-spacing: 0.5px;
   }
 
@@ -396,20 +646,70 @@
   }
 
   .hr-display {
-    font-size: clamp(20px, 8vw, 28px);
-    padding: 8px;
+    font-size: clamp(18px, 7.4vw, 26px);
+    padding: 6px;
   }
 
   .hr-keypad {
-    gap: 5px;
+    gap: 4px;
   }
 
   .hr-keypad button {
-    min-height: 42px;
-    font-size: 11px;
+    min-height: 34px;
+    font-size: 9px;
+  }
+
+  .hr-keypad .key-num {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .hr-keypad-primary {
+    grid-template-rows: auto 1fr;
+  }
+
+  .hr-keypad-primary-main {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1.34fr);
+  }
+
+  .hr-keypad-primary-numeric {
+    grid-template-rows: repeat(4, minmax(36px, 1fr));
+  }
+
+  .hr-keypad-primary-symbols {
+    grid-template-rows:
+      minmax(36px, 1fr)
+      minmax(36px, 1fr)
+      minmax(36px, 1fr)
+      minmax(48px, 1.33fr);
+  }
+
+  .hr-keypad-utility {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .hr-keypad-utility button {
+    min-height: 26px;
+    font-size: 8px;
+    padding: 2px 1px;
   }
 
   .hr-keypad .key-spacer {
-    min-height: 42px;
+    min-height: 26px;
+  }
+
+  .hr-selector-buttons {
+    gap: 3px;
+  }
+
+  .hr-selector-buttons button {
+    min-height: 26px;
+    font-size: 9px;
+    padding: 2px 2px;
+  }
+
+  .hr-keypad .key-commit {
+    font-size: 17px;
   }
 }

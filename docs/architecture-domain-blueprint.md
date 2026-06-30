@@ -26,6 +26,7 @@ El proyecto aplica ideas de `Domain-Driven Design`, `Bounded Context` y `Clean A
 - no hay microservicios ni modulos separados por despliegue
 - si hay lenguaje del dominio, agregado principal, servicios de dominio, puertos y adaptadores
 - los bounded contexts son logicos, no fisicos
+- la jerarquia visual del teclado se trata como detalle de entrega, no como logica del dominio
 
 ## 2. Principios de construccion
 
@@ -215,6 +216,8 @@ Responsabilidades:
 - teclado fisico
 - doble clic sobre display
 - scroll de la cinta
+- jerarquia visual del teclado por frecuencia de uso
+- agrupacion semantica por color para memoria, tax y conversion
 
 ## 4. Bounded Contexts aterrizados a codigo
 
@@ -430,7 +433,55 @@ Reglas asociadas:
 - la conversion no cambia la personalidad de la maquina; solo ejecuta una funcion
 - el indicador `M ON/OFF` del display solo informa si la memoria independiente esta vacia o no
 
-## 10. Casos de uso de aplicacion
+## 10. Teclado y jerarquia visual
+
+La interfaz actual explicita una decision de producto:
+
+- no todas las teclas tienen el mismo peso visual
+- el tablero separa capacidades ocasionales de operaciones frecuentes
+- `+ =` recibe mayor protagonismo dentro del bloque de simbolos
+- ese protagonismo no altera `0` ni `.`
+- memoria, tax y conversion usan familias cromaticas propias
+
+Correspondencia real con codigo:
+
+- `src/ui/components/CalculatorUI.tsx`
+- `src/ui/components/CalculatorUI.css`
+
+Estructura actual:
+
+```mermaid
+flowchart TB
+    Keypad["CalculatorUI keypad"]
+    Utility["hr-keypad-utility"]
+    Primary["hr-keypad-primary"]
+    Top["hr-keypad-primary-top"]
+    Numeric["hr-keypad-primary-numeric"]
+    Symbols["hr-keypad-primary-symbols"]
+    Commit["+= dominant key"]
+    Memory["memory color family"]
+    Tax["tax color family"]
+    Conv["conversion color family"]
+
+    Keypad --> Utility
+    Keypad --> Primary
+    Primary --> Top
+    Primary --> Numeric
+    Primary --> Symbols
+    Symbols --> Commit
+    Utility --> Memory
+    Utility --> Tax
+    Utility --> Conv
+```
+
+Por que esto no vive en el dominio:
+
+- la semantica contable de `+ =` si es dominio
+- la prominencia visual de `+ =` no es dominio
+- el color de memoria, tax o conversion no afecta calculo, cinta ni persistencia
+- por eso esta decision se documenta como detalle de UI en la ADR 0012
+
+## 11. Casos de uso de aplicacion
 
 ```mermaid
 flowchart LR
@@ -451,9 +502,9 @@ flowchart LR
     Transfer --> Calc
 ```
 
-## 11. Detalle por detalle: que logica usa que detalle y por que
+## 12. Detalle por detalle: que logica usa que detalle y por que
 
-### 11.1 Dominio
+### 12.1 Dominio
 
 Usa:
 
@@ -477,7 +528,7 @@ Por que:
 
 - esas capacidades no pertenecen a la regla contable
 
-### 11.2 Aplicacion
+### 12.2 Aplicacion
 
 Usa:
 
@@ -493,7 +544,7 @@ Por que:
 
 - debe coordinar, no acoplarse al entorno
 
-### 11.3 Infraestructura
+### 12.3 Infraestructura
 
 Usa:
 
@@ -507,7 +558,7 @@ Por que:
 
 - ahi viven los detalles del runtime web/PWA
 
-### 11.4 UI
+### 12.4 UI
 
 Usa:
 
@@ -516,12 +567,14 @@ Usa:
 - doble clic
 - keydown
 - scroll
+- layout del teclado
+- color semantico por familias de teclas
 
 Por que:
 
 - render e interaccion pertenecen al borde del sistema
 
-## 12. Grafo de dependencias real
+## 13. Grafo de dependencias real
 
 ```mermaid
 flowchart TB
@@ -567,7 +620,7 @@ flowchart TB
     I3 --> A3
 ```
 
-## 13. Como se creo la app con estos enfoques en mente
+## 14. Como se creo la app con estos enfoques en mente
 
 La forma actual del repo no surgio de una sola reescritura. Surgio de refactors sucesivos guiados por fronteras.
 
@@ -598,7 +651,7 @@ El tercer ejemplo es modo de trabajo:
 - despues se observo que conversion ya tenia teclas propias y memoria no debia bloquearse
 - finalmente se eliminaron los modos y se acepto ruptura de snapshots viejos para limpiar el dominio
 
-## 14. Que parte si es DDD y que parte no
+## 15. Que parte si es DDD y que parte no
 
 Si es DDD en proporcion:
 
@@ -617,7 +670,7 @@ No es DDD ceremonial:
 
 Eso es intencional. El proyecto busca claridad y buen juicio, no inflar la complejidad.
 
-## 15. Limites actuales
+## 16. Limites actuales
 
 - `Calculator.ts` sigue siendo un orquestador grande
 - `expressionTokens` mezcla bien el modelo de calculadora y el de sumadora, aunque ya mejor delimitado

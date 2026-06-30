@@ -15,6 +15,9 @@ Replica web de una calculadora contable de escritorio. El proyecto no intenta ve
 - Persistencia local con exportacion e importacion de snapshots JSON en formato actual `v2`
 - Persistencia automatica entre sesiones solo para `M`, `RATE` y `TAX`
 - Copia del valor mostrado mediante doble clic sobre el display
+- Teclado jerarquizado en bloques: utilitario, primario, numerico y simbolos
+- `+ =` con mayor protagonismo tactico dentro de la columna de simbolos
+- Familias visuales separadas para memoria, tax y conversion
 
 Nota visual: el indicador `M ON/OFF` del display no representa encendido de la calculadora. Solo indica si la memoria independiente contiene un valor distinto de cero.
 
@@ -76,6 +79,8 @@ La simplificacion mas reciente quito los modos `NORMAL` y `CONVERSION` del domin
 
 La convencion actual de cinta y el significado porcentual de `MGN` quedaron fijados en [ADR 0011](./docs/adr/0011-explicit-tape-sequences-and-percentage-margin.md): `OP` y `SUB` son secuencias independientes de la cinta, y el margen de negocio se expresa siempre como porcentaje.
 
+La jerarquia visual del teclado quedo fijada en [ADR 0012](./docs/adr/0012-keypad-layout-driven-by-frequency-and-semantic-groups.md): la prominencia de `+ =` y el color por familias son decisiones de UI y producto, no de dominio contable.
+
 ### Mapa de bounded contexts
 
 ```mermaid
@@ -97,6 +102,22 @@ flowchart LR
 ```
 
 La copia al portapapeles no aparece en este grafo porque no es un bounded context de negocio. Es una capacidad de aplicacion e infraestructura propia del entorno web/PWA.
+
+## Teclado actual
+
+La interfaz actual ya no usa una matriz uniforme de botones.
+
+- `CalculatorUI.tsx` separa el tablero en `hr-keypad-utility` y `hr-keypad-primary`
+- el bloque primario se divide en `hr-keypad-primary-top`, `hr-keypad-primary-numeric` y `hr-keypad-primary-symbols`
+- `+ =` vive en la columna de simbolos y recibe mas altura que `/`, `x` y `-`
+- `0` y `.` conservan su altura numerica normal; el espacio extra sale del bloque de simbolos y no de toda la fila inferior
+- memoria, tax y conversion usan familias cromaticas propias para mejorar lectura operativa
+
+Esto no cambia reglas del dominio. Cambia solo la entrega:
+
+- lo mas frecuente queda mas cerca del bloque numerico
+- la tecla principal de sumadora recibe jerarquia visual
+- las capacidades especializadas se distinguen sin leer cada etiqueta
 
 ### Vista de Clean Architecture
 
