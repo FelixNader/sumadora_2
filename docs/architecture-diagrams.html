@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sumadora - Diagramas de Arquitectura</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4efe5;
+        --panel: #fffaf2;
+        --ink: #2a241f;
+        --muted: #6c6257;
+        --line: #d9ccb8;
+        --accent: #8f5e2e;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Iowan Old Style", "Palatino Linotype", serif;
+        background: linear-gradient(180deg, #f3eee5 0%, #e8dfd1 100%);
+        color: var(--ink);
+      }
+
+      main {
+        width: min(1100px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 28px 0 60px;
+      }
+
+      header {
+        margin-bottom: 24px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 250, 242, 0.92);
+        box-shadow: 0 10px 30px rgba(70, 51, 28, 0.08);
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(28px, 4vw, 42px);
+      }
+
+      header p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        max-width: 72ch;
+      }
+
+      section {
+        margin-top: 18px;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 250, 242, 0.95);
+        box-shadow: 0 8px 24px rgba(70, 51, 28, 0.06);
+      }
+
+      section p {
+        margin: 10px 0 0;
+        color: var(--muted);
+      }
+
+      .mermaid {
+        margin-top: 18px;
+        padding: 16px;
+        border-radius: 14px;
+        background: var(--panel);
+        overflow: auto;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, monospace;
+        color: var(--accent);
+      }
+    </style>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+      mermaid.initialize({
+        startOnLoad: true,
+        securityLevel: "loose",
+        theme: "base",
+        themeVariables: {
+          primaryColor: "#e8d5b5",
+          primaryTextColor: "#2a241f",
+          primaryBorderColor: "#8f5e2e",
+          lineColor: "#7f7568",
+          secondaryColor: "#dbe8e1",
+          tertiaryColor: "#f6f2ea",
+          background: "#fffaf2",
+          fontFamily: "Iowan Old Style, Palatino Linotype, serif"
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Diagramas de Arquitectura y Dominio</h1>
+        <p>
+          Vista HTML generada desde el estado actual del repo. Las graficas
+          reflejan la app como esta hoy: dominio contable, bounded contexts
+          logicos, persistencia filtrada y Clean Architecture ligera.
+        </p>
+      </header>
+
+      <section>
+        <h2>Bounded Contexts</h2>
+        <p>
+          Fronteras logicas del problema, no modulos de despliegue separados.
+        </p>
+        <pre class="mermaid">
+flowchart LR
+    Core["BC1 Core Arithmetic"]
+    Accounting["BC2 Accounting Session and Tape"]
+    Memory["BC3 Independent Memory"]
+    Tax["BC4 Tax Rules"]
+    FX["BC5 Currency Conversion"]
+    Business["BC6 Cost Sell Margin"]
+    Persistence["BC7 Session Persistence and Backup"]
+
+    Core --> Accounting
+    Core --> Memory
+    Core --> Tax
+    Core --> FX
+    Core --> Business
+    Accounting --> Persistence
+    Memory --> Persistence
+    Tax --> Persistence
+    FX --> Persistence
+        </pre>
+      </section>
+
+      <section>
+        <h2>Clean Architecture</h2>
+        <p>
+          <code>ui</code> delega, <code>application</code> coordina,
+          <code>domain</code> decide, <code>infrastructure</code> adapta.
+        </p>
+        <pre class="mermaid">
+flowchart TB
+    UI["UI: React, DOM, teclado, display"]
+    APP["Application: use cases y service facade"]
+    DOMAIN["Domain: Calculator, services, policies"]
+    INFRA["Infrastructure: localStorage, files, clipboard"]
+
+    UI --> APP
+    APP --> DOMAIN
+    INFRA --> APP
+        </pre>
+      </section>
+
+      <section>
+        <h2>Mapa Real por Codigo</h2>
+        <p>
+          Relaciones principales entre agregado, servicios de dominio y casos de
+          uso.
+        </p>
+        <pre class="mermaid">
+flowchart TB
+    subgraph Core["BC1 Core Arithmetic"]
+        Calc["Calculator.ts"]
+        Expr["expressionEvaluator.ts"]
+        Num["numericPolicy.ts"]
+    end
+
+    subgraph Accounting["BC2 Accounting Session and Tape"]
+        Acc["accountingService.ts"]
+        Tape["tapePolicy.ts"]
+        Session["sessionStateService.ts"]
+    end
+
+    subgraph Memory["BC3 Independent Memory"]
+        Mem["memoryAdd memorySubtract memoryRecall memoryClear"]
+    end
+
+    subgraph Tax["BC4 Tax Rules"]
+        TaxSvc["taxService.ts"]
+    end
+
+    subgraph FX["BC5 Currency Conversion"]
+        FxSvc["currencyConversionService.ts"]
+    end
+
+    subgraph Business["BC6 Cost Sell Margin"]
+        Biz["businessMath.ts"]
+    end
+
+    subgraph Persistence["BC7 Session Persistence and Backup"]
+        Hyd["hydrateCalculatorState.ts"]
+        Per["persistCalculatorState.ts"]
+        Filter["buildPersistedSessionSnapshot.ts"]
+        Transfer["transferCalculatorSnapshot.ts"]
+        Repo["CalculatorSnapshotRepository"]
+        File["CalculatorSnapshotFileGateway"]
+    end
+
+    Calc --> Expr
+    Calc --> Num
+    Calc --> Acc
+    Calc --> Tape
+    Calc --> Session
+    Calc --> TaxSvc
+    Calc --> FxSvc
+    Calc --> Biz
+
+    Hyd --> Filter
+    Per --> Filter
+    Hyd --> Repo
+    Per --> Repo
+    Transfer --> Repo
+    Transfer --> File
+        </pre>
+      </section>
+
+      <section>
+        <h2>Estado del Agregado</h2>
+        <p>
+          El agregado <code>Calculator</code> concentra sesion, expresion,
+          contabilidad y configuracion.
+        </p>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Session["Sesion actual"]
+        Mode["mode"]
+        Dec["decimalMode"]
+        Display["displayValue"]
+        Error["error"]
+        Tape["paperTape"]
+    end
+
+    subgraph Arithmetic["Expresion y calculo"]
+        Expr["expressionTokens"]
+        Pending["pendingOperation"]
+        First["firstOperand"]
+        LastOp["lastOperator"]
+        LastOperand["lastOperand"]
+        Wait["waitingForNewEntry"]
+        Total["totalMemory"]
+    end
+
+    subgraph Accounting["Contabilidad"]
+        GT["grandTotal"]
+        Ops["operationCount"]
+        Sub["subtotalCount"]
+        Ref["referenceNumber"]
+    end
+
+    subgraph Config["Config y registros"]
+        Mem["independentMemory"]
+        Rate["conversionRate"]
+        Tax["taxRate"]
+        Biz["businessCost / businessSell / businessMargin"]
+    end
+        </pre>
+      </section>
+
+      <section>
+        <h2>Maquina de Estados del Flujo Aditivo</h2>
+        <p>
+          Esta es la parte mas propia de una sumadora: la semantica de
+          <code>+ =</code>.
+        </p>
+        <pre class="mermaid">
+stateDiagram-v2
+    [*] --> Capturando
+
+    Capturando --> SecuenciaAditivaAbierta: + o += con numero
+    Capturando --> ExpresionMixta: x o / con numero
+    Capturando --> Error: overflow o expresion invalida
+
+    SecuenciaAditivaAbierta --> SecuenciaAditivaAbierta: capturar nuevo numero y + o -
+    SecuenciaAditivaAbierta --> TotalAditivoImpreso: += consecutivo o =
+    SecuenciaAditivaAbierta --> SubtotalImpreso: SUBT
+    SecuenciaAditivaAbierta --> Error: fallo de evaluacion
+
+    TotalAditivoImpreso --> SecuenciaAditivaAbierta: escribir nuevo numero y + o +=
+    TotalAditivoImpreso --> TotalAditivoImpreso: = repetido
+    TotalAditivoImpreso --> SubtotalImpreso: SUBT
+
+    ExpresionMixta --> ExpresionMixta: continuar con x / + -
+    ExpresionMixta --> TotalAditivoImpreso: =
+    ExpresionMixta --> Error: division invalida u overflow
+
+    SubtotalImpreso --> Capturando: nueva entrada
+    Error --> Capturando: CE o CA
+        </pre>
+      </section>
+
+      <section>
+        <h2>Sesion y Persistencia</h2>
+        <p>
+          La sesion operativa y la persistencia automatica ya no significan lo
+          mismo.
+        </p>
+        <pre class="mermaid">
+stateDiagram-v2
+    [*] --> SesionNueva
+    SesionNueva --> SesionActiva: hydrate
+    SesionActiva --> SesionActiva: dispatch / setMode / setDecimalMode
+    SesionActiva --> PersistenciaFiltrada: persist
+    PersistenciaFiltrada --> SesionActiva: solo guarda M RATE TAX
+    SesionActiva --> SnapshotCompleto: export / import
+    SnapshotCompleto --> SesionActiva: backup explicito completo
+        </pre>
+      </section>
+
+      <section>
+        <h2>Modos Vigentes</h2>
+        <p>
+          El producto actual opera solo con <code>NORMAL</code> y
+          <code>CONVERSION</code>.
+        </p>
+        <pre class="mermaid">
+stateDiagram-v2
+    [*] --> NORMAL
+    NORMAL --> CONVERSION: setMode(CONVERSION)
+    CONVERSION --> NORMAL: setMode(NORMAL)
+        </pre>
+      </section>
+
+      <section>
+        <h2>Casos de Uso de Aplicacion</h2>
+        <p>
+          Fachada de aplicacion y casos de uso que median entre UI y dominio.
+        </p>
+        <pre class="mermaid">
+flowchart LR
+    UI["CalculatorUI / teclado / display"] --> Service["CalculatorApplicationService"]
+
+    Service --> Dispatch["dispatchCalculatorAction"]
+    Service --> Mode["configureCalculatorMode"]
+    Service --> Copy["copyDisplayValue"]
+    Service --> Hydrate["hydrateCalculatorState"]
+    Service --> Persist["persistCalculatorState"]
+    Service --> Transfer["transferCalculatorSnapshot"]
+
+    Dispatch --> Calc["Calculator"]
+    Mode --> Calc
+    Copy --> Calc
+    Hydrate --> Calc
+    Persist --> Calc
+    Transfer --> Calc
+        </pre>
+      </section>
+
+      <section>
+        <h2>Grafo de Dependencias Real</h2>
+        <p>
+          Dependencias estables del repo actual.
+        </p>
+        <pre class="mermaid">
+flowchart TB
+    subgraph UI
+        U1["CalculatorUI.tsx"]
+        U2["translateCalculatorKeyboardEvent.ts"]
+    end
+
+    subgraph APP
+        A1["CalculatorApplicationService.ts"]
+        A2["usecases/*"]
+        A3["ports/*"]
+    end
+
+    subgraph DOMAIN
+        D1["Calculator.ts"]
+        D2["types.ts"]
+        D3["state.ts"]
+        D4["policies/*"]
+        D5["services/*"]
+    end
+
+    subgraph INFRA
+        I1["BrowserClipboardGateway.ts"]
+        I2["BrowserCalculatorSnapshotFileGateway.ts"]
+        I3["LocalStorageCalculatorSnapshotRepository.ts"]
+    end
+
+    U1 --> A1
+    U2 --> A2
+    A1 --> A2
+    A2 --> D1
+    D1 --> D2
+    D1 --> D3
+    D1 --> D4
+    D1 --> D5
+    I1 --> A3
+    I2 --> A3
+    I3 --> A3
+        </pre>
+      </section>
+    </main>
+  </body>
+</html>
