@@ -39,6 +39,7 @@ Tape policy is also part of the decision:
 - additive flows print the percentage input as entered, for example `10 %`
 - additive continuation must not print misleading materialized lines like `1 +`
 - multiplicative and divisive flows may print both the percentage input and the resolved operation line
+- mixed expressions with precedence must keep the tape aligned with the full result, not only with the multiplicative or divisive sub-block
 
 ## Consequences
 

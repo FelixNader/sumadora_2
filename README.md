@@ -36,6 +36,7 @@ La cinta conserva intencion contable:
 
 - en flujos aditivos imprime la entrada porcentual, por ejemplo `10 %`, y luego el total final
 - en flujos multiplicativos y divisivos imprime tanto la entrada porcentual como la operacion resuelta completa
+- en expresiones mixtas con precedencia, por ejemplo `5 + 8 + 3 x 2 =`, imprime el subbloque multiplicativo `3 x 2 = 6` y tambien el total global `19`
 
 Esta decision de dominio quedo formalizada en [ADR 0009](./docs/adr/0009-percentage-uses-accumulated-base-in-additive-flows.md).
 

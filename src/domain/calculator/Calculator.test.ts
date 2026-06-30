@@ -457,4 +457,10 @@ test('respects multiplication precedence in mixed expression', () => {
   calculator.equals();
 
   expect(calculator.getState().displayValue).toBe('19');
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+5\s+\+/);
+  expect(tape).toMatch(/\s+8\s+\+/);
+  expect(tape).toMatch(/\s+3\s+x/);
+  expect(tape).toMatch(/3\s+x\s+2\s+=\s+6/);
+  expect(tape).toMatch(/\s+19/);
 });

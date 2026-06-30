@@ -245,7 +245,17 @@ export class Calculator {
         return;
       }
 
+      const hasAdditiveOperators = expression.some(
+        (token) => token === "+" || token === "-"
+      );
+
       if (typeof lastToken === "string" && (lastToken === "+" || lastToken === "-")) {
+        this.printToTape(`${formatForTape(result)}`);
+      } else if (
+        typeof lastToken === "string" &&
+        (lastToken === "*" || lastToken === "/") &&
+        hasAdditiveOperators
+      ) {
         this.printToTape(`${formatForTape(result)}`);
       }
 
