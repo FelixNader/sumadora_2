@@ -2,6 +2,13 @@ export type DecimalMode = "F" | "3" | "2" | "0" | "ADD2";
 export type Operation = "+" | "-" | "*" | "/";
 export type BusinessMode = "COST" | "SELL" | "MGN" | null;
 export type ExpressionToken = number | Operation;
+export type AccumulatorContext =
+  | "idle"
+  | "entry"
+  | "result"
+  | "subtotal"
+  | "total"
+  | "grand-total";
 
 export interface CalculatorState {
   decimalMode: DecimalMode;
@@ -24,6 +31,7 @@ export interface CalculatorState {
   lastOperand: number | null;
   lastOperator: Operation | null;
   waitingForNewEntry: boolean;
+  accumulatorContext: AccumulatorContext;
   pendingBusiness: BusinessMode;
   businessBase: number | null;
   businessCost: number | null;

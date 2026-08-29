@@ -25,6 +25,7 @@ export function createInitialCalculatorState(): CalculatorState {
     lastOperand: null,
     lastOperator: null,
     waitingForNewEntry: false,
+    accumulatorContext: "idle",
     pendingBusiness: null,
     businessBase: null,
     businessCost: null,
@@ -60,6 +61,15 @@ export function sanitizeSnapshot(snapshot: CalculatorSnapshot): CalculatorState 
       typeof snapshot.state.lastPercentInput === "number"
         ? snapshot.state.lastPercentInput
         : null,
+    accumulatorContext:
+      snapshot.state.accumulatorContext === "idle" ||
+      snapshot.state.accumulatorContext === "entry" ||
+      snapshot.state.accumulatorContext === "result" ||
+      snapshot.state.accumulatorContext === "subtotal" ||
+      snapshot.state.accumulatorContext === "total" ||
+      snapshot.state.accumulatorContext === "grand-total"
+        ? snapshot.state.accumulatorContext
+        : "idle",
     businessCost:
       typeof snapshot.state.businessCost === "number"
         ? snapshot.state.businessCost

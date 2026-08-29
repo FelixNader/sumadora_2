@@ -117,6 +117,8 @@ export class Calculator {
       }
       this.state.displayValue = next;
     }
+
+    this.state.accumulatorContext = "entry";
   }
 
   inputDecimal(): void {
@@ -134,6 +136,8 @@ export class Calculator {
     if (!this.state.displayValue.includes(".")) {
       this.state.displayValue += ".";
     }
+
+    this.state.accumulatorContext = "entry";
   }
 
   toggleSign(): void {
@@ -146,6 +150,7 @@ export class Calculator {
     this.state.displayValue = this.state.displayValue.startsWith("-")
       ? this.state.displayValue.slice(1)
       : `-${this.state.displayValue}`;
+    this.state.accumulatorContext = "entry";
   }
 
   clearEntry(): void {
@@ -249,6 +254,7 @@ export class Calculator {
       this.state.pendingOperation = null;
       this.state.expressionTokens = [result];
       this.state.waitingForNewEntry = true;
+      this.state.accumulatorContext = "result";
       return;
     }
 
@@ -276,6 +282,7 @@ export class Calculator {
       this.state.lastPercentInput = null;
       this.state.expressionTokens = [result];
       this.state.waitingForNewEntry = true;
+      this.state.accumulatorContext = "result";
     }
   }
 
@@ -305,6 +312,7 @@ export class Calculator {
     this.state.expressionTokens = [];
     this.state.operationCount = 0;
     this.state.lastPercentInput = null;
+    this.state.accumulatorContext = "total";
   }
 
   memoryAdd(): void {
@@ -328,12 +336,14 @@ export class Calculator {
   memoryRecall(): void {
     this.state.displayValue = formatForDisplay(this.state.independentMemory);
     this.state.waitingForNewEntry = true;
+    this.state.accumulatorContext = "result";
     this.printToTape(`${formatForTape(this.state.independentMemory)} M◇`);
   }
 
   memoryClear(): void {
     this.state.displayValue = formatForDisplay(this.state.independentMemory);
     this.state.waitingForNewEntry = true;
+    this.state.accumulatorContext = "result";
     this.printToTape(`${formatForTape(this.state.independentMemory)} M*`);
     this.state.independentMemory = 0;
   }
@@ -361,6 +371,7 @@ export class Calculator {
     this.state.businessMargin = null;
     this.state.expressionTokens = [];
     this.state.lastPercentInput = null;
+    this.state.accumulatorContext = "grand-total";
   }
 
   printReference(): void {
@@ -371,6 +382,7 @@ export class Calculator {
 
     this.printToTape(`${formatForTape(value)} #`);
     this.state.waitingForNewEntry = true;
+    this.state.accumulatorContext = "result";
   }
 
   subtotal(): void {
@@ -395,6 +407,7 @@ export class Calculator {
     this.state.businessCost = null;
     this.state.businessSell = null;
     this.state.businessMargin = null;
+    this.state.accumulatorContext = "subtotal";
   }
 
   printOperationAverage(): void {
@@ -407,6 +420,7 @@ export class Calculator {
     this.printToTape(`${formatForTape(average)}`);
     this.state.displayValue = formatForDisplay(average);
     this.state.waitingForNewEntry = true;
+    this.state.accumulatorContext = "result";
   }
 
   percent(): void {
@@ -445,6 +459,7 @@ export class Calculator {
       this.printOperationToTape(`${formatForTape(result)}`);
     }
     this.state.totalMemory = result;
+    this.state.accumulatorContext = pendingOperation === null ? "result" : "entry";
   }
 
   setTaxRate(): void {
@@ -476,6 +491,18 @@ export class Calculator {
     this.state.displayValue = formatForDisplay(computation.result);
     this.state.waitingForNewEntry = true;
     this.state.totalMemory = computation.result;
+    this.state.pendingOperation = null;
+    this.state.firstOperand = computation.result;
+    this.state.lastOperand = null;
+    this.state.lastOperator = null;
+    this.state.lastPercentInput = null;
+    this.state.expressionTokens = [computation.result];
+    this.state.pendingBusiness = null;
+    this.state.businessBase = null;
+    this.state.businessCost = null;
+    this.state.businessSell = null;
+    this.state.businessMargin = null;
+    this.state.accumulatorContext = "result";
     this.printOperationToTape(`TAX+`);
     this.printOperationToTape(`BASE  ${formatForTape(value)}`);
     this.printOperationToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(computation.taxAmount)}`);
@@ -501,6 +528,18 @@ export class Calculator {
     this.state.displayValue = formatForDisplay(computation.result);
     this.state.waitingForNewEntry = true;
     this.state.totalMemory = computation.result;
+    this.state.pendingOperation = null;
+    this.state.firstOperand = computation.result;
+    this.state.lastOperand = null;
+    this.state.lastOperator = null;
+    this.state.lastPercentInput = null;
+    this.state.expressionTokens = [computation.result];
+    this.state.pendingBusiness = null;
+    this.state.businessBase = null;
+    this.state.businessCost = null;
+    this.state.businessSell = null;
+    this.state.businessMargin = null;
+    this.state.accumulatorContext = "result";
     this.printOperationToTape(`TAX-`);
     this.printOperationToTape(`TOTAL ${formatForTape(value)}`);
     this.printOperationToTape(`BASE  ${formatForTape(computation.result)}`);
@@ -638,6 +677,11 @@ export class Calculator {
       return;
     }
 
+    if (this.shouldOpenAccumulatorContinuation(operation)) {
+      this.openAccumulatorContinuation(operation);
+      return;
+    }
+
     const rawCurrent = this.parseDisplayValue();
     if (rawCurrent === null) {
       return;
@@ -715,6 +759,54 @@ export class Calculator {
     this.state.businessCost = null;
     this.state.businessSell = null;
     this.state.businessMargin = null;
+    this.state.accumulatorContext = "entry";
+  }
+
+  private shouldOpenAccumulatorContinuation(operation: Operation): boolean {
+    const base = this.state.expressionTokens[0];
+    const current = this.parseDisplayValue();
+
+    return (
+      (operation === "+" || operation === "-") &&
+      this.state.waitingForNewEntry &&
+      this.state.expressionTokens.length === 1 &&
+      typeof base === "number" &&
+      current !== null &&
+      Math.abs(current - base) < 1e-9 &&
+      (this.state.accumulatorContext === "subtotal" ||
+        this.state.accumulatorContext === "result")
+    );
+  }
+
+  private openAccumulatorContinuation(operation: Operation): void {
+    const base = this.state.expressionTokens[0];
+    if (typeof base !== "number") {
+      return;
+    }
+
+    this.printOperationToTape(`${formatForTape(base)} ${symbolFor(operation)}`);
+    this.state.expressionTokens = [base, operation];
+    this.state.pendingOperation = operation;
+    this.state.firstOperand = base;
+    this.state.lastOperator = operation;
+    this.state.lastOperand = null;
+    this.state.displayValue = formatForDisplay(base);
+    this.state.totalMemory = base;
+
+    const operationCounterUpdate = incrementOperationCount(
+      this.state.operationCount,
+      operation
+    );
+    this.state.operationCount = operationCounterUpdate.operationCount;
+
+    this.state.waitingForNewEntry = true;
+    this.state.lastPercentInput = null;
+    this.state.pendingBusiness = null;
+    this.state.businessBase = null;
+    this.state.businessCost = null;
+    this.state.businessSell = null;
+    this.state.businessMargin = null;
+    this.state.accumulatorContext = "entry";
   }
 
   private shouldContinueFromAccumulatorValue(operation: Operation): boolean {

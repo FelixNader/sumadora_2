@@ -268,6 +268,25 @@ test('subtract chain does not print running total until equals', () => {
   expect(finalizedTape).toContain('122');
 });
 
+test('equals result can open a new subtractive line directly from the displayed result', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('2');
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.equals();
+  calculator.subtract();
+  calculator.inputDigit('7');
+  calculator.equals();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+17\s+-/);
+  expect(tape).toMatch(/\s+7\s+-/);
+  expect(tape).toMatch(/\s+10(\s|$)/);
+  expect(calculator.getState().displayValue).toBe('10');
+});
+
 test('subtotal lets the next additive line continue from the live accumulator', () => {
   const calculator = new Calculator();
 
@@ -299,6 +318,34 @@ test('subtotal lets the next additive line continue from the live accumulator', 
   expect(tape).toContain('350');
   expect(tape).toContain('450');
   expect(calculator.getState().displayValue).toBe('450');
+});
+
+test('subtotal can open a subtractive continuation directly from the displayed subtotal', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('9');
+  calculator.inputDigit('4');
+  calculator.inputDecimal();
+  calculator.inputDigit('4');
+  calculator.subtract();
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.subtotal();
+  calculator.subtract();
+  calculator.inputDigit('1');
+  calculator.inputDigit('4');
+  calculator.inputDigit('4');
+  calculator.subtotal();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+194\.4\s+-/);
+  expect(tape).toMatch(/\s+50\s+-/);
+  expect(tape).toMatch(/\s+144\.4\s+◇/);
+  expect(tape).toMatch(/\s+144\.4\s+-/);
+  expect(tape).toMatch(/\s+144\s+-/);
+  expect(tape).toMatch(/\s+0\.4\s+◇/);
+  expect(calculator.getState().displayValue).toBe('0.4');
 });
 
 test('percent in additive flow uses the first operand as base and equals resolves the total', () => {
@@ -499,6 +546,48 @@ test('tax operations print full breakdown on tape', () => {
   expect(tape).toContain('TOTAL');
   expect(tape).toContain('BASE');
   expect(tape).toContain('TAX 16%');
+});
+
+test('tax addition rebases the active accumulator to the taxed total', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('3');
+  calculator.inputDigit('6');
+  calculator.multiply();
+  calculator.inputDigit('5');
+  calculator.add();
+  calculator.addTax();
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.subtotal();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toContain('TOTAL          208.8');
+  expect(tape).toMatch(/\s+208\.8\s+\+/);
+  expect(tape).toMatch(/\s+5\s+\+/);
+  expect(tape).toMatch(/\s+213\.8\s+◇/);
+  expect(calculator.getState().displayValue).toBe('213.8');
+});
+
+test('tax subtraction rebases the active accumulator to the untaxed base', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('2');
+  calculator.inputDigit('0');
+  calculator.inputDigit('8');
+  calculator.inputDecimal();
+  calculator.inputDigit('8');
+  calculator.subtractTax();
+  calculator.subtract();
+  calculator.inputDigit('8');
+  calculator.subtotal();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toContain('BASE             180');
+  expect(tape).toMatch(/\s+180\s+-/);
+  expect(tape).toMatch(/\s+8\s+-/);
+  expect(tape).toMatch(/\s+172\s+◇/);
+  expect(calculator.getState().displayValue).toBe('172');
 });
 
 test('business keys solve with chained different keys', () => {

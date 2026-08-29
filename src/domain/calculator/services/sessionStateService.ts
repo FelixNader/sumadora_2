@@ -9,6 +9,7 @@ interface SessionStateBase {
   lastOperand: number | null;
   lastOperator: Operation | null;
   waitingForNewEntry: boolean;
+  accumulatorContext: CalculatorState["accumulatorContext"];
   pendingBusiness: CalculatorState["pendingBusiness"];
   businessBase: number | null;
   businessCost: number | null;
@@ -23,12 +24,13 @@ interface SessionStateBase {
 
 export function createClearedEntryState(): Pick<
   CalculatorState,
-  "displayValue" | "error" | "lastPercentInput"
+  "displayValue" | "error" | "lastPercentInput" | "accumulatorContext"
 > {
   return {
     displayValue: "0",
     error: null,
     lastPercentInput: null,
+    accumulatorContext: "entry",
   };
 }
 
@@ -42,6 +44,7 @@ export function createClearAllState(): SessionStateBase {
     lastOperand: null,
     lastOperator: null,
     waitingForNewEntry: false,
+    accumulatorContext: "idle",
     pendingBusiness: null,
     businessBase: null,
     businessCost: null,
@@ -86,6 +89,7 @@ export function createErrorState(): Pick<
   | "pendingOperation"
   | "firstOperand"
   | "waitingForNewEntry"
+  | "accumulatorContext"
   | "pendingBusiness"
   | "businessBase"
   | "businessCost"
@@ -100,6 +104,7 @@ export function createErrorState(): Pick<
     pendingOperation: null,
     firstOperand: null,
     waitingForNewEntry: false,
+    accumulatorContext: "idle",
     pendingBusiness: null,
     businessBase: null,
     businessCost: null,
