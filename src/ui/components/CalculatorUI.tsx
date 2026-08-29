@@ -221,14 +221,13 @@ const CalculatorUI: React.FC = () => {
             <div className="hr-keypad-primary-tools">
               <button className="key-fn key-tax" onClick={() => handleButtonClick("TAX+")}>TAX+</button>
               <button className="key-fn key-tax" onClick={() => handleButtonClick("TAX-")}>TAX-</button>
+              <button className="key-fn" onClick={() => handleButtonClick("#")}>#</button>
               <button
-                className="key-fn key-subtotal"
-                title="Subtotal: imprime sin cerrar la cuenta"
-                onClick={() => handleButtonClick("SUBT")}
+                className="key-warn"
+                onClick={() => handleButtonClick("CA")}
               >
-                SUBT ◇
+                CA
               </button>
-              <button className="key-warn" onClick={() => handleButtonClick("CA")}>CA</button>
             </div>
 
             <div className="hr-keypad-primary-grid">
@@ -249,7 +248,13 @@ const CalculatorUI: React.FC = () => {
 
               <button className="key-num key-zero" onClick={() => handleButtonClick("0")}>0</button>
               <button className="key-num" onClick={() => handleButtonClick(".")}>.</button>
-              <button className="key-fn" onClick={() => handleButtonClick("#")}>#</button>
+              <button
+                className="key-fn key-subtotal"
+                title="Subtotal: imprime sin cerrar la cuenta"
+                onClick={() => handleButtonClick("SUBT")}
+              >
+                SUBT ◇
+              </button>
             </div>
           </div>
 
