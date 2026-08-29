@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  DecimalMode,
-} from "../../domain/calculator/Calculator";
+import { DecimalMode } from "../../domain/calculator/Calculator";
 import { CalculatorApplicationService } from "../../application/services/CalculatorApplicationService";
 import { BrowserClipboardGateway } from "../../infrastructure/clipboard/BrowserClipboardGateway";
 import { BrowserCalculatorSnapshotFileGateway } from "../../infrastructure/files/BrowserCalculatorSnapshotFileGateway";
@@ -85,7 +83,7 @@ const CalculatorUI: React.FC = () => {
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    event.target.value = '';
+    event.target.value = "";
     if (!file) {
       return;
     }
@@ -112,8 +110,8 @@ const CalculatorUI: React.FC = () => {
       handleButtonClick(keyboardAction.action);
     };
 
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [handleButtonClick]);
 
   useEffect(() => {
@@ -139,7 +137,7 @@ const CalculatorUI: React.FC = () => {
           <div className="hr-storage-actions">
             <button onClick={handleExport}>Exportar</button>
             <button onClick={handleImportClick}>Importar</button>
-            <button onClick={() => handleButtonClick('TAPE CLR')}>Limpiar cinta</button>
+            <button onClick={() => handleButtonClick("TAPE CLR")}>Limpiar cinta</button>
             <input
               ref={fileInputRef}
               type="file"
@@ -150,24 +148,47 @@ const CalculatorUI: React.FC = () => {
           </div>
         </div>
 
-        <div className="hr-display-section">
-          <div className="hr-leds">
-            <span>DEC {state.decimalMode}</span>
-            <span>ITEM {state.operationCount}</span>
-            <span>GTN {state.subtotalCount}</span>
-            <span>M {state.independentMemory !== 0 ? 'ON' : 'OFF'}</span>
+        <div className="hr-tape-display-stack">
+          <div className="hr-paper-tape">
+            <div className="hr-paper-tape-head">
+              <h3>Cinta de papel</h3>
+              {!isTapePinned && state.paperTape.length > 0 && (
+                <button className="hr-scroll-end" onClick={scrollTapeToBottom}>
+                  Ir al final
+                </button>
+              )}
+            </div>
+            <div className="hr-tape-scroll" ref={paperTapeRef} onScroll={handleTapeScroll}>
+              <div className="hr-tape-content">
+                {state.paperTape.map((line, index) => (
+                  <div
+                    key={index}
+                    className={`hr-tape-line ${index === state.paperTape.length - 1 ? "hr-tape-line-last" : ""}`.trim()}
+                  >
+                    {line}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+
           <div
-            className="hr-display"
+            className="hr-display-section"
             onDoubleClick={handleCopyDisplayValue}
             title="Doble clic para copiar el valor mostrado"
           >
-            {state.displayValue}
-          </div>
-          <div className="hr-status-line">
-            <span>TAX {state.taxRate}%</span>
-            <span>RATE {state.conversionRate}</span>
-            <span>GT {state.grandTotal}</span>
+            <div className="hr-leds">
+              <span>DEC {state.decimalMode}</span>
+              <span>ITEM {state.operationCount}</span>
+              <span>GTN {state.subtotalCount}</span>
+              <span>M {state.independentMemory !== 0 ? "ON" : "OFF"}</span>
+            </div>
+            <div className="hr-display">{state.displayValue}</div>
+            <div className="hr-status-line">
+              <span>TAX {state.taxRate}%</span>
+              <span>RATE {state.conversionRate}</span>
+              <span>GT {state.grandTotal}</span>
+            </div>
           </div>
         </div>
 
@@ -175,10 +196,10 @@ const CalculatorUI: React.FC = () => {
           <div className="hr-selector-group">
             <label>Selector decimal</label>
             <div className="hr-selector-buttons">
-              {(['F', '3', '2', '0', 'ADD2'] as DecimalMode[]).map((decimalMode) => (
+              {(["F", "3", "2", "0", "ADD2"] as DecimalMode[]).map((decimalMode) => (
                 <button
                   key={decimalMode}
-                  className={state.decimalMode === decimalMode ? 'active' : ''}
+                  className={state.decimalMode === decimalMode ? "active" : ""}
                   onClick={() => handleDecimalModeChange(decimalMode)}
                 >
                   {decimalMode}
@@ -189,90 +210,93 @@ const CalculatorUI: React.FC = () => {
         </div>
 
         <div className="hr-keypad-layout">
-          <div className="hr-keypad hr-keypad-primary">
-            <div className="hr-keypad-primary-utility">
-              <button className="key-fn" onClick={() => handleButtonClick('CE')}>CE</button>
-              <button className="key-warn" onClick={() => handleButtonClick('CA')}>CA</button>
-              <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX+')}>TAX+</button>
-              <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX-')}>TAX-</button>
+          <div className="hr-keypad-primary">
+            <div className="hr-keypad-primary-tools">
+              <button className="key-fn" onClick={() => handleButtonClick("CE")}>CE</button>
+              <button className="key-op" onClick={() => handleButtonClick("/")}>/</button>
+              <button className="key-fn" onClick={() => handleButtonClick("%")}>%</button>
+              <button className="key-fn" onClick={() => handleButtonClick("+/-")}>+/-</button>
             </div>
 
-            <div className="hr-keypad-primary-main">
-              <div className="hr-keypad-primary-numeric">
-                <button className="key-num" onClick={() => handleButtonClick('7')}>7</button>
-                <button className="key-num" onClick={() => handleButtonClick('8')}>8</button>
-                <button className="key-num" onClick={() => handleButtonClick('9')}>9</button>
-                <button className="key-op" onClick={() => handleButtonClick('-')}>-</button>
+            <div className="hr-keypad-primary-tools">
+              <button className="key-fn key-tax" onClick={() => handleButtonClick("TAX+")}>TAX+</button>
+              <button className="key-fn key-tax" onClick={() => handleButtonClick("TAX-")}>TAX-</button>
+              <button
+                className="key-fn key-subtotal"
+                title="Subtotal: imprime sin cerrar la cuenta"
+                onClick={() => handleButtonClick("SUBT")}
+              >
+                SUBT ◇
+              </button>
+              <button className="key-warn" onClick={() => handleButtonClick("CA")}>CA</button>
+            </div>
 
-                <button className="key-num" onClick={() => handleButtonClick('4')}>4</button>
-                <button className="key-num" onClick={() => handleButtonClick('5')}>5</button>
-                <button className="key-num" onClick={() => handleButtonClick('6')}>6</button>
-                <button className="key-op" onClick={() => handleButtonClick('+')}>+</button>
+            <div className="hr-keypad-primary-grid">
+              <button className="key-num" onClick={() => handleButtonClick("7")}>7</button>
+              <button className="key-num" onClick={() => handleButtonClick("8")}>8</button>
+              <button className="key-num" onClick={() => handleButtonClick("9")}>9</button>
+              <button className="key-op" onClick={() => handleButtonClick("-")}>-</button>
 
-                <button className="key-num" onClick={() => handleButtonClick('1')}>1</button>
-                <button className="key-num" onClick={() => handleButtonClick('2')}>2</button>
-                <button className="key-num" onClick={() => handleButtonClick('3')}>3</button>
-                <button className="key-op" onClick={() => handleButtonClick('x')}>x</button>
+              <button className="key-num" onClick={() => handleButtonClick("4")}>4</button>
+              <button className="key-num" onClick={() => handleButtonClick("5")}>5</button>
+              <button className="key-num" onClick={() => handleButtonClick("6")}>6</button>
+              <button className="key-op" onClick={() => handleButtonClick("+")}>+</button>
 
-                <button className="key-num" onClick={() => handleButtonClick('0')}>0</button>
-                <button className="key-num" onClick={() => handleButtonClick('.')}>.</button>
-                <button
-                  className="key-fn key-subtotal"
-                  title="Subtotal: imprime sin cerrar la cuenta"
-                  onClick={() => handleButtonClick('SUBT')}
-                >
-                  SUBT ◇
-                </button>
-                <button
-                  className="key-op key-commit key-total"
-                  title="Total: cierra la cuenta y la envia al grand total"
-                  onClick={() => handleButtonClick('*')}
-                >
-                  TOTAL *
-                </button>
-              </div>
+              <button className="key-num" onClick={() => handleButtonClick("1")}>1</button>
+              <button className="key-num" onClick={() => handleButtonClick("2")}>2</button>
+              <button className="key-num" onClick={() => handleButtonClick("3")}>3</button>
+              <button className="key-op" onClick={() => handleButtonClick("x")}>x</button>
+
+              <button className="key-num key-zero" onClick={() => handleButtonClick("0")}>0</button>
+              <button className="key-num" onClick={() => handleButtonClick(".")}>.</button>
+              <button className="key-fn" onClick={() => handleButtonClick("#")}>#</button>
             </div>
           </div>
 
           <div className="hr-keypad-secondary">
             <div className="hr-keypad-group hr-keypad-group-account">
-              <h4>Cuenta y control</h4>
-              <div className="hr-keypad-group-grid">
-                <button className="key-fn" title="Grand total: imprime y borra el GT" onClick={() => handleButtonClick('G*')}>GT G*</button>
-                <button className="key-fn" onClick={() => handleButtonClick('%')}>%</button>
-                <button className="key-op key-secondary-op" onClick={() => handleButtonClick('/')}>/</button>
-                <button className="key-fn" onClick={() => handleButtonClick('+/-')}>+/-</button>
-                <button className="key-fn" onClick={() => handleButtonClick('#')}>#</button>
-                <button className="key-fn" onClick={() => handleButtonClick('AVG')}>AVG</button>
+              <h4>Cuenta y cierre</h4>
+              <div className="hr-keypad-group-grid hr-keypad-group-grid-account">
+                <button className="key-fn" title="Grand total: imprime y borra el GT" onClick={() => handleButtonClick("G*")}>
+                  GT G*
+                </button>
+                <button
+                  className="key-total key-commit"
+                  title="Total: cierra la cuenta y la envia al grand total"
+                  onClick={() => handleButtonClick("*")}
+                >
+                  TOTAL *
+                </button>
+                <button className="key-fn" onClick={() => handleButtonClick("AVG")}>AVG</button>
               </div>
             </div>
 
             <div className="hr-keypad-group hr-keypad-group-memory">
               <h4>Memoria</h4>
               <div className="hr-keypad-group-grid">
-                <button className="key-fn key-memory" onClick={() => handleButtonClick('M+')}>M+</button>
-                <button className="key-fn key-memory" onClick={() => handleButtonClick('M-')}>M-</button>
-                <button className="key-fn key-memory" onClick={() => handleButtonClick('MR')}>M◇</button>
-                <button className="key-fn key-memory" onClick={() => handleButtonClick('MC')}>M*</button>
+                <button className="key-fn key-memory" onClick={() => handleButtonClick("M+")}>M+</button>
+                <button className="key-fn key-memory" onClick={() => handleButtonClick("M-")}>M-</button>
+                <button className="key-fn key-memory" onClick={() => handleButtonClick("MR")}>M◇</button>
+                <button className="key-fn key-memory" onClick={() => handleButtonClick("MC")}>M*</button>
               </div>
             </div>
 
             <div className="hr-keypad-group hr-keypad-group-tax">
               <h4>Impuesto y conversion</h4>
               <div className="hr-keypad-group-grid">
-                <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX SET')}>TAX SET</button>
-                <button className="key-fn key-conv" onClick={() => handleButtonClick('RATE')}>RATE</button>
-                <button className="key-fn key-conv" onClick={() => handleButtonClick('CONV ->')}>CONV -&gt;</button>
-                <button className="key-fn key-conv" onClick={() => handleButtonClick('<- CONV')}>&lt;- CONV</button>
+                <button className="key-fn key-tax" onClick={() => handleButtonClick("TAX SET")}>TAX SET</button>
+                <button className="key-fn key-conv" onClick={() => handleButtonClick("RATE")}>RATE</button>
+                <button className="key-fn key-conv" onClick={() => handleButtonClick("CONV ->")}>CONV -&gt;</button>
+                <button className="key-fn key-conv" onClick={() => handleButtonClick("<- CONV")}>&lt;- CONV</button>
               </div>
             </div>
 
             <div className="hr-keypad-group hr-keypad-group-business">
               <h4>Negocio</h4>
               <div className="hr-keypad-group-grid">
-                <button className="key-fn" onClick={() => handleButtonClick('COST')}>COST</button>
-                <button className="key-fn" onClick={() => handleButtonClick('SELL')}>SELL</button>
-                <button className="key-fn" onClick={() => handleButtonClick('MGN')}>MGN</button>
+                <button className="key-fn" onClick={() => handleButtonClick("COST")}>COST</button>
+                <button className="key-fn" onClick={() => handleButtonClick("SELL")}>SELL</button>
+                <button className="key-fn" onClick={() => handleButtonClick("MGN")}>MGN</button>
               </div>
             </div>
           </div>
@@ -280,25 +304,6 @@ const CalculatorUI: React.FC = () => {
 
         {importError && <p className="import-error">{importError}</p>}
         {copyFeedback && <p className="copy-feedback">{copyFeedback}</p>}
-      </div>
-
-      <div className="hr-paper-tape">
-        <h3>Cinta de papel</h3>
-        <div className="hr-tape-scroll" ref={paperTapeRef} onScroll={handleTapeScroll}>
-          <div className="hr-tape-content">
-          {state.paperTape.map((line, index) => (
-              <div
-                key={index}
-                className={`hr-tape-line ${index === state.paperTape.length - 1 ? 'hr-tape-line-last' : ''}`.trim()}
-              >
-                {line}
-              </div>
-          ))}
-          </div>
-        </div>
-        {!isTapePinned && state.paperTape.length > 0 && (
-          <button className="hr-scroll-end" onClick={scrollTapeToBottom}>Ir al final</button>
-        )}
       </div>
     </div>
   );
