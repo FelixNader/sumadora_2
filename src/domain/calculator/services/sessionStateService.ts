@@ -3,6 +3,7 @@ import { CalculatorState, ExpressionToken, Operation } from "../types";
 interface SessionStateBase {
   displayValue: string;
   error: string | null;
+  needsTapeBlockHeader: boolean;
   lastPercentInput: number | null;
   pendingOperation: Operation | null;
   firstOperand: number | null;
@@ -38,6 +39,7 @@ export function createClearAllState(): SessionStateBase {
   return {
     displayValue: "0",
     error: null,
+    needsTapeBlockHeader: false,
     lastPercentInput: null,
     pendingOperation: null,
     firstOperand: null,
@@ -66,6 +68,7 @@ export function createResetAllState(): Pick<
   | "conversionRate"
   | "taxRate"
   | "paperTape"
+  | "needsTapeBlockHeader"
   | "tapeOperationSequence"
   | "tapeSubtotalSequence"
 > {
@@ -76,6 +79,7 @@ export function createResetAllState(): Pick<
     conversionRate: 1,
     taxRate: 16,
     paperTape: [],
+    needsTapeBlockHeader: true,
     tapeOperationSequence: 0,
     tapeSubtotalSequence: 0,
   };
@@ -85,6 +89,7 @@ export function createErrorState(): Pick<
   CalculatorState,
   | "error"
   | "displayValue"
+  | "needsTapeBlockHeader"
   | "lastPercentInput"
   | "pendingOperation"
   | "firstOperand"
@@ -100,6 +105,7 @@ export function createErrorState(): Pick<
   return {
     error: "E",
     displayValue: "E",
+    needsTapeBlockHeader: false,
     lastPercentInput: null,
     pendingOperation: null,
     firstOperand: null,

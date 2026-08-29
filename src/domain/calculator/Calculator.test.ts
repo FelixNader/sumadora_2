@@ -1,5 +1,19 @@
 import { Calculator } from './Calculator';
 
+function createFixedClock(isoDate: string) {
+  return () => new Date(isoDate);
+}
+
+function createSequentialClock(isoDates: string[]) {
+  let index = 0;
+
+  return () => {
+    const currentIndex = Math.min(index, isoDates.length - 1);
+    index += 1;
+    return new Date(isoDates[currentIndex]);
+  };
+}
+
 test('ADD2 treats integer input as cents for add/sub operations', () => {
   const calculator = new Calculator();
 
@@ -111,7 +125,7 @@ test('operation counter updates as each add line is committed', () => {
 });
 
 test('subtotal and grand total summaries print to tape', () => {
-  const calculator = new Calculator();
+  const calculator = new Calculator(createFixedClock('2026-08-29T14:37:00'));
 
   calculator.inputDigit('1');
   calculator.inputDigit('0');
@@ -124,6 +138,7 @@ test('subtotal and grand total summaries print to tape', () => {
   calculator.grandTotalRecall();
 
   const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toContain('2026-08-29 14:37');
   expect(tape).toContain('ItemNo.: 002');
   expect(tape).toContain('Sub Total:');
   expect(tape).toContain('30 ◇');
@@ -134,7 +149,10 @@ test('subtotal and grand total summaries print to tape', () => {
 });
 
 test('paper tape follows a Casio-like summary grammar', () => {
-  const calculator = new Calculator();
+  const calculator = new Calculator(createSequentialClock([
+    '2026-08-29T14:37:00',
+    '2026-08-29T14:41:00',
+  ]));
 
   calculator.inputDigit('1');
   calculator.inputDigit('0');
@@ -145,16 +163,42 @@ test('paper tape follows a Casio-like summary grammar', () => {
   calculator.grandTotalRecall();
 
   const tape = calculator.getState().paperTape;
-  expect(tape[0]).toContain('10 +');
-  expect(tape[1]).toContain('20 +');
-  expect(tape[2]).toBe('----------------');
-  expect(tape[3]).toBe('ItemNo.: 002');
-  expect(tape[4]).toBe('Total:');
-  expect(tape[5]).toContain('30 *');
-  expect(tape[6]).toBe('----------------');
-  expect(tape[7]).toBe('ItemNo.: 001');
-  expect(tape[8]).toBe('GrandTotal:');
-  expect(tape[9]).toContain('30 G*');
+  expect(tape[0]).toBe('2026-08-29 14:37');
+  expect(tape[1]).toBe('----------------');
+  expect(tape[2]).toContain('10 +');
+  expect(tape[3]).toContain('20 +');
+  expect(tape[4]).toBe('----------------');
+  expect(tape[5]).toBe('ItemNo.: 002');
+  expect(tape[6]).toBe('Total:');
+  expect(tape[7]).toContain('30 *');
+  expect(tape[8]).toBe('2026-08-29 14:41');
+  expect(tape[9]).toBe('----------------');
+  expect(tape[10]).toBe('----------------');
+  expect(tape[11]).toBe('ItemNo.: 001');
+  expect(tape[12]).toBe('GrandTotal:');
+  expect(tape[13]).toContain('30 G*');
+});
+
+test('a new tape block opens after total closes the previous account', () => {
+  const calculator = new Calculator(createSequentialClock([
+    '2026-08-29T15:02:00',
+    '2026-08-29T15:05:00',
+  ]));
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('8');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('2');
+  calculator.inputDigit('0');
+  calculator.total();
+  calculator.inputDigit('5');
+  calculator.add();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toContain('2026-08-29 15:02');
+  expect(tape).toContain('2026-08-29 15:05');
+  expect(tape).toMatch(/2026-08-29 15:05\n----------------\n\s+5 \+/);
 });
 
 test('clear all resets the open accumulator and clears grand total', () => {

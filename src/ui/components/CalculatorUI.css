@@ -142,6 +142,13 @@
   color: #6a5843;
 }
 
+.hr-tape-line-timestamp {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #7a6b59;
+}
+
 .hr-tape-line-separator {
   font-size: 12px;
   color: #9b8e80;
@@ -550,6 +557,7 @@
   }
 
   .hr-tape-line-label,
+  .hr-tape-line-timestamp,
   .hr-tape-line-separator {
     font-size: 10px;
   }

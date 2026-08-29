@@ -34,6 +34,10 @@ function classifyTapeLine(line: string): string {
     return "hr-tape-line-empty";
   }
 
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(trimmed)) {
+    return "hr-tape-line-timestamp";
+  }
+
   if (/^-+$/.test(trimmed)) {
     return "hr-tape-line-separator";
   }
@@ -64,7 +68,12 @@ function classifyTapeLine(line: string): string {
 }
 
 function renderTapeLine(line: string): React.ReactNode {
-  if (line.trim().startsWith("ItemNo.:")) {
+  const trimmed = line.trim();
+
+  if (
+    trimmed.startsWith("ItemNo.:") ||
+    /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(trimmed)
+  ) {
     return line;
   }
 

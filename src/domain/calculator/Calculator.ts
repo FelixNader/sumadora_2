@@ -59,10 +59,24 @@ export type {
   Operation,
 } from "./types";
 
+function padTimestampPart(value: number): string {
+  return value.toString().padStart(2, "0");
+}
+
+function formatTapeBlockTimestamp(date: Date): string {
+  return [
+    date.getFullYear(),
+    padTimestampPart(date.getMonth() + 1),
+    padTimestampPart(date.getDate()),
+  ].join("-") + ` ${padTimestampPart(date.getHours())}:${padTimestampPart(date.getMinutes())}`;
+}
+
 export class Calculator {
   private state: CalculatorState;
+  private readonly now: () => Date;
 
-  constructor() {
+  constructor(now: () => Date = () => new Date()) {
+    this.now = now;
     this.state = createInitialCalculatorState();
   }
 
@@ -90,7 +104,7 @@ export class Calculator {
 
   setDecimalMode(decimalMode: DecimalMode): void {
     this.state.decimalMode = decimalMode;
-    this.printToTape(`[DEC ${decimalMode}]`);
+    this.printToTape(`[DEC ${decimalMode}]`, false);
   }
 
   inputDigit(digit: string): void {
@@ -159,7 +173,8 @@ export class Calculator {
 
   clearAll(): void {
     Object.assign(this.state, createClearAllState());
-    this.printToTape("..0.. CA");
+    this.printToTape("..0.. CA", false);
+    this.state.needsTapeBlockHeader = true;
   }
 
   resetAll(): void {
@@ -313,6 +328,7 @@ export class Calculator {
     this.state.operationCount = 0;
     this.state.lastPercentInput = null;
     this.state.accumulatorContext = "total";
+    this.state.needsTapeBlockHeader = true;
   }
 
   memoryAdd(): void {
@@ -372,6 +388,7 @@ export class Calculator {
     this.state.expressionTokens = [];
     this.state.lastPercentInput = null;
     this.state.accumulatorContext = "grand-total";
+    this.state.needsTapeBlockHeader = true;
   }
 
   printReference(): void {
@@ -670,6 +687,7 @@ export class Calculator {
     this.state.paperTape = [];
     this.state.tapeOperationSequence = 0;
     this.state.tapeSubtotalSequence = 0;
+    this.state.needsTapeBlockHeader = true;
   }
 
   private performOperation(operation: Operation): void {
@@ -992,7 +1010,19 @@ export class Calculator {
     return parsed;
   }
 
-  private printToTape(text: string): void {
+  private printToTape(text: string, allowBlockHeader = true): void {
+    if (!canPrintToTape(this.state)) {
+      return;
+    }
+
+    if (allowBlockHeader) {
+      this.ensureTapeBlockHeader();
+    }
+
+    this.appendRawTapeLine(text);
+  }
+
+  private appendRawTapeLine(text: string): void {
     if (!canPrintToTape(this.state)) {
       return;
     }
@@ -1069,6 +1099,16 @@ export class Calculator {
     this.printToTape(`ItemNo.: ${itemCount.toString().padStart(3, "0")}`);
     this.printToTape(`${title}:`);
     this.printToTape(`${formatForTape(value)} ${marker}`);
+  }
+
+  private ensureTapeBlockHeader(): void {
+    if (!this.state.needsTapeBlockHeader) {
+      return;
+    }
+
+    this.appendRawTapeLine(formatTapeBlockTimestamp(this.now()));
+    this.appendRawTapeLine("----------------");
+    this.state.needsTapeBlockHeader = false;
   }
 
   private resolveMulDivPostingOperation(

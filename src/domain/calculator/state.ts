@@ -18,6 +18,7 @@ export function createInitialCalculatorState(): CalculatorState {
     conversionRate: 1,
     taxRate: 16,
     paperTape: [],
+    needsTapeBlockHeader: true,
     error: null,
     lastPercentInput: null,
     pendingOperation: null,
@@ -57,6 +58,10 @@ export function sanitizeSnapshot(snapshot: CalculatorSnapshot): CalculatorState 
     paperTape: Array.isArray(snapshot.state.paperTape)
       ? [...snapshot.state.paperTape].slice(-MAX_TAPE_LINES)
       : [],
+    needsTapeBlockHeader:
+      typeof snapshot.state.needsTapeBlockHeader === "boolean"
+        ? snapshot.state.needsTapeBlockHeader
+        : !Array.isArray(snapshot.state.paperTape) || snapshot.state.paperTape.length === 0,
     lastPercentInput:
       typeof snapshot.state.lastPercentInput === "number"
         ? snapshot.state.lastPercentInput

@@ -24,6 +24,7 @@ export interface CalculatorState {
   conversionRate: number;
   taxRate: number;
   paperTape: string[];
+  needsTapeBlockHeader: boolean;
   error: string | null;
   lastPercentInput: number | null;
   pendingOperation: Operation | null;

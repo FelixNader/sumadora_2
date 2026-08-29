@@ -10,6 +10,7 @@ test("createClearedEntryState resets only entry and error", () => {
     displayValue: "0",
     error: null,
     lastPercentInput: null,
+    accumulatorContext: "entry",
   });
 });
 
@@ -17,6 +18,7 @@ test("createClearAllState clears arithmetic and accounting session state", () =>
   expect(createClearAllState()).toMatchObject({
     displayValue: "0",
     error: null,
+    needsTapeBlockHeader: false,
     pendingOperation: null,
     firstOperand: null,
     lastOperand: null,
@@ -40,6 +42,7 @@ test("createResetAllState also clears registers and persisted tape", () => {
     conversionRate: 1,
     taxRate: 16,
     paperTape: [],
+    needsTapeBlockHeader: true,
     tapeOperationSequence: 0,
     tapeSubtotalSequence: 0,
   });
@@ -49,10 +52,12 @@ test("createErrorState forces calculator error display and clears flow state", (
   expect(createErrorState()).toEqual({
     error: "E",
     displayValue: "E",
+    needsTapeBlockHeader: false,
     lastPercentInput: null,
     pendingOperation: null,
     firstOperand: null,
     waitingForNewEntry: false,
+    accumulatorContext: "idle",
     pendingBusiness: null,
     businessBase: null,
     businessCost: null,
