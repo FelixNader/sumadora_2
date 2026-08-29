@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import App from "../../App";
 
 beforeEach(() => {
@@ -102,4 +102,16 @@ test("backspace clears current entry and escape clears all", () => {
   pressKey("8", "Digit8");
   pressKey("Escape", "Escape");
   expect(getDisplay(container)).toBe("0");
+});
+
+test("mobile-first keyboard removes on-screen equals and groups secondary functions", () => {
+  render(<App />);
+
+  expect(screen.queryByRole("button", { name: "=" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "SUBT ◇" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "TOTAL *" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Cuenta y control" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Memoria" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Impuesto y conversion" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Negocio" })).toBeInTheDocument();
 });

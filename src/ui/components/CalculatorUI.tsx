@@ -189,38 +189,12 @@ const CalculatorUI: React.FC = () => {
         </div>
 
         <div className="hr-keypad-layout">
-          <div className="hr-keypad hr-keypad-utility">
-            <button className="key-fn" onClick={() => handleButtonClick('#')}>#</button>
-            <button className="key-fn" onClick={() => handleButtonClick('AVG')}>AVG</button>
-            <button className="key-fn key-memory" onClick={() => handleButtonClick('M+')}>M+</button>
-            <button className="key-fn key-memory" onClick={() => handleButtonClick('M-')}>M-</button>
-            <button className="key-fn key-memory" onClick={() => handleButtonClick('MR')}>M◇</button>
-
-            <button className="key-fn key-memory" onClick={() => handleButtonClick('MC')}>M*</button>
-            <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX SET')}>TAX SET</button>
-            <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX+')}>TAX+</button>
-            <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX-')}>TAX-</button>
-            <button className="key-fn" onClick={() => handleButtonClick('%')}>%</button>
-
-            <button className="key-fn key-conv" onClick={() => handleButtonClick('RATE')}>RATE</button>
-            <button className="key-fn key-conv" onClick={() => handleButtonClick('CONV ->')}>CONV -&gt;</button>
-            <button className="key-fn key-conv" onClick={() => handleButtonClick('<- CONV')}>&lt;- CONV</button>
-            <button className="key-fn" onClick={() => handleButtonClick('COST')}>COST</button>
-            <button className="key-fn" onClick={() => handleButtonClick('SELL')}>SELL</button>
-
-            <button className="key-fn" onClick={() => handleButtonClick('MGN')}>MGN</button>
-            <button className="key-fn" onClick={() => handleButtonClick('=')}>=</button>
-            <button className="key-fn" onClick={() => handleButtonClick('+/-')}>+/-</button>
-            <button className="key-fn" onClick={() => handleButtonClick('CE')}>CE</button>
-            <div className="key-spacer" aria-hidden="true" />
-          </div>
-
           <div className="hr-keypad hr-keypad-primary">
-            <div className="hr-keypad-primary-top">
-              <button className="key-fn" title="Grand total: imprime y borra el GT" onClick={() => handleButtonClick('G*')}>GT G*</button>
-              <button className="key-fn" title="Subtotal: imprime sin cerrar la cuenta" onClick={() => handleButtonClick('SUBT')}>SUBT ◇</button>
-              <button className="key-op key-commit" title="Total: cierra la cuenta y la envia al grand total" onClick={() => handleButtonClick('*')}>TOTAL *</button>
+            <div className="hr-keypad-primary-utility">
+              <button className="key-fn" onClick={() => handleButtonClick('CE')}>CE</button>
               <button className="key-warn" onClick={() => handleButtonClick('CA')}>CA</button>
+              <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX+')}>TAX+</button>
+              <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX-')}>TAX-</button>
             </div>
 
             <div className="hr-keypad-primary-main">
@@ -228,24 +202,77 @@ const CalculatorUI: React.FC = () => {
                 <button className="key-num" onClick={() => handleButtonClick('7')}>7</button>
                 <button className="key-num" onClick={() => handleButtonClick('8')}>8</button>
                 <button className="key-num" onClick={() => handleButtonClick('9')}>9</button>
+                <button className="key-op" onClick={() => handleButtonClick('-')}>-</button>
 
                 <button className="key-num" onClick={() => handleButtonClick('4')}>4</button>
                 <button className="key-num" onClick={() => handleButtonClick('5')}>5</button>
                 <button className="key-num" onClick={() => handleButtonClick('6')}>6</button>
+                <button className="key-op" onClick={() => handleButtonClick('+')}>+</button>
 
                 <button className="key-num" onClick={() => handleButtonClick('1')}>1</button>
                 <button className="key-num" onClick={() => handleButtonClick('2')}>2</button>
                 <button className="key-num" onClick={() => handleButtonClick('3')}>3</button>
-
-                <button className="key-num key-wide" onClick={() => handleButtonClick('0')}>0</button>
-                <button className="key-num" onClick={() => handleButtonClick('.')}>.</button>
-              </div>
-
-              <div className="hr-keypad-primary-symbols">
-                <button className="key-op" onClick={() => handleButtonClick('/')}>/</button>
                 <button className="key-op" onClick={() => handleButtonClick('x')}>x</button>
-                <button className="key-op" onClick={() => handleButtonClick('-')}>-</button>
-                <button className="key-op key-equals key-commit" onClick={() => handleButtonClick('+')}>+</button>
+
+                <button className="key-num" onClick={() => handleButtonClick('0')}>0</button>
+                <button className="key-num" onClick={() => handleButtonClick('.')}>.</button>
+                <button
+                  className="key-fn key-subtotal"
+                  title="Subtotal: imprime sin cerrar la cuenta"
+                  onClick={() => handleButtonClick('SUBT')}
+                >
+                  SUBT ◇
+                </button>
+                <button
+                  className="key-op key-commit key-total"
+                  title="Total: cierra la cuenta y la envia al grand total"
+                  onClick={() => handleButtonClick('*')}
+                >
+                  TOTAL *
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="hr-keypad-secondary">
+            <div className="hr-keypad-group hr-keypad-group-account">
+              <h4>Cuenta y control</h4>
+              <div className="hr-keypad-group-grid">
+                <button className="key-fn" title="Grand total: imprime y borra el GT" onClick={() => handleButtonClick('G*')}>GT G*</button>
+                <button className="key-fn" onClick={() => handleButtonClick('%')}>%</button>
+                <button className="key-op key-secondary-op" onClick={() => handleButtonClick('/')}>/</button>
+                <button className="key-fn" onClick={() => handleButtonClick('+/-')}>+/-</button>
+                <button className="key-fn" onClick={() => handleButtonClick('#')}>#</button>
+                <button className="key-fn" onClick={() => handleButtonClick('AVG')}>AVG</button>
+              </div>
+            </div>
+
+            <div className="hr-keypad-group hr-keypad-group-memory">
+              <h4>Memoria</h4>
+              <div className="hr-keypad-group-grid">
+                <button className="key-fn key-memory" onClick={() => handleButtonClick('M+')}>M+</button>
+                <button className="key-fn key-memory" onClick={() => handleButtonClick('M-')}>M-</button>
+                <button className="key-fn key-memory" onClick={() => handleButtonClick('MR')}>M◇</button>
+                <button className="key-fn key-memory" onClick={() => handleButtonClick('MC')}>M*</button>
+              </div>
+            </div>
+
+            <div className="hr-keypad-group hr-keypad-group-tax">
+              <h4>Impuesto y conversion</h4>
+              <div className="hr-keypad-group-grid">
+                <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX SET')}>TAX SET</button>
+                <button className="key-fn key-conv" onClick={() => handleButtonClick('RATE')}>RATE</button>
+                <button className="key-fn key-conv" onClick={() => handleButtonClick('CONV ->')}>CONV -&gt;</button>
+                <button className="key-fn key-conv" onClick={() => handleButtonClick('<- CONV')}>&lt;- CONV</button>
+              </div>
+            </div>
+
+            <div className="hr-keypad-group hr-keypad-group-business">
+              <h4>Negocio</h4>
+              <div className="hr-keypad-group-grid">
+                <button className="key-fn" onClick={() => handleButtonClick('COST')}>COST</button>
+                <button className="key-fn" onClick={() => handleButtonClick('SELL')}>SELL</button>
+                <button className="key-fn" onClick={() => handleButtonClick('MGN')}>MGN</button>
               </div>
             </div>
           </div>
