@@ -153,8 +153,8 @@ const CalculatorUI: React.FC = () => {
         <div className="hr-display-section">
           <div className="hr-leds">
             <span>DEC {state.decimalMode}</span>
-            <span>OPS {state.operationCount}</span>
-            <span>SUB {state.subtotalCount}</span>
+            <span>ITEM {state.operationCount}</span>
+            <span>GTN {state.subtotalCount}</span>
             <span>M {state.independentMemory !== 0 ? 'ON' : 'OFF'}</span>
           </div>
           <div
@@ -190,13 +190,13 @@ const CalculatorUI: React.FC = () => {
 
         <div className="hr-keypad-layout">
           <div className="hr-keypad hr-keypad-utility">
-            <button className="key-fn" onClick={() => handleButtonClick('REF')}>REF</button>
+            <button className="key-fn" onClick={() => handleButtonClick('#')}>#</button>
             <button className="key-fn" onClick={() => handleButtonClick('AVG')}>AVG</button>
             <button className="key-fn key-memory" onClick={() => handleButtonClick('M+')}>M+</button>
             <button className="key-fn key-memory" onClick={() => handleButtonClick('M-')}>M-</button>
-            <button className="key-fn key-memory" onClick={() => handleButtonClick('MR')}>MR</button>
+            <button className="key-fn key-memory" onClick={() => handleButtonClick('MR')}>M◇</button>
 
-            <button className="key-fn key-memory" onClick={() => handleButtonClick('MC')}>MC</button>
+            <button className="key-fn key-memory" onClick={() => handleButtonClick('MC')}>M*</button>
             <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX SET')}>TAX SET</button>
             <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX+')}>TAX+</button>
             <button className="key-fn key-tax" onClick={() => handleButtonClick('TAX-')}>TAX-</button>
@@ -209,17 +209,17 @@ const CalculatorUI: React.FC = () => {
             <button className="key-fn" onClick={() => handleButtonClick('SELL')}>SELL</button>
 
             <button className="key-fn" onClick={() => handleButtonClick('MGN')}>MGN</button>
+            <button className="key-fn" onClick={() => handleButtonClick('=')}>=</button>
             <button className="key-fn" onClick={() => handleButtonClick('+/-')}>+/-</button>
-            <div className="key-spacer" aria-hidden="true" />
-            <div className="key-spacer" aria-hidden="true" />
+            <button className="key-fn" onClick={() => handleButtonClick('CE')}>CE</button>
             <div className="key-spacer" aria-hidden="true" />
           </div>
 
           <div className="hr-keypad hr-keypad-primary">
             <div className="hr-keypad-primary-top">
-              <button className="key-fn" onClick={() => handleButtonClick('GT')}>GT</button>
-              <button className="key-fn" onClick={() => handleButtonClick('SUBT')}>SUBT</button>
-              <button className="key-warn" onClick={() => handleButtonClick('CE')}>CE</button>
+              <button className="key-fn" onClick={() => handleButtonClick('G*')}>G*</button>
+              <button className="key-fn" onClick={() => handleButtonClick('SUBT')}>◇</button>
+              <button className="key-op key-commit" onClick={() => handleButtonClick('*')}>*</button>
               <button className="key-warn" onClick={() => handleButtonClick('CA')}>CA</button>
             </div>
 
@@ -245,7 +245,7 @@ const CalculatorUI: React.FC = () => {
                 <button className="key-op" onClick={() => handleButtonClick('/')}>/</button>
                 <button className="key-op" onClick={() => handleButtonClick('x')}>x</button>
                 <button className="key-op" onClick={() => handleButtonClick('-')}>-</button>
-                <button className="key-op key-equals key-commit" onClick={() => handleButtonClick('+=')}>+ =</button>
+                <button className="key-op key-equals key-commit" onClick={() => handleButtonClick('+')}>+</button>
               </div>
             </div>
           </div>

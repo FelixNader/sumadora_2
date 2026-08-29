@@ -65,9 +65,15 @@ export function translateCalculatorKeyboardEvent(
 
   if (
     event.key === "Enter" ||
-    event.key === "=" ||
     event.code === "NumpadEnter"
   ) {
+    return {
+      action: "*",
+      preventDefault: true,
+    };
+  }
+
+  if (event.key === "=") {
     return {
       action: "=",
       preventDefault: true,

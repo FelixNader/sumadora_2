@@ -14,7 +14,7 @@ beforeEach(() => {
 test("double clicking the display copies the shown value to the clipboard", async () => {
   const { container } = render(<App />);
   const display = container.querySelector(".hr-display");
-  const keypad = container.querySelector(".hr-keypad");
+  const keypad = container.querySelector(".hr-keypad-primary");
 
   fireEvent.click(within(keypad as HTMLElement).getByRole("button", { name: "4" }));
   fireEvent.click(within(keypad as HTMLElement).getByRole("button", { name: "2" }));

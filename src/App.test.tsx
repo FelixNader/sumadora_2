@@ -17,91 +17,92 @@ test('renders keyboard actions on main panel', () => {
   expect(screen.getByRole('button', { name: 'COST' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'TAX+' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'RATE' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'G*' })).toBeInTheDocument();
 });
 
-test('executes addition with combined + = key', () => {
+test('executes a Casio-style add and total flow from the main keypad', () => {
   const { container } = render(<App />);
-  const keypad = container.querySelector('.hr-keypad');
+  const keypad = container.querySelector('.hr-keypad-primary');
   expect(keypad).not.toBeNull();
 
   const keypadQueries = within(keypad as HTMLElement);
   fireEvent.click(keypadQueries.getByRole('button', { name: '2' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '+' }));
   fireEvent.click(keypadQueries.getByRole('button', { name: '3' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '*' }));
 
   const display = container.querySelector('.hr-display');
   expect(display?.textContent).toBe('5');
 });
 
-test('combined + = key closes additive chain on second consecutive press and prints total to tape', () => {
+test('subtotal prints the live accumulator without closing it', () => {
   const { container } = render(<App />);
-  const keypad = container.querySelector('.hr-keypad');
+  const keypad = container.querySelector('.hr-keypad-primary');
   expect(keypad).not.toBeNull();
 
   const keypadQueries = within(keypad as HTMLElement);
   fireEvent.click(keypadQueries.getByRole('button', { name: '1' }));
   fireEvent.click(keypadQueries.getByRole('button', { name: '5' }));
   fireEvent.click(keypadQueries.getByRole('button', { name: '2' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '+' }));
   fireEvent.click(keypadQueries.getByRole('button', { name: '1' }));
   fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
   fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '1' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
-
-  const tapeBeforeClose = container.querySelector('.hr-tape-content');
-  expect(tapeBeforeClose?.textContent).toContain('152 +');
-  expect(tapeBeforeClose?.textContent).toContain('100 +');
-  expect(tapeBeforeClose?.textContent).not.toContain('352');
-
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '◇' }));
 
   const display = container.querySelector('.hr-display');
-  expect(display?.textContent).toBe('352');
+  expect(display?.textContent).toBe('252');
 
-  const tapeAfterClose = container.querySelector('.hr-tape-content');
-  expect(tapeAfterClose?.textContent).toContain('352');
+  const tape = container.querySelector('.hr-tape-content');
+  expect(tape?.textContent).toContain('152 +');
+  expect(tape?.textContent).toContain('100 +');
+  expect(tape?.textContent).toContain('Sub Total:');
+  expect(tape?.textContent).toContain('252 ◇');
 });
 
-test('combined + = key can continue accumulating from a printed total', () => {
+test('grand total closes only after totals are posted and G* is pressed', () => {
   const { container } = render(<App />);
-  const keypad = container.querySelector('.hr-keypad');
+  const keypad = container.querySelector('.hr-keypad-primary');
   expect(keypad).not.toBeNull();
 
   const keypadQueries = within(keypad as HTMLElement);
   fireEvent.click(keypadQueries.getByRole('button', { name: '1' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '+' }));
   fireEvent.click(keypadQueries.getByRole('button', { name: '5' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '*' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '2' }));
   fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '1' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '1' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '*' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: 'G*' }));
 
-  let display = container.querySelector('.hr-display');
-  expect(display?.textContent).toBe('350');
-
-  fireEvent.click(keypadQueries.getByRole('button', { name: '1' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
-
-  display = container.querySelector('.hr-display');
-  expect(display?.textContent).toBe('450');
-
-  fireEvent.click(keypadQueries.getByRole('button', { name: '+ =' }));
+  const display = container.querySelector('.hr-display');
+  expect(display?.textContent).toBe('35');
 
   const tape = container.querySelector('.hr-tape-content');
-  expect(display?.textContent).toBe('450');
-  expect(tape?.textContent).toContain('350');
-  expect(tape?.textContent).toContain('450');
+  expect(tape?.textContent).toContain('15 *');
+  expect(tape?.textContent).toContain('20 *');
+  expect(tape?.textContent).toContain('35 G*');
+});
+
+test('repeat addition creates another committed line on the tape', () => {
+  const { container } = render(<App />);
+  const keypad = container.querySelector('.hr-keypad-primary');
+  expect(keypad).not.toBeNull();
+
+  const keypadQueries = within(keypad as HTMLElement);
+  fireEvent.click(keypadQueries.getByRole('button', { name: '3' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '0' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '+' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '+' }));
+  fireEvent.click(keypadQueries.getByRole('button', { name: '*' }));
+
+  const display = container.querySelector('.hr-display');
+  expect(display?.textContent).toBe('600');
+
+  const tape = container.querySelector('.hr-tape-content');
+  expect(tape?.textContent).toContain('300 +');
+  expect(tape?.textContent?.match(/300 \+/g)?.length).toBe(2);
+  expect(tape?.textContent).toContain('600 *');
 });

@@ -43,7 +43,7 @@ test('conversion and independent memory remain available without a working mode 
   expect(calculator.getState().displayValue).toBe('2');
 });
 
-test('subtotal resets operation count and increments subtotal count', () => {
+test('subtotal keeps the accumulator open and total increments the grand-total counter', () => {
   const calculator = new Calculator();
 
   calculator.inputDigit('1');
@@ -54,15 +54,17 @@ test('subtotal resets operation count and increments subtotal count', () => {
   expect(calculator.getState().subtotalCount).toBe(0);
 
   calculator.subtotal();
-  expect(calculator.getState().operationCount).toBe(0);
-  expect(calculator.getState().subtotalCount).toBe(1);
+  expect(calculator.getState().displayValue).toBe('3');
+  expect(calculator.getState().operationCount).toBe(1);
+  expect(calculator.getState().subtotalCount).toBe(0);
 
   calculator.inputDigit('3');
   calculator.add();
-  calculator.inputDigit('4');
-  calculator.equals();
+  expect(calculator.getState().displayValue).toBe('6');
+  expect(calculator.getState().operationCount).toBe(2);
 
-  expect(calculator.getState().operationCount).toBe(1);
+  calculator.total();
+  expect(calculator.getState().operationCount).toBe(0);
   expect(calculator.getState().subtotalCount).toBe(1);
 });
 
@@ -100,14 +102,20 @@ test('subtotal and grand total summaries print to tape', () => {
   calculator.inputDigit('0');
   calculator.add();
   calculator.subtotal();
+  calculator.total();
   calculator.grandTotalRecall();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toContain('SUB 0001 OPS 2');
-  expect(tape).toContain('SUB 0002 GT 1');
+  expect(tape).toContain('ItemNo.: 002');
+  expect(tape).toContain('Sub Total:');
+  expect(tape).toContain('30 ◇');
+  expect(tape).toContain('Total:');
+  expect(tape).toContain('30 *');
+  expect(tape).toContain('GrandTotal:');
+  expect(tape).toContain('30 G*');
 });
 
-test('paper tape uses separate domain sequences for operation and subtotal lines', () => {
+test('paper tape follows a Casio-like summary grammar', () => {
   const calculator = new Calculator();
 
   calculator.inputDigit('1');
@@ -115,40 +123,41 @@ test('paper tape uses separate domain sequences for operation and subtotal lines
   calculator.add();
   calculator.inputDigit('2');
   calculator.inputDigit('0');
-  calculator.add();
-  calculator.subtotal();
+  calculator.total();
   calculator.grandTotalRecall();
 
   const tape = calculator.getState().paperTape;
-  expect(tape[0]).toContain('OP 0001');
-  expect(tape[1]).toContain('OP 0002');
-  expect(tape[2]).toContain('SUB 0001');
-  expect(tape[3]).toContain('SUB 0002');
+  expect(tape[0]).toContain('10 +');
+  expect(tape[1]).toContain('20 +');
+  expect(tape[2]).toBe('----------------');
+  expect(tape[3]).toBe('ItemNo.: 002');
+  expect(tape[4]).toBe('Total:');
+  expect(tape[5]).toContain('30 *');
+  expect(tape[6]).toBe('----------------');
+  expect(tape[7]).toBe('ItemNo.: 001');
+  expect(tape[8]).toBe('GrandTotal:');
+  expect(tape[9]).toContain('30 G*');
 });
 
-test('clear all preserves tape id sequences until the tape itself is cleared', () => {
+test('clear all resets the open accumulator but preserves grand total until G*', () => {
   const calculator = new Calculator();
 
   calculator.inputDigit('5');
   calculator.add();
-  calculator.clearAll();
   calculator.inputDigit('7');
-  calculator.add();
+  calculator.total();
+  expect(calculator.getState().grandTotal).toBe(12);
 
-  let tape = calculator.getState().paperTape;
-  expect(tape[0]).toContain('OP 0001');
-  expect(tape[2]).toContain('OP 0002');
+  calculator.clearAll();
+  expect(calculator.getState().displayValue).toBe('0');
+  expect(calculator.getState().grandTotal).toBe(12);
 
-  calculator.clearTape();
-  calculator.inputDigit('9');
-  calculator.add();
-
-  tape = calculator.getState().paperTape;
-  expect(tape).toHaveLength(1);
-  expect(tape[0]).toContain('OP 0001');
+  calculator.grandTotalRecall();
+  expect(calculator.getState().displayValue).toBe('12');
+  expect(calculator.getState().grandTotal).toBe(0);
 });
 
-test('addition tape prints addends and subtotal prints total', () => {
+test('addition tape prints addends and subtotal shows the live accumulator', () => {
   const calculator = new Calculator();
 
   calculator.inputDigit('2');
@@ -156,19 +165,15 @@ test('addition tape prints addends and subtotal prints total', () => {
   calculator.inputDigit('3');
   calculator.add();
   calculator.inputDigit('4');
-  calculator.add();
-
-  const beforeSubtotalTape = calculator.getState().paperTape.join('\n');
-  expect(beforeSubtotalTape).toMatch(/\s+2\s+\+/);
-  expect(beforeSubtotalTape).toMatch(/\s+3\s+\+/);
-  expect(beforeSubtotalTape).toMatch(/\s+4\s+\+/);
-  expect(beforeSubtotalTape).not.toContain('=');
-
   calculator.subtotal();
 
-  const afterSubtotalTape = calculator.getState().paperTape.join('\n');
-  expect(afterSubtotalTape).toContain('SUB 0001 OPS 3');
-  expect(calculator.getState().displayValue).toBe('0');
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+2\s+\+/);
+  expect(tape).toMatch(/\s+3\s+\+/);
+  expect(tape).toMatch(/\s+4\s+\+/);
+  expect(tape).toContain('Sub Total:');
+  expect(tape).toContain('9 ◇');
+  expect(calculator.getState().displayValue).toBe('9');
 });
 
 test('subtotal commits the last open additive line before printing the subtotal row', () => {
@@ -184,13 +189,12 @@ test('subtotal commits the last open additive line before printing the subtotal 
   calculator.subtotal();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toContain('OP 0001');
   expect(tape).toContain('150 +');
-  expect(tape).toContain('OP 0002');
   expect(tape).toContain('100 +');
-  expect(tape).toContain('SUB 0001 OPS 2');
+  expect(tape).toContain('ItemNo.: 002');
+  expect(tape).toContain('Sub Total:');
   expect(tape).toContain('250');
-  expect(calculator.getState().displayValue).toBe('0');
+  expect(calculator.getState().displayValue).toBe('250');
 });
 
 test('add chain does not print running total until equals', () => {
@@ -245,7 +249,7 @@ test('subtract chain does not print running total until equals', () => {
   expect(finalizedTape).toContain('122');
 });
 
-test('additive total can continue accumulating from the printed total', () => {
+test('subtotal lets the next additive line continue from the live accumulator', () => {
   const calculator = new Calculator();
 
   calculator.inputDigit('1');
@@ -259,7 +263,7 @@ test('additive total can continue accumulating from the printed total', () => {
   calculator.inputDigit('1');
   calculator.inputDigit('0');
   calculator.inputDigit('0');
-  calculator.equals();
+  calculator.subtotal();
 
   expect(calculator.getState().displayValue).toBe('350');
 
@@ -270,7 +274,7 @@ test('additive total can continue accumulating from the printed total', () => {
 
   expect(calculator.getState().displayValue).toBe('450');
 
-  calculator.equals();
+  calculator.total();
 
   const tape = calculator.getState().paperTape.join('\n');
   expect(tape).toContain('350');
@@ -364,63 +368,57 @@ test('percent in multiplicative flow uses the current operand percentage', () =>
   expect(calculator.getState().displayValue).toBe('1');
 });
 
-test('grand total accumulates subtotals and clears with CA', () => {
+test('grand total accumulates totals and only clears with G*', () => {
   const calculator = new Calculator();
 
   calculator.inputDigit('2');
   calculator.add();
   calculator.inputDigit('3');
-  calculator.add();
-  calculator.subtotal();
+  calculator.total();
 
   calculator.inputDigit('1');
   calculator.inputDigit('0');
   calculator.add();
   calculator.inputDigit('5');
-  calculator.add();
-  calculator.subtotal();
+  calculator.total();
 
+  expect(calculator.getState().grandTotal).toBe(20);
   calculator.grandTotalRecall();
   expect(calculator.getState().displayValue).toBe('20');
+  expect(calculator.getState().grandTotal).toBe(0);
 
   calculator.clearAll();
   calculator.grandTotalRecall();
   expect(calculator.getState().displayValue).toBe('0');
 });
 
-test('subtotal and grand total reflect each additive block independently after subtotal reset', () => {
+test('repeat addition, totals and grand total follow the Casio flow', () => {
   const calculator = new Calculator();
 
-  calculator.inputDigit('1');
-  calculator.inputDigit('5');
-  calculator.inputDigit('0');
-  calculator.plusEquals();
-  calculator.inputDigit('1');
+  calculator.inputDigit('3');
   calculator.inputDigit('0');
   calculator.inputDigit('0');
-  calculator.plusEquals();
-  calculator.inputDigit('1');
+  calculator.add();
+  calculator.add();
+  calculator.inputDigit('4');
   calculator.inputDigit('0');
   calculator.inputDigit('0');
-  calculator.plusEquals();
-  calculator.subtotal();
+  calculator.add();
+  calculator.total();
 
-  calculator.inputDigit('1');
+  calculator.inputDigit('2');
+  calculator.inputDigit('0');
+  calculator.add();
   calculator.inputDigit('5');
-  calculator.inputDigit('0');
-  calculator.plusEquals();
-  calculator.inputDigit('1');
-  calculator.inputDigit('0');
-  calculator.inputDigit('0');
-  calculator.plusEquals();
-  calculator.subtotal();
+  calculator.total();
   calculator.grandTotalRecall();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toMatch(/SUB 0001 OPS 3\s+350/);
-  expect(tape).toMatch(/SUB 0002 OPS 2\s+250/);
-  expect(tape).toMatch(/SUB 0003 GT 2\s+600/);
-  expect(calculator.getState().displayValue).toBe('600');
+  expect(tape.match(/300 \+/g)?.length).toBe(2);
+  expect(tape).toContain('1000 *');
+  expect(tape).toContain('25 *');
+  expect(tape).toContain('1025 G*');
+  expect(calculator.getState().displayValue).toBe('1025');
 });
 
 test('tax operations print full breakdown on tape', () => {

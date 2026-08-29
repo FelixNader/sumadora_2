@@ -31,6 +31,9 @@ export function dispatchCalculatorAction(
     case "CA":
       calculator.clearAll();
       break;
+    case "*":
+      calculator.total();
+      break;
     case "+":
       calculator.add();
       break;
@@ -62,9 +65,11 @@ export function dispatchCalculatorAction(
       calculator.memoryClear();
       break;
     case "REF":
+    case "#":
       calculator.printReference();
       break;
     case "GT":
+    case "G*":
       calculator.grandTotalRecall();
       break;
     case "SUBT":

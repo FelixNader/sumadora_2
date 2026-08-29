@@ -5,18 +5,18 @@ Replica web de una calculadora contable de escritorio. El proyecto no intenta ve
 ## Que hace
 
 - Operaciones aritmeticas con precedencia real entre `+`, `-`, `x` y `/`
-- Flujo de sumadora para la tecla combinada `+ =`: registra linea, totaliza la secuencia y permite seguir acumulando desde el total impreso
+- Flujo Casio de sumadora: `+` y `-` registran renglones, `◇` consulta el acumulado sin cerrarlo, `*` cierra la cuenta y la manda a `G*`
 - Selector decimal `F`, `3`, `2`, `0` y `ADD2`
 - Conversion y memoria como capacidades directas, sin selector global de modo
-- Memoria independiente, `grand total`, subtotales y contadores `OPS` y `SUB`
+- Memoria independiente, `grand total`, subtotales y contadores `ITEM` y `GTN`
 - Impuestos, conversion de moneda y calculos `COST / SELL / MGN`
 - Cinta de papel siempre activa
-- Cinta con dos secuencias de dominio: `OP` para renglones operativos y `SUB` para subtotales y gran total
+- Cinta con gramática tipo Casio: renglones operativos, `ItemNo.`, `Sub Total`, `Total` y `GrandTotal`
 - Persistencia local con exportacion e importacion de snapshots JSON en formato actual `v2`
 - Persistencia automatica entre sesiones solo para `M`, `RATE` y `TAX`
 - Copia del valor mostrado mediante doble clic sobre el display
 - Teclado jerarquizado en bloques: utilitario, primario, numerico y simbolos
-- `+ =` con mayor protagonismo tactico dentro de la columna de simbolos
+- `+` como tecla principal de alta de renglones y `*` como cierre de cuenta
 - Familias visuales separadas para memoria, tax y conversion
 
 Nota visual: el indicador `M ON/OFF` del display no representa encendido de la calculadora. Solo indica si la memoria independiente contiene un valor distinto de cero.
@@ -43,10 +43,11 @@ La cinta conserva intencion contable:
 - en flujos aditivos imprime la entrada porcentual, por ejemplo `10 %`, y luego el total final
 - en flujos multiplicativos y divisivos imprime tanto la entrada porcentual como la operacion resuelta completa
 - en expresiones mixtas con precedencia, por ejemplo `5 + 8 + 3 x 2 =`, imprime el subbloque multiplicativo `3 x 2 = 6` y tambien el total global `19`
-- los renglones operativos avanzan como `OP 0001`, `OP 0002`, etc.
-- los renglones de subtotal y gran total avanzan por otra cadena, `SUB 0001`, `SUB 0002`, etc.
-- los cierres de subtotal ya no repiten la palabra `SUBTOTAL` dentro del cuerpo; hoy usan el formato `SUB nnnn OPS x valor`
-- los cierres de gran total usan el formato `SUB nnnn GT x valor`
+- las lineas operativas imprimen el importe y la marca contable, por ejemplo `125 +`
+- los cierres imprimen un separador, `ItemNo.`, el tipo de cierre y el valor final con `◇`, `*` o `G*`
+- `◇` conserva vivo el acumulador
+- `*` envia el total al grand total y limpia el acumulador corriente
+- `G*` imprime y limpia el grand total
 
 En calculos de negocio, `MGN` significa margen porcentual en todos los casos:
 
@@ -69,7 +70,7 @@ No es una arquitectura corporativa sobredimensionada. El sistema sigue siendo pe
 
 Las decisiones principales quedaron documentadas en [docs/adr/README.md](./docs/adr/README.md).
 
-La decision mas reciente sobre el flujo contable de `+ =` quedo registrada en [ADR 0007](./docs/adr/0007-combined-plus-equals-belongs-to-the-domain.md): esa tecla ya no se entiende como un parche de interfaz, sino como comportamiento propio del dominio.
+La etapa anterior del proyecto exploro la tecla combinada `+ =` y quedo registrada en [ADR 0007](./docs/adr/0007-combined-plus-equals-belongs-to-the-domain.md). La implementacion actual prioriza fidelidad Casio sobre ese atajo moderno.
 
 La persistencia local automatica tambien quedo acotada por producto en [ADR 0008](./docs/adr/0008-persist-only-configuration-across-sessions.md): `M`, `RATE` y `TAX` sobreviven entre sesiones, pero la cinta, `GT`, `OPS`, `SUB` y el estado operativo se reinician al abrir la app.
 
@@ -79,7 +80,7 @@ La simplificacion mas reciente quito los modos `NORMAL` y `CONVERSION` del domin
 
 La convencion actual de cinta y el significado porcentual de `MGN` quedaron fijados en [ADR 0011](./docs/adr/0011-explicit-tape-sequences-and-percentage-margin.md): `OP` y `SUB` son secuencias independientes de la cinta, y el margen de negocio se expresa siempre como porcentaje.
 
-La jerarquia visual del teclado quedo fijada en [ADR 0012](./docs/adr/0012-keypad-layout-driven-by-frequency-and-semantic-groups.md): la prominencia de `+ =` y el color por familias son decisiones de UI y producto, no de dominio contable.
+La jerarquia visual del teclado quedo fijada en [ADR 0012](./docs/adr/0012-keypad-layout-driven-by-frequency-and-semantic-groups.md): la prominencia de `+`, `*` y el color por familias son decisiones de UI y producto, no de dominio contable.
 
 ### Mapa de bounded contexts
 
@@ -109,7 +110,7 @@ La interfaz actual ya no usa una matriz uniforme de botones.
 
 - `CalculatorUI.tsx` separa el tablero en `hr-keypad-utility` y `hr-keypad-primary`
 - el bloque primario se divide en `hr-keypad-primary-top`, `hr-keypad-primary-numeric` y `hr-keypad-primary-symbols`
-- `+ =` vive en la columna de simbolos y recibe mas altura que `/`, `x` y `-`
+- `+` vive en la columna de simbolos y recibe mas altura que `/`, `x` y `-`
 - `0` y `.` conservan su altura numerica normal; el espacio extra sale del bloque de simbolos y no de toda la fila inferior
 - memoria, tax y conversion usan familias cromaticas propias para mejorar lectura operativa
 
