@@ -8,6 +8,77 @@ import { Calculator } from "../../domain/calculator/Calculator";
 import { translateCalculatorKeyboardEvent } from "../keyboard/translateCalculatorKeyboardEvent";
 import "./CalculatorUI.css";
 
+type SecondaryGroupId = "account" | "memory" | "tax" | "business";
+
+const secondaryGroups: Array<{
+  id: SecondaryGroupId;
+  label: string;
+  className: string;
+  buttons: Array<{
+    action: string;
+    label: string;
+    title?: string;
+    className?: string;
+  }>;
+}> = [
+  {
+    id: "account",
+    label: "Cuenta y cierre",
+    className: "hr-keypad-group-account",
+    buttons: [
+      {
+        action: "G*",
+        label: "GT G*",
+        title: "Grand total: imprime y borra el GT",
+        className: "key-fn",
+      },
+      {
+        action: "*",
+        label: "TOTAL *",
+        title: "Total: cierra la cuenta y la envia al grand total",
+        className: "key-total key-commit",
+      },
+      {
+        action: "AVG",
+        label: "AVG",
+        className: "key-fn",
+      },
+    ],
+  },
+  {
+    id: "memory",
+    label: "Memoria",
+    className: "hr-keypad-group-memory",
+    buttons: [
+      { action: "M+", label: "M+", className: "key-fn key-memory" },
+      { action: "M-", label: "M-", className: "key-fn key-memory" },
+      { action: "MR", label: "M◇", className: "key-fn key-memory" },
+      { action: "MC", label: "M*", className: "key-fn key-memory" },
+    ],
+  },
+  {
+    id: "tax",
+    label: "Impuesto y conversion",
+    className: "hr-keypad-group-tax",
+    buttons: [
+      { action: "TAX SET", label: "TAX SET", className: "key-fn key-tax" },
+      { action: "RATE", label: "RATE", className: "key-fn key-conv" },
+      { action: "CONV ->", label: "CONV ->", className: "key-fn key-conv" },
+      { action: "<- CONV", label: "<- CONV", className: "key-fn key-conv" },
+    ],
+  },
+  {
+    id: "business",
+    label: "Negocio",
+    className: "hr-keypad-group-business",
+    buttons: [
+      { action: "COST", label: "COST", className: "key-fn" },
+      { action: "SELL", label: "SELL", className: "key-fn" },
+      { action: "MGN", label: "MGN", className: "key-fn" },
+    ],
+  },
+];
+
 const CalculatorUI: React.FC = () => {
   const [service] = useState(
     () =>
@@ -22,6 +93,7 @@ const CalculatorUI: React.FC = () => {
   const [importError, setImportError] = useState("");
   const [copyFeedback, setCopyFeedback] = useState("");
   const [isTapePinned, setIsTapePinned] = useState(true);
+  const [activeSecondaryGroup, setActiveSecondaryGroup] = useState<SecondaryGroupId>("account");
   const paperTapeRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -126,6 +198,9 @@ const CalculatorUI: React.FC = () => {
     return () => window.clearTimeout(timeoutId);
   }, [copyFeedback]);
 
+  const activeSecondaryPanel =
+    secondaryGroups.find((group) => group.id === activeSecondaryGroup) ?? secondaryGroups[0];
+
   return (
     <div className="hr-container">
       <div className="hr-calculator">
@@ -214,8 +289,8 @@ const CalculatorUI: React.FC = () => {
             <div className="hr-keypad-primary-tools">
               <button className="key-fn" onClick={() => handleButtonClick("CE")}>CE</button>
               <button className="key-op" onClick={() => handleButtonClick("/")}>/</button>
-              <button className="key-fn" onClick={() => handleButtonClick("%")}>%</button>
-              <button className="key-fn" onClick={() => handleButtonClick("+/-")}>+/-</button>
+              <button className="key-fn key-symbol" onClick={() => handleButtonClick("%")}>%</button>
+              <button className="key-fn key-symbol" onClick={() => handleButtonClick("+/-")}>+/-</button>
             </div>
 
             <div className="hr-keypad-primary-tools">
@@ -259,49 +334,36 @@ const CalculatorUI: React.FC = () => {
           </div>
 
           <div className="hr-keypad-secondary">
-            <div className="hr-keypad-group hr-keypad-group-account">
-              <h4>Cuenta y cierre</h4>
-              <div className="hr-keypad-group-grid hr-keypad-group-grid-account">
-                <button className="key-fn" title="Grand total: imprime y borra el GT" onClick={() => handleButtonClick("G*")}>
-                  GT G*
-                </button>
+            <div className="hr-secondary-switcher" role="tablist" aria-label="Funciones secundarias">
+              {secondaryGroups.map((group) => (
                 <button
-                  className="key-total key-commit"
-                  title="Total: cierra la cuenta y la envia al grand total"
-                  onClick={() => handleButtonClick("*")}
+                  key={group.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeSecondaryGroup === group.id}
+                  className={`hr-secondary-tab ${group.className} ${activeSecondaryGroup === group.id ? "active" : ""}`.trim()}
+                  onClick={() => setActiveSecondaryGroup(group.id)}
                 >
-                  TOTAL *
+                  {group.label}
                 </button>
-                <button className="key-fn" onClick={() => handleButtonClick("AVG")}>AVG</button>
-              </div>
+              ))}
             </div>
 
-            <div className="hr-keypad-group hr-keypad-group-memory">
-              <h4>Memoria</h4>
-              <div className="hr-keypad-group-grid">
-                <button className="key-fn key-memory" onClick={() => handleButtonClick("M+")}>M+</button>
-                <button className="key-fn key-memory" onClick={() => handleButtonClick("M-")}>M-</button>
-                <button className="key-fn key-memory" onClick={() => handleButtonClick("MR")}>M◇</button>
-                <button className="key-fn key-memory" onClick={() => handleButtonClick("MC")}>M*</button>
-              </div>
-            </div>
-
-            <div className="hr-keypad-group hr-keypad-group-tax">
-              <h4>Impuesto y conversion</h4>
-              <div className="hr-keypad-group-grid">
-                <button className="key-fn key-tax" onClick={() => handleButtonClick("TAX SET")}>TAX SET</button>
-                <button className="key-fn key-conv" onClick={() => handleButtonClick("RATE")}>RATE</button>
-                <button className="key-fn key-conv" onClick={() => handleButtonClick("CONV ->")}>CONV -&gt;</button>
-                <button className="key-fn key-conv" onClick={() => handleButtonClick("<- CONV")}>&lt;- CONV</button>
-              </div>
-            </div>
-
-            <div className="hr-keypad-group hr-keypad-group-business">
-              <h4>Negocio</h4>
-              <div className="hr-keypad-group-grid">
-                <button className="key-fn" onClick={() => handleButtonClick("COST")}>COST</button>
-                <button className="key-fn" onClick={() => handleButtonClick("SELL")}>SELL</button>
-                <button className="key-fn" onClick={() => handleButtonClick("MGN")}>MGN</button>
+            <div className={`hr-keypad-group hr-secondary-panel ${activeSecondaryPanel.className}`.trim()}>
+              <h4>{activeSecondaryPanel.label}</h4>
+              <div
+                className={`hr-keypad-group-grid ${activeSecondaryPanel.id === "account" ? "hr-keypad-group-grid-account" : ""}`.trim()}
+              >
+                {activeSecondaryPanel.buttons.map((button) => (
+                  <button
+                    key={button.action}
+                    className={button.className}
+                    title={button.title}
+                    onClick={() => handleButtonClick(button.action)}
+                  >
+                    {button.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>

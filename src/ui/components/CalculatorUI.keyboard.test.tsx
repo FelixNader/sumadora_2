@@ -114,8 +114,21 @@ test("mobile-first keyboard removes on-screen equals and groups secondary functi
   expect(screen.getByRole("button", { name: "+/-" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "TOTAL *" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Cinta de papel" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Cuenta y cierre" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Memoria" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Impuesto y conversion" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Negocio" })).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Cuenta y cierre" })).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByRole("tab", { name: "Memoria" })).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Impuesto y conversion" })).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Negocio" })).toBeInTheDocument();
+});
+
+test("secondary functions stay compact and switch visible group", () => {
+  render(<App />);
+
+  expect(screen.getByRole("button", { name: "TOTAL *" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "M+" })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("tab", { name: "Memoria" }));
+
+  expect(screen.getByRole("tab", { name: "Memoria" })).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByRole("button", { name: "M+" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "TOTAL *" })).not.toBeInTheDocument();
 });
