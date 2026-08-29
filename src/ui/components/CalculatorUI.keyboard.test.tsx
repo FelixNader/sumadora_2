@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import App from "../../App";
 
 beforeEach(() => {
@@ -131,4 +131,20 @@ test("secondary functions stay compact and switch visible group", () => {
   expect(screen.getByRole("tab", { name: "Memoria" })).toHaveAttribute("aria-selected", "true");
   expect(screen.getByRole("button", { name: "M+" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "TOTAL *" })).not.toBeInTheDocument();
+});
+
+test("paper tape formats large amounts with thousands separators", () => {
+  const { container } = render(<App />);
+  const keypad = container.querySelector(".hr-keypad-primary");
+  expect(keypad).not.toBeNull();
+  const keypadQueries = within(keypad as HTMLElement);
+
+  fireEvent.click(keypadQueries.getByRole("button", { name: "1" }));
+  fireEvent.click(keypadQueries.getAllByRole("button", { name: "0" })[0]);
+  fireEvent.click(keypadQueries.getAllByRole("button", { name: "0" })[0]);
+  fireEvent.click(keypadQueries.getAllByRole("button", { name: "0" })[0]);
+  fireEvent.click(screen.getByRole("button", { name: "TOTAL *" }));
+
+  const tape = container.querySelector(".hr-tape-content");
+  expect(tape?.textContent).toContain("1,000 *");
 });

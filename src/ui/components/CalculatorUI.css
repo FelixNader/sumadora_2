@@ -90,7 +90,8 @@
 .hr-paper-tape h3 {
   margin: 0;
   color: #3e3327;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .hr-tape-scroll {
@@ -103,24 +104,58 @@
   background: repeating-linear-gradient(
     180deg,
     #f8f4ec 0,
-    #f8f4ec 24px,
-    #efe8dd 24px,
-    #efe8dd 25px
+    #f8f4ec 28px,
+    #efe8dd 28px,
+    #efe8dd 29px
   );
-  padding: 8px 10px;
+  padding: 10px 12px;
   min-height: 100%;
+  font-variant-numeric: tabular-nums;
 }
 
 .hr-tape-line {
-  font-size: 12px;
-  color: #32291d;
-  padding: 3px 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: #241c12;
+  padding: 4px 0;
   white-space: pre;
 }
 
-.hr-tape-line-last {
-  color: #12100a;
+.hr-tape-line-operation {
+  font-size: 14px;
+  color: #23180d;
+}
+
+.hr-tape-line-summary {
+  font-size: 15px;
   font-weight: 700;
+  color: #171007;
+}
+
+.hr-tape-line-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6a5843;
+}
+
+.hr-tape-line-separator {
+  font-size: 12px;
+  color: #9b8e80;
+}
+
+.hr-tape-number {
+  font-weight: 800;
+  font-size: 1.12em;
+  color: #0f0c07;
+}
+
+.hr-tape-line-last {
+  color: #0f0c07;
+  font-weight: 800;
 }
 
 .hr-scroll-end {
@@ -502,11 +537,21 @@
   }
 
   .hr-tape-content {
-    padding: 6px 8px;
+    padding: 8px 10px;
   }
 
   .hr-tape-line {
-    font-size: 11px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .hr-tape-line-summary {
+    font-size: 13px;
+  }
+
+  .hr-tape-line-label,
+  .hr-tape-line-separator {
+    font-size: 10px;
   }
 
   .hr-display-section {

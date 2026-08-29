@@ -10,6 +10,79 @@ import "./CalculatorUI.css";
 
 type SecondaryGroupId = "account" | "memory" | "tax" | "business";
 
+const tapeNumberFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 10,
+});
+
+function formatTapeNumericToken(token: string): string {
+  const hasPercent = token.endsWith("%");
+  const numericPortion = hasPercent ? token.slice(0, -1) : token;
+  const parsed = Number(numericPortion);
+
+  if (!Number.isFinite(parsed)) {
+    return token;
+  }
+
+  const formatted = tapeNumberFormatter.format(parsed);
+  return hasPercent ? `${formatted}%` : formatted;
+}
+
+function classifyTapeLine(line: string): string {
+  const trimmed = line.trim();
+
+  if (!trimmed) {
+    return "hr-tape-line-empty";
+  }
+
+  if (/^-+$/.test(trimmed)) {
+    return "hr-tape-line-separator";
+  }
+
+  if (
+    trimmed.startsWith("ItemNo.:") ||
+    trimmed === "Sub Total:" ||
+    trimmed === "Total:" ||
+    trimmed === "GrandTotal:" ||
+    trimmed === "TAX+" ||
+    trimmed === "TAX-"
+  ) {
+    return "hr-tape-line-label";
+  }
+
+  if (
+    trimmed.startsWith("BASE ") ||
+    trimmed.startsWith("TOTAL ") ||
+    trimmed.startsWith("TAX ") ||
+    trimmed.startsWith("RATE ") ||
+    trimmed.includes(" IN ") ||
+    trimmed.includes(" OUT ")
+  ) {
+    return "hr-tape-line-summary";
+  }
+
+  return "hr-tape-line-operation";
+}
+
+function renderTapeLine(line: string): React.ReactNode {
+  if (line.trim().startsWith("ItemNo.:")) {
+    return line;
+  }
+
+  const parts = line.split(/(-?\d+(?:\.\d+)?%?)/g);
+
+  return parts.map((part, index) => {
+    if (/^-?\d+(?:\.\d+)?%?$/.test(part)) {
+      return (
+        <span key={`${part}-${index}`} className="hr-tape-number">
+          {formatTapeNumericToken(part)}
+        </span>
+      );
+    }
+
+    return <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>;
+  });
+}
+
 const secondaryGroups: Array<{
   id: SecondaryGroupId;
   label: string;
@@ -238,9 +311,9 @@ const CalculatorUI: React.FC = () => {
                 {state.paperTape.map((line, index) => (
                   <div
                     key={index}
-                    className={`hr-tape-line ${index === state.paperTape.length - 1 ? "hr-tape-line-last" : ""}`.trim()}
+                    className={`hr-tape-line ${classifyTapeLine(line)} ${index === state.paperTape.length - 1 ? "hr-tape-line-last" : ""}`.trim()}
                   >
-                    {line}
+                    {renderTapeLine(line)}
                   </div>
                 ))}
               </div>
