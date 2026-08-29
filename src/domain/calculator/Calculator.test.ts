@@ -363,8 +363,10 @@ test('percent in multiplicative flow uses the current operand percentage', () =>
   calculator.equals();
 
   const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+10\s+x/);
   expect(tape).toMatch(/\s+10\s+%/);
-  expect(tape).toMatch(/10\s+x\s+0\.1\s+=\s+1/);
+  expect(tape).toMatch(/\s+0\.1\s+=/);
+  expect(tape).toMatch(/\s+1(\s|$)/);
   expect(calculator.getState().displayValue).toBe('1');
 });
 
@@ -516,11 +518,27 @@ test('multiply chain prints operation result on tape', () => {
   calculator.inputDigit('2');
   calculator.multiply();
   calculator.inputDigit('3');
-  calculator.multiply();
+  calculator.equals();
 
   const tape = calculator.getState().paperTape.join('\n');
   expect(tape).toMatch(/\s+2\s+x/);
-  expect(tape).toMatch(/\s+2\s+x\s+3\s+=\s+6/);
+  expect(tape).toMatch(/\s+3\s+=/);
+  expect(tape).toMatch(/\s+6(\s|$)/);
+});
+
+test('division prints operands and result on separate tape lines', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('6');
+  calculator.inputDigit('0');
+  calculator.divide();
+  calculator.inputDigit('8');
+  calculator.equals();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+60\s+\//);
+  expect(tape).toMatch(/\s+8\s+=/);
+  expect(tape).toMatch(/\s+7\.5(\s|$)/);
 });
 
 test('respects multiplication precedence in mixed expression', () => {
@@ -540,6 +558,7 @@ test('respects multiplication precedence in mixed expression', () => {
   expect(tape).toMatch(/\s+5\s+\+/);
   expect(tape).toMatch(/\s+8\s+\+/);
   expect(tape).toMatch(/\s+3\s+x/);
-  expect(tape).toMatch(/3\s+x\s+2\s+=\s+6/);
+  expect(tape).toMatch(/\s+2\s+=/);
+  expect(tape).toMatch(/\s+6\s+\+/);
   expect(tape).toMatch(/\s+19/);
 });

@@ -217,9 +217,9 @@ const CalculatorUI: React.FC = () => {
 
           <div className="hr-keypad hr-keypad-primary">
             <div className="hr-keypad-primary-top">
-              <button className="key-fn" onClick={() => handleButtonClick('G*')}>G*</button>
-              <button className="key-fn" onClick={() => handleButtonClick('SUBT')}>◇</button>
-              <button className="key-op key-commit" onClick={() => handleButtonClick('*')}>*</button>
+              <button className="key-fn" title="Grand total: imprime y borra el GT" onClick={() => handleButtonClick('G*')}>GT G*</button>
+              <button className="key-fn" title="Subtotal: imprime sin cerrar la cuenta" onClick={() => handleButtonClick('SUBT')}>SUBT ◇</button>
+              <button className="key-op key-commit" title="Total: cierra la cuenta y la envia al grand total" onClick={() => handleButtonClick('*')}>TOTAL *</button>
               <button className="key-warn" onClick={() => handleButtonClick('CA')}>CA</button>
             </div>
 

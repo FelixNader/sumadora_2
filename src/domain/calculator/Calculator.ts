@@ -213,17 +213,10 @@ export class Calculator {
             this.state.lastPercentInput !== null;
 
           if (lastToken === "*" || lastToken === "/") {
-            const leftOperand = this.resolveMulDivLeftOperandSafely(expression);
-            if (leftOperand === null) {
+            const postingOperation = this.resolveMulDivPostingOperation(expression);
+            if (!this.printClosedMulDivSegment(expression, secondOperand, lastToken, postingOperation)) {
               return;
             }
-            const mulDivResult = this.executeOperationSafely(leftOperand, secondOperand, lastToken);
-            if (mulDivResult === null) {
-              return;
-            }
-            this.printOperationToTape(
-              `${formatForTape(leftOperand)} ${symbolFor(lastToken)} ${formatForTape(secondOperand)} = ${formatForTape(mulDivResult)}`
-            );
           } else if (!shouldSuppressAdditiveOperandLine) {
             this.printOperationToTape(`${formatForTape(secondOperand)} ${symbolFor(lastToken)}`);
           }
@@ -279,9 +272,8 @@ export class Calculator {
         );
         this.printOperationToTape(`${formatForTape(result)}`);
       } else {
-        this.printOperationToTape(
-          `${formatForTape(current)} ${symbolFor(this.state.lastOperator)} ${formatForTape(this.state.lastOperand)} = ${formatForTape(result)}`
-        );
+        this.printOperationToTape(`${formatForTape(this.state.lastOperand)} =`);
+        this.printOperationToTape(`${formatForTape(result)}`);
       }
       this.finalizeResult(result, this.state.lastOperator, this.state.lastOperand, false);
       this.state.firstOperand = result;
@@ -680,21 +672,16 @@ export class Calculator {
       this.state.lastPercentInput !== null;
 
     if (previousOperator === "*" || previousOperator === "/") {
-      const leftOperand = this.resolveMulDivLeftOperandSafely(this.state.expressionTokens);
-      if (leftOperand === null) {
-        return;
-      }
-      const mulDivResult = this.executeOperationSafely(
-        leftOperand,
+      if (operation === "*" || operation === "/") {
+        this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
+      } else if (!this.printClosedMulDivSegment(
+        this.state.expressionTokens,
         operand,
-        previousOperator
-      );
-      if (mulDivResult === null) {
+        previousOperator,
+        operation
+      )) {
         return;
       }
-      this.printOperationToTape(
-        `${formatForTape(leftOperand)} ${symbolFor(previousOperator)} ${formatForTape(operand)} = ${formatForTape(mulDivResult)}`
-      );
     } else if (!shouldSuppressAdditivePercentLine) {
       this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
     }
@@ -780,11 +767,6 @@ export class Calculator {
     this.state.businessMargin = null;
   }
 
-  private hasOpenAdditiveSequence(): boolean {
-    const lastToken = this.state.expressionTokens[this.state.expressionTokens.length - 1];
-    return lastToken === "+" || lastToken === "-";
-  }
-
   private materializeOpenExpressionForTape(): void {
     const lastToken = this.state.expressionTokens[this.state.expressionTokens.length - 1];
     if (typeof lastToken !== "string" || this.state.waitingForNewEntry) {
@@ -798,19 +780,15 @@ export class Calculator {
 
     const operand = this.normalizeOperandForCurrentDisplay(current, lastToken);
     if (lastToken === "*" || lastToken === "/") {
-      const leftOperand = this.resolveMulDivLeftOperandSafely(this.state.expressionTokens);
-      if (leftOperand === null) {
+      const postingOperation = this.resolveMulDivPostingOperation(this.state.expressionTokens);
+      if (!this.printClosedMulDivSegment(
+        this.state.expressionTokens,
+        operand,
+        lastToken,
+        postingOperation
+      )) {
         return;
       }
-
-      const mulDivResult = this.executeOperationSafely(leftOperand, operand, lastToken);
-      if (mulDivResult === null) {
-        return;
-      }
-
-      this.printOperationToTape(
-        `${formatForTape(leftOperand)} ${symbolFor(lastToken)} ${formatForTape(operand)} = ${formatForTape(mulDivResult)}`
-      );
     } else if (this.state.lastPercentInput === null) {
       this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(lastToken)}`);
     }
@@ -934,6 +912,32 @@ export class Calculator {
     this.printToTape(text);
   }
 
+  private printClosedMulDivSegment(
+    expression: ExpressionToken[],
+    operand: number,
+    operation: Operation,
+    postingOperation: "+" | "-" | null
+  ): boolean {
+    const leftOperand = this.resolveMulDivLeftOperandSafely(expression);
+    if (leftOperand === null) {
+      return false;
+    }
+
+    const mulDivResult = this.executeOperationSafely(leftOperand, operand, operation);
+    if (mulDivResult === null) {
+      return false;
+    }
+
+    this.printOperationToTape(`${formatForTape(operand)} =`);
+    if (postingOperation) {
+      this.printOperationToTape(`${formatForTape(mulDivResult)} ${postingOperation}`);
+    } else {
+      this.printOperationToTape(`${formatForTape(mulDivResult)}`);
+    }
+
+    return true;
+  }
+
   private repeatAdditiveOperation(operation: Operation, operand: number): void {
     this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
     this.state.expressionTokens.push(operand);
@@ -972,6 +976,19 @@ export class Calculator {
     this.printToTape(`ItemNo.: ${itemCount.toString().padStart(3, "0")}`);
     this.printToTape(`${title}:`);
     this.printToTape(`${formatForTape(value)} ${marker}`);
+  }
+
+  private resolveMulDivPostingOperation(
+    tokens: ExpressionToken[]
+  ): "+" | "-" | null {
+    for (let index = tokens.length - 1; index >= 0; index -= 1) {
+      const token = tokens[index];
+      if (token === "+" || token === "-") {
+        return token;
+      }
+    }
+
+    return null;
   }
 
   private formatBusinessValueForDisplay(
