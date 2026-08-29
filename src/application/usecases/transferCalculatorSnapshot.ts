@@ -13,6 +13,13 @@ export function exportCalculatorSnapshot(
   fileGateway.exportSnapshot(calculator.getSnapshot());
 }
 
+export function exportCalculatorReceiptPdf(
+  calculator: Calculator,
+  fileGateway: CalculatorSnapshotFileGateway
+): Promise<void> {
+  return fileGateway.exportReceiptPdf(calculator.getState());
+}
+
 export async function importCalculatorSnapshotFromFile(
   calculator: Calculator,
   snapshotRepository: CalculatorSnapshotRepository,

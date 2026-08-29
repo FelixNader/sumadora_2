@@ -1,5 +1,5 @@
 import { CalculatorSnapshot } from "../../domain/calculator/Calculator";
-import { Calculator } from "../../domain/calculator/Calculator";
+import { Calculator, CalculatorState } from "../../domain/calculator/Calculator";
 import { ClipboardGateway } from "../ports/ClipboardGateway";
 import { CalculatorSnapshotFileGateway } from "../ports/CalculatorSnapshotFileGateway";
 import { CalculatorSnapshotRepository } from "../ports/CalculatorSnapshotRepository";
@@ -25,10 +25,15 @@ class InMemorySnapshotRepository implements CalculatorSnapshotRepository {
 
 class InMemorySnapshotFileGateway implements CalculatorSnapshotFileGateway {
   exported: CalculatorSnapshot | null = null;
+  exportedReceiptState: CalculatorState | null = null;
   imported: CalculatorSnapshot | null = null;
 
   exportSnapshot(snapshot: CalculatorSnapshot) {
     this.exported = snapshot;
+  }
+
+  async exportReceiptPdf(state: CalculatorState) {
+    this.exportedReceiptState = state;
   }
 
   async importSnapshot() {
@@ -185,6 +190,24 @@ test("exports snapshots through the configured file gateway", () => {
   service.exportSnapshot();
 
   expect(fileGateway.exported?.state.displayValue).toBe("9");
+});
+
+test("exports receipt pdf through the configured file gateway", async () => {
+  const repository = new InMemorySnapshotRepository();
+  const fileGateway = new InMemorySnapshotFileGateway();
+  const service = new CalculatorApplicationService(
+    new Calculator(),
+    repository,
+    fileGateway
+  );
+
+  service.dispatch("9");
+  service.dispatch("+");
+  service.dispatch("1");
+
+  await service.exportReceiptPdf();
+
+  expect(fileGateway.exportedReceiptState?.paperTape.join("\n")).toContain("9 +");
 });
 
 test("imports snapshots from the file gateway and persists them", async () => {

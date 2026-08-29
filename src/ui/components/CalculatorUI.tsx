@@ -174,6 +174,7 @@ const CalculatorUI: React.FC = () => {
   const [state, setState] = useState(service.getState());
   const [importError, setImportError] = useState("");
   const [copyFeedback, setCopyFeedback] = useState("");
+  const [exportFeedback, setExportFeedback] = useState("");
   const [isTapePinned, setIsTapePinned] = useState(true);
   const [activeSecondaryGroup, setActiveSecondaryGroup] = useState<SecondaryGroupId>("account");
   const paperTapeRef = useRef<HTMLDivElement>(null);
@@ -221,6 +222,15 @@ const CalculatorUI: React.FC = () => {
   const handleExport = () => {
     service.exportSnapshot();
   };
+
+  const handleExportReceiptPdf = useCallback(async () => {
+    try {
+      await service.exportReceiptPdf();
+      setExportFeedback("Ticket PDF listo.");
+    } catch {
+      setExportFeedback("No se pudo exportar el ticket PDF.");
+    }
+  }, [service]);
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
@@ -280,6 +290,18 @@ const CalculatorUI: React.FC = () => {
     return () => window.clearTimeout(timeoutId);
   }, [copyFeedback]);
 
+  useEffect(() => {
+    if (!exportFeedback) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setExportFeedback("");
+    }, 1800);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [exportFeedback]);
+
   const activeSecondaryPanel =
     secondaryGroups.find((group) => group.id === activeSecondaryGroup) ?? secondaryGroups[0];
 
@@ -292,7 +314,8 @@ const CalculatorUI: React.FC = () => {
             <p>Replica web con cinta siempre activa</p>
           </div>
           <div className="hr-storage-actions">
-            <button onClick={handleExport}>Exportar</button>
+            <button onClick={handleExportReceiptPdf}>Ticket PDF</button>
+            <button onClick={handleExport}>Backup</button>
             <button onClick={handleImportClick}>Importar</button>
             <button onClick={() => handleButtonClick("TAPE CLR")}>Limpiar cinta</button>
             <input
@@ -453,6 +476,7 @@ const CalculatorUI: React.FC = () => {
 
         {importError && <p className="import-error">{importError}</p>}
         {copyFeedback && <p className="copy-feedback">{copyFeedback}</p>}
+        {exportFeedback && <p className="copy-feedback">{exportFeedback}</p>}
       </div>
     </div>
   );

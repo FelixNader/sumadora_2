@@ -13,6 +13,7 @@ import { copyDisplayValue } from "../usecases/copyDisplayValue";
 import { hydrateCalculatorState } from "../usecases/hydrateCalculatorState";
 import { persistCalculatorState } from "../usecases/persistCalculatorState";
 import {
+  exportCalculatorReceiptPdf,
   exportCalculatorSnapshot,
   importCalculatorSnapshot,
   importCalculatorSnapshotFromFile,
@@ -54,6 +55,14 @@ export class CalculatorApplicationService {
     }
 
     exportCalculatorSnapshot(this.calculator, this.snapshotFileGateway);
+  }
+
+  async exportReceiptPdf(): Promise<void> {
+    if (!this.snapshotFileGateway) {
+      throw new Error("Snapshot file gateway is not configured");
+    }
+
+    await exportCalculatorReceiptPdf(this.calculator, this.snapshotFileGateway);
   }
 
   async importSnapshot(file: File): Promise<CalculatorState> {
