@@ -43,6 +43,24 @@ test('conversion and independent memory remain available without a working mode 
   expect(calculator.getState().displayValue).toBe('2');
 });
 
+test('clear entry only clears the active input and preserves the pending operation', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('2');
+  calculator.add();
+  calculator.inputDigit('9');
+  calculator.inputDigit('9');
+  calculator.clearEntry();
+  calculator.inputDigit('5');
+  calculator.equals();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+12\s+\+/);
+  expect(tape).toMatch(/\s+5\s+\+/);
+  expect(calculator.getState().displayValue).toBe('17');
+});
+
 test('subtotal keeps the accumulator open and total increments the grand-total counter', () => {
   const calculator = new Calculator();
 
@@ -139,7 +157,7 @@ test('paper tape follows a Casio-like summary grammar', () => {
   expect(tape[9]).toContain('30 G*');
 });
 
-test('clear all resets the open accumulator but preserves grand total until G*', () => {
+test('clear all resets the open accumulator and clears grand total', () => {
   const calculator = new Calculator();
 
   calculator.inputDigit('5');
@@ -150,10 +168,11 @@ test('clear all resets the open accumulator but preserves grand total until G*',
 
   calculator.clearAll();
   expect(calculator.getState().displayValue).toBe('0');
-  expect(calculator.getState().grandTotal).toBe(12);
+  expect(calculator.getState().grandTotal).toBe(0);
+  expect(calculator.getState().subtotalCount).toBe(0);
 
   calculator.grandTotalRecall();
-  expect(calculator.getState().displayValue).toBe('12');
+  expect(calculator.getState().displayValue).toBe('0');
   expect(calculator.getState().grandTotal).toBe(0);
 });
 
@@ -298,12 +317,25 @@ test('percent in additive flow uses the first operand as base and equals resolve
 
   const tape = calculator.getState().paperTape.join('\n');
   expect(tape).toMatch(/\s+10\s+%/);
-  expect(tape).not.toMatch(/\s+1\s+\+/);
+  expect(tape).toMatch(/\s+1\s+\+/);
   expect(tape).toMatch(/\s+11/);
   expect(calculator.getState().displayValue).toBe('11');
 });
 
-test('chained additive percent flow does not print the materialized percent operand on tape', () => {
+test('standalone percent prints the realized decimal value on tape', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.percent();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(calculator.getState().displayValue).toBe('0.1');
+  expect(tape).toMatch(/\s+10\s+%/);
+  expect(tape).toMatch(/\s+0\.1(\s|$)/);
+});
+
+test('chained additive percent flow prints the materialized percent operand on tape', () => {
   const calculator = new Calculator();
 
   calculator.inputDigit('1');
@@ -319,13 +351,13 @@ test('chained additive percent flow does not print the materialized percent oper
   const tape = calculator.getState().paperTape.join('\n');
   expect(tape).toMatch(/\s+10\s+\+/);
   expect(tape).toMatch(/\s+10\s+%/);
-  expect(tape).not.toMatch(/\s+1\s+\+/);
+  expect(tape).toMatch(/\s+1\s+\+/);
   expect(tape).toMatch(/\s+5\s+\+/);
   expect(tape).toMatch(/\s+16/);
   expect(calculator.getState().displayValue).toBe('16');
 });
 
-test('repeated additive percent flow keeps accumulated-base math but preserves percent intent on tape', () => {
+test('repeated additive percent flow keeps accumulated-base math and prints each realized operand', () => {
   const calculator = new Calculator();
 
   calculator.inputDigit('1');
@@ -343,9 +375,28 @@ test('repeated additive percent flow keeps accumulated-base math but preserves p
   const tape = calculator.getState().paperTape.join('\n');
   expect(tape).toMatch(/\s+10\s+\+/);
   expect(tape.match(/\s+10\s+%/g)?.length).toBe(2);
-  expect(tape).not.toMatch(/\s+1\s+\+/);
+  expect(tape).toMatch(/\s+1\s+\+/);
+  expect(tape).toMatch(/\s+1\.1\s+\+/);
   expect(tape).toMatch(/\s+12\.1/);
   expect(calculator.getState().displayValue).toBe('12.1');
+});
+
+test('subtractive percent prints the realized discount before subtotal or total', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('8');
+  calculator.inputDigit('0');
+  calculator.subtract();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.percent();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(calculator.getState().displayValue).toBe('18');
+  expect(tape).toMatch(/\s+180\s+-/);
+  expect(tape).toMatch(/\s+10\s+%/);
+  expect(tape).toMatch(/\s+18\s+-/);
 });
 
 test('percent in multiplicative flow uses the current operand percentage', () => {

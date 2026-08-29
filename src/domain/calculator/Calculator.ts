@@ -153,11 +153,7 @@ export class Calculator {
   }
 
   clearAll(): void {
-    const preservedGrandTotal = this.state.grandTotal;
-    const preservedGrandTotalCount = this.state.subtotalCount;
     Object.assign(this.state, createClearAllState());
-    this.state.grandTotal = preservedGrandTotal;
-    this.state.subtotalCount = preservedGrandTotalCount;
     this.printToTape("..0.. CA");
   }
 
@@ -443,6 +439,11 @@ export class Calculator {
     this.state.waitingForNewEntry = pendingOperation === null;
     this.state.lastPercentInput = current;
     this.printOperationToTape(`${formatForTape(current)} %`);
+    if (usesBasePercentage && pendingOperation) {
+      this.printOperationToTape(`${formatForTape(result)} ${symbolFor(pendingOperation)}`);
+    } else if (pendingOperation === null) {
+      this.printOperationToTape(`${formatForTape(result)}`);
+    }
     this.state.totalMemory = result;
   }
 
