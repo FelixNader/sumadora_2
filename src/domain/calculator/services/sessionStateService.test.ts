@@ -64,5 +64,6 @@ test("createErrorState forces calculator error display and clears flow state", (
     businessSell: null,
     businessMargin: null,
     expressionTokens: [],
+    suppressNextAccumulatorBasePrint: false,
   });
 });

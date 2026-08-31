@@ -103,6 +103,7 @@ export class Calculator {
   }
 
   setDecimalMode(decimalMode: DecimalMode): void {
+    this.resetAccumulatorBaseSuppression();
     this.state.decimalMode = decimalMode;
     this.printToTape(`[DEC ${decimalMode}]`, false);
   }
@@ -112,6 +113,7 @@ export class Calculator {
       return;
     }
 
+    this.resetAccumulatorBaseSuppression();
     this.state.lastPercentInput = null;
 
     if (this.state.waitingForNewEntry || this.state.displayValue === "E") {
@@ -140,6 +142,7 @@ export class Calculator {
       return;
     }
 
+    this.resetAccumulatorBaseSuppression();
     this.state.lastPercentInput = null;
 
     if (this.state.waitingForNewEntry) {
@@ -159,6 +162,7 @@ export class Calculator {
       return;
     }
 
+    this.resetAccumulatorBaseSuppression();
     this.state.lastPercentInput = null;
 
     this.state.displayValue = this.state.displayValue.startsWith("-")
@@ -168,16 +172,19 @@ export class Calculator {
   }
 
   clearEntry(): void {
+    this.resetAccumulatorBaseSuppression();
     Object.assign(this.state, createClearedEntryState());
   }
 
   clearAll(): void {
+    this.resetAccumulatorBaseSuppression();
     Object.assign(this.state, createClearAllState());
     this.printToTape("..0.. CA", false);
     this.state.needsTapeBlockHeader = true;
   }
 
   resetAll(): void {
+    this.resetAccumulatorBaseSuppression();
     Object.assign(this.state, createResetAllState());
   }
 
@@ -206,6 +213,7 @@ export class Calculator {
       return;
     }
 
+    this.resetAccumulatorBaseSuppression();
     const current = this.parseDisplayValue();
     if (current === null) {
       return;
@@ -306,6 +314,7 @@ export class Calculator {
       return;
     }
 
+    this.resetAccumulatorBaseSuppression();
     this.materializeOpenExpressionForTape();
     const totalValue = this.resolveRunningTotal();
     this.printAccumulatorSummary("Total", this.state.operationCount, totalValue, "*");
@@ -332,6 +341,7 @@ export class Calculator {
   }
 
   memoryAdd(): void {
+    this.resetAccumulatorBaseSuppression();
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -341,6 +351,7 @@ export class Calculator {
   }
 
   memorySubtract(): void {
+    this.resetAccumulatorBaseSuppression();
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -350,6 +361,7 @@ export class Calculator {
   }
 
   memoryRecall(): void {
+    this.resetAccumulatorBaseSuppression();
     this.state.displayValue = formatForDisplay(this.state.independentMemory);
     this.state.waitingForNewEntry = true;
     this.state.accumulatorContext = "result";
@@ -357,6 +369,7 @@ export class Calculator {
   }
 
   memoryClear(): void {
+    this.resetAccumulatorBaseSuppression();
     this.state.displayValue = formatForDisplay(this.state.independentMemory);
     this.state.waitingForNewEntry = true;
     this.state.accumulatorContext = "result";
@@ -369,6 +382,7 @@ export class Calculator {
       return;
     }
 
+    this.resetAccumulatorBaseSuppression();
     const grandTotalValue = this.state.grandTotal;
     this.printAccumulatorSummary("GrandTotal", this.state.subtotalCount, grandTotalValue, "G*");
     this.state.displayValue = formatForDisplay(grandTotalValue);
@@ -392,6 +406,7 @@ export class Calculator {
   }
 
   printReference(): void {
+    this.resetAccumulatorBaseSuppression();
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -407,6 +422,7 @@ export class Calculator {
       return;
     }
 
+    this.resetAccumulatorBaseSuppression();
     this.materializeOpenExpressionForTape();
     const subtotalValue = this.resolveRunningTotal();
     this.printAccumulatorSummary("Sub Total", this.state.operationCount, subtotalValue, "◇");
@@ -428,6 +444,7 @@ export class Calculator {
   }
 
   printOperationAverage(): void {
+    this.resetAccumulatorBaseSuppression();
     const average = calculateOperationAverage(
       this.state.operationCount,
       this.state.totalMemory
@@ -444,6 +461,7 @@ export class Calculator {
     if (!this.canOperate() || this.state.error) {
       return;
     }
+    this.resetAccumulatorBaseSuppression();
     const current = this.parseDisplayValue();
     if (current === null) {
       return;
@@ -469,7 +487,9 @@ export class Calculator {
     this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = pendingOperation === null;
     this.state.lastPercentInput = current;
-    this.printOperationToTape(`${formatForTape(current)} %`);
+    this.printOperationToTape(
+      `${formatForTape(this.formatPercentInputForTape(current, usesBasePercentage))} %`
+    );
     if (usesBasePercentage && pendingOperation) {
       this.printOperationToTape(this.formatAdditiveTapeLine(result, pendingOperation));
     } else if (pendingOperation === null) {
@@ -480,6 +500,7 @@ export class Calculator {
   }
 
   setTaxRate(): void {
+    this.resetAccumulatorBaseSuppression();
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -490,6 +511,7 @@ export class Calculator {
   }
 
   addTax(): void {
+    this.resetAccumulatorBaseSuppression();
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -514,6 +536,7 @@ export class Calculator {
     this.state.lastOperator = null;
     this.state.lastPercentInput = null;
     this.state.expressionTokens = [computation.result];
+    this.state.suppressNextAccumulatorBasePrint = true;
     this.state.pendingBusiness = null;
     this.state.businessBase = null;
     this.state.businessCost = null;
@@ -527,6 +550,7 @@ export class Calculator {
   }
 
   subtractTax(): void {
+    this.resetAccumulatorBaseSuppression();
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -551,6 +575,7 @@ export class Calculator {
     this.state.lastOperator = null;
     this.state.lastPercentInput = null;
     this.state.expressionTokens = [computation.result];
+    this.state.suppressNextAccumulatorBasePrint = true;
     this.state.pendingBusiness = null;
     this.state.businessBase = null;
     this.state.businessCost = null;
@@ -564,6 +589,7 @@ export class Calculator {
   }
 
   setConversionRate(): void {
+    this.resetAccumulatorBaseSuppression();
     const rate = this.parseDisplayValue();
     if (rate === null) {
       return;
@@ -579,6 +605,7 @@ export class Calculator {
   }
 
   convertDomesticToForeign(): void {
+    this.resetAccumulatorBaseSuppression();
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -596,10 +623,20 @@ export class Calculator {
     }
     this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = true;
+    this.state.totalMemory = result;
+    this.state.pendingOperation = null;
+    this.state.firstOperand = result;
+    this.state.lastOperand = null;
+    this.state.lastOperator = null;
+    this.state.lastPercentInput = null;
+    this.state.expressionTokens = [result];
+    this.state.accumulatorContext = "result";
+    this.state.suppressNextAccumulatorBasePrint = true;
     this.printOperationToTape(`${formatForTape(value)} -> ${formatForTape(result)} FC`);
   }
 
   convertForeignToDomestic(): void {
+    this.resetAccumulatorBaseSuppression();
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -617,10 +654,20 @@ export class Calculator {
     }
     this.state.displayValue = formatForDisplay(result);
     this.state.waitingForNewEntry = true;
+    this.state.totalMemory = result;
+    this.state.pendingOperation = null;
+    this.state.firstOperand = result;
+    this.state.lastOperand = null;
+    this.state.lastOperator = null;
+    this.state.lastPercentInput = null;
+    this.state.expressionTokens = [result];
+    this.state.accumulatorContext = "result";
+    this.state.suppressNextAccumulatorBasePrint = true;
     this.printOperationToTape(`${formatForTape(value)} FC -> ${formatForTape(result)} DC`);
   }
 
   businessFunction(fn: Exclude<BusinessMode, null>): void {
+    this.resetAccumulatorBaseSuppression();
     const value = this.parseDisplayValue();
     if (value === null) {
       return;
@@ -684,6 +731,7 @@ export class Calculator {
   }
 
   clearTape(): void {
+    this.resetAccumulatorBaseSuppression();
     this.state.paperTape = [];
     this.state.tapeOperationSequence = 0;
     this.state.tapeSubtotalSequence = 0;
@@ -693,6 +741,10 @@ export class Calculator {
   private performOperation(operation: Operation): void {
     if (!this.canOperate() || this.state.error) {
       return;
+    }
+
+    if (operation === "*" || operation === "/") {
+      this.resetAccumulatorBaseSuppression();
     }
 
     if (this.shouldOpenAccumulatorContinuation(operation)) {
@@ -1203,6 +1255,11 @@ export class Calculator {
   }
 
   private printAdditiveBaseToTape(value: number): void {
+    if (this.state.suppressNextAccumulatorBasePrint) {
+      this.state.suppressNextAccumulatorBasePrint = false;
+      return;
+    }
+
     this.printOperationToTape(formatForTape(value));
   }
 
@@ -1216,5 +1273,16 @@ export class Calculator {
     const magnitude = operand < 0 ? Math.abs(operand) : operand;
 
     return `${formatForTape(magnitude)} ${symbolFor(effectiveOperation)}`;
+  }
+
+  private formatPercentInputForTape(
+    value: number,
+    normalizeForAdditiveFlow: boolean
+  ): number {
+    return normalizeForAdditiveFlow ? Math.abs(value) : value;
+  }
+
+  private resetAccumulatorBaseSuppression(): void {
+    this.state.suppressNextAccumulatorBasePrint = false;
   }
 }

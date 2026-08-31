@@ -17,6 +17,7 @@ interface SessionStateBase {
   businessSell: number | null;
   businessMargin: number | null;
   expressionTokens: ExpressionToken[];
+  suppressNextAccumulatorBasePrint: boolean;
   totalMemory: number;
   grandTotal: number;
   operationCount: number;
@@ -53,6 +54,7 @@ export function createClearAllState(): SessionStateBase {
     businessSell: null,
     businessMargin: null,
     expressionTokens: [],
+    suppressNextAccumulatorBasePrint: false,
     totalMemory: 0,
     grandTotal: 0,
     operationCount: 0,
@@ -101,6 +103,7 @@ export function createErrorState(): Pick<
   | "businessSell"
   | "businessMargin"
   | "expressionTokens"
+  | "suppressNextAccumulatorBasePrint"
 > {
   return {
     error: "E",
@@ -117,5 +120,6 @@ export function createErrorState(): Pick<
     businessSell: null,
     businessMargin: null,
     expressionTokens: [],
+    suppressNextAccumulatorBasePrint: false,
   };
 }

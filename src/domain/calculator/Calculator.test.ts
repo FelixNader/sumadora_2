@@ -795,3 +795,131 @@ test('negative subtractive operands print with their effective additive marker',
   expect(tape).toMatch(/\s+7(\s|$)/);
   expect(calculator.getState().displayValue).toBe('7');
 });
+
+test('negative additive percentage input prints a normalized percent line and effective operator', () => {
+  const calculator = new Calculator(() => new Date('2026-08-31T12:00:00'));
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('8');
+  calculator.inputDigit('0');
+  calculator.subtract();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.toggleSign();
+  calculator.percent();
+  calculator.equals();
+
+  expect(calculator.getState().paperTape).toEqual([
+    '2026-08-31 12:00',
+    '----------------',
+    '           180',
+    '            10 %',
+    '            18 +',
+    '           198',
+  ]);
+  expect(calculator.getState().displayValue).toBe('198');
+});
+
+test('tax addition does not reprint the derived total as a bare base before the next additive line', () => {
+  const calculator = new Calculator(() => new Date('2026-08-31T12:00:00'));
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.addTax();
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.toggleSign();
+  calculator.subtotal();
+
+  expect(calculator.getState().paperTape).toEqual([
+    '2026-08-31 12:00',
+    '----------------',
+    'TAX+',
+    'BASE             100',
+    'TAX 16%             16',
+    'TOTAL            116',
+    '             5 -',
+    '----------------',
+    'ItemNo.: 002',
+    'Sub Total:',
+    '           111 ◇',
+  ]);
+});
+
+test('tax subtraction does not reprint the untaxed base as a bare base before the next subtractive line', () => {
+  const calculator = new Calculator(() => new Date('2026-08-31T12:00:00'));
+
+  calculator.inputDigit('2');
+  calculator.inputDigit('0');
+  calculator.inputDigit('8');
+  calculator.inputDecimal();
+  calculator.inputDigit('8');
+  calculator.subtractTax();
+  calculator.subtract();
+  calculator.inputDigit('8');
+  calculator.subtotal();
+
+  expect(calculator.getState().paperTape).toEqual([
+    '2026-08-31 12:00',
+    '----------------',
+    'TAX-',
+    'TOTAL          208.8',
+    'BASE             180',
+    'TAX 16%           28.8',
+    '             8 -',
+    '----------------',
+    'ItemNo.: 002',
+    'Sub Total:',
+    '           172 ◇',
+  ]);
+});
+
+test('conversion results do not reprint as a bare base before the next additive line', () => {
+  const calculator = new Calculator(() => new Date('2026-08-31T12:00:00'));
+
+  calculator.inputDigit('2');
+  calculator.setConversionRate();
+  calculator.inputDigit('4');
+  calculator.convertDomesticToForeign();
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.total();
+
+  expect(calculator.getState().paperTape).toEqual([
+    '2026-08-31 12:00',
+    '----------------',
+    'RATE              2',
+    '             4 ->              2 FC',
+    '             5 +',
+    '----------------',
+    'ItemNo.: 002',
+    'Total:',
+    '             7 *',
+  ]);
+});
+
+test('converted domestic bases are not reprinted before a normalized negative subtractive operand', () => {
+  const calculator = new Calculator(() => new Date('2026-08-31T12:00:00'));
+
+  calculator.inputDigit('2');
+  calculator.setConversionRate();
+  calculator.inputDigit('4');
+  calculator.convertForeignToDomestic();
+  calculator.subtract();
+  calculator.inputDigit('3');
+  calculator.toggleSign();
+  calculator.total();
+
+  expect(calculator.getState().paperTape).toEqual([
+    '2026-08-31 12:00',
+    '----------------',
+    'RATE              2',
+    '             4 FC ->              8 DC',
+    '             3 +',
+    '----------------',
+    'ItemNo.: 002',
+    'Total:',
+    '            11 *',
+  ]);
+});

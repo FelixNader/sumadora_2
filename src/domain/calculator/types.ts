@@ -39,6 +39,7 @@ export interface CalculatorState {
   businessSell: number | null;
   businessMargin: number | null;
   expressionTokens: ExpressionToken[];
+  suppressNextAccumulatorBasePrint: boolean;
 }
 
 export interface CalculatorSnapshot {

@@ -33,6 +33,7 @@ export function createInitialCalculatorState(): CalculatorState {
     businessSell: null,
     businessMargin: null,
     expressionTokens: [],
+    suppressNextAccumulatorBasePrint: false,
   };
 }
 
@@ -87,6 +88,10 @@ export function sanitizeSnapshot(snapshot: CalculatorSnapshot): CalculatorState 
       typeof snapshot.state.businessMargin === "number"
         ? snapshot.state.businessMargin
         : null,
+    suppressNextAccumulatorBasePrint:
+      typeof snapshot.state.suppressNextAccumulatorBasePrint === "boolean"
+        ? snapshot.state.suppressNextAccumulatorBasePrint
+        : false,
     expressionTokens: Array.isArray(snapshot.state.expressionTokens)
       ? snapshot.state.expressionTokens.filter(
           (token) =>
