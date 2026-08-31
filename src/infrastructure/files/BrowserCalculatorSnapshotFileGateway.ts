@@ -4,53 +4,36 @@ import { buildReceiptPdfFilename, createReceiptPdfBlob } from "./receiptPdf";
 
 export class BrowserCalculatorSnapshotFileGateway
   implements CalculatorSnapshotFileGateway {
+  private downloadBlob(blob: Blob, fileName: string): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   exportSnapshot(snapshot: CalculatorSnapshot): void {
     const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
       type: "application/json",
     });
-
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `sumadora-backup-${Date.now()}.json`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    this.downloadBlob(blob, `sumadora-backup-${Date.now()}.json`);
   }
 
   async exportReceiptPdf(state: CalculatorState): Promise<void> {
     const now = new Date();
     const fileName = buildReceiptPdfFilename(now);
     const blob = createReceiptPdfBlob(state);
-    const file = new File([blob], fileName, {
-      type: "application/pdf",
-      lastModified: now.getTime(),
-    });
-    const navigatorWithShare = navigator as Navigator & {
-      canShare?: (data?: ShareData) => boolean;
-    };
+    const url = URL.createObjectURL(blob);
+    const previewWindow = window.open(url, "_blank", "noopener,noreferrer");
 
-    if (
-      typeof navigatorWithShare.share === "function" &&
-      navigatorWithShare.canShare?.({ files: [file] })
-    ) {
-      try {
-        await navigatorWithShare.share({
-          files: [file],
-          title: "Ticket Sumadora Fenix",
-          text: "Ticket PDF generado en Sumadora Fenix",
-        });
-        return;
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
-      }
+    if (previewWindow) {
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      return;
     }
 
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = fileName;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    URL.revokeObjectURL(url);
+    this.downloadBlob(blob, fileName);
   }
 
   async importSnapshot(file: File): Promise<CalculatorSnapshot> {
