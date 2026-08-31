@@ -56,7 +56,7 @@ test('subtotal prints the live accumulator without closing it', () => {
   expect(display?.textContent).toBe('252');
 
   const tape = container.querySelector('.hr-tape-content');
-  expect(tape?.textContent).toContain('152 +');
+  expect(tape?.textContent).toMatch(/\s152(\s|$)/);
   expect(tape?.textContent).toContain('100 +');
   expect(tape?.textContent).toContain('Sub Total:');
   expect(tape?.textContent).toContain('252 ◇');
@@ -104,7 +104,7 @@ test('repeat addition creates another committed line on the tape', () => {
   expect(display?.textContent).toBe('600');
 
   const tape = container.querySelector('.hr-tape-content');
-  expect(tape?.textContent).toContain('300 +');
-  expect(tape?.textContent?.match(/300 \+/g)?.length).toBe(2);
+  expect(tape?.textContent).toMatch(/\s300(\s|$)/);
+  expect(tape?.textContent?.match(/300 \+/g)?.length).toBe(1);
   expect(tape?.textContent).toContain('600 *');
 });

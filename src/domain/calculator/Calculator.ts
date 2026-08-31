@@ -234,7 +234,7 @@ export class Calculator {
               return;
             }
           } else if (!shouldSuppressAdditiveOperandLine) {
-            this.printOperationToTape(`${formatForTape(secondOperand)} ${symbolFor(lastToken)}`);
+            this.printOperationToTape(this.formatAdditiveTapeLine(secondOperand, lastToken));
           }
 
           expression.push(secondOperand);
@@ -285,7 +285,7 @@ export class Calculator {
 
       if (this.state.lastOperator === "+" || this.state.lastOperator === "-") {
         this.printOperationToTape(
-          `${formatForTape(this.state.lastOperand)} ${symbolFor(this.state.lastOperator)}`
+          this.formatAdditiveTapeLine(this.state.lastOperand, this.state.lastOperator)
         );
         this.printOperationToTape(`${formatForTape(result)}`);
       } else {
@@ -471,7 +471,7 @@ export class Calculator {
     this.state.lastPercentInput = current;
     this.printOperationToTape(`${formatForTape(current)} %`);
     if (usesBasePercentage && pendingOperation) {
-      this.printOperationToTape(`${formatForTape(result)} ${symbolFor(pendingOperation)}`);
+      this.printOperationToTape(this.formatAdditiveTapeLine(result, pendingOperation));
     } else if (pendingOperation === null) {
       this.printOperationToTape(`${formatForTape(result)}`);
     }
@@ -746,7 +746,15 @@ export class Calculator {
         return;
       }
     } else if (!shouldSuppressAdditivePercentLine) {
-      this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
+      if (operation === "+" || operation === "-") {
+        if (this.state.expressionTokens.length === 0) {
+          this.printAdditiveBaseToTape(operand);
+        } else {
+          this.printOperationToTape(this.formatAdditiveTapeLine(operand, operation));
+        }
+      } else {
+        this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
+      }
     }
 
     this.state.expressionTokens.push(operand);
@@ -802,7 +810,7 @@ export class Calculator {
       return;
     }
 
-    this.printOperationToTape(`${formatForTape(base)} ${symbolFor(operation)}`);
+    this.printAdditiveBaseToTape(base);
     this.state.expressionTokens = [base, operation];
     this.state.pendingOperation = operation;
     this.state.firstOperand = base;
@@ -847,7 +855,7 @@ export class Calculator {
     }
 
     const operand = this.normalizeOperandForCurrentDisplay(rawCurrent, operation);
-    this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
+    this.printOperationToTape(this.formatAdditiveTapeLine(operand, operation));
 
     this.state.expressionTokens = [base, operation, operand, operation];
     this.state.lastOperator = operation;
@@ -901,7 +909,7 @@ export class Calculator {
         return;
       }
     } else if (this.state.lastPercentInput === null) {
-      this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(lastToken)}`);
+      this.printOperationToTape(this.formatAdditiveTapeLine(operand, lastToken));
     }
 
     this.state.expressionTokens.push(operand);
@@ -1061,8 +1069,8 @@ export class Calculator {
     return true;
   }
 
-  private repeatAdditiveOperation(operation: Operation, operand: number): void {
-    this.printOperationToTape(`${formatForTape(operand)} ${symbolFor(operation)}`);
+  private repeatAdditiveOperation(operation: "+" | "-", operand: number): void {
+    this.printOperationToTape(this.formatAdditiveTapeLine(operand, operation));
     this.state.expressionTokens.push(operand);
     this.state.expressionTokens.push(operation);
     this.state.lastOperator = operation;
@@ -1192,5 +1200,21 @@ export class Calculator {
       this.setError();
       return null;
     }
+  }
+
+  private printAdditiveBaseToTape(value: number): void {
+    this.printOperationToTape(formatForTape(value));
+  }
+
+  private formatAdditiveTapeLine(
+    operand: number,
+    operation: "+" | "-"
+  ): string {
+    const effectiveOperation = operand < 0
+      ? operation === "+" ? "-" : "+"
+      : operation;
+    const magnitude = operand < 0 ? Math.abs(operand) : operand;
+
+    return `${formatForTape(magnitude)} ${symbolFor(effectiveOperation)}`;
   }
 }

@@ -70,7 +70,7 @@ test('clear entry only clears the active input and preserves the pending operati
   calculator.equals();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toMatch(/\s+12\s+\+/);
+  expect(tape).toMatch(/\s+12(\s|$)/);
   expect(tape).toMatch(/\s+5\s+\+/);
   expect(calculator.getState().displayValue).toBe('17');
 });
@@ -165,7 +165,7 @@ test('paper tape follows a Casio-like summary grammar', () => {
   const tape = calculator.getState().paperTape;
   expect(tape[0]).toBe('2026-08-29 14:37');
   expect(tape[1]).toBe('----------------');
-  expect(tape[2]).toContain('10 +');
+  expect(tape[2]).toMatch(/\s+10(\s|$)/);
   expect(tape[3]).toContain('20 +');
   expect(tape[4]).toBe('----------------');
   expect(tape[5]).toBe('ItemNo.: 002');
@@ -198,7 +198,7 @@ test('a new tape block opens after total closes the previous account', () => {
   const tape = calculator.getState().paperTape.join('\n');
   expect(tape).toContain('2026-08-29 15:02');
   expect(tape).toContain('2026-08-29 15:05');
-  expect(tape).toMatch(/2026-08-29 15:05\n----------------\n\s+5 \+/);
+  expect(tape).toMatch(/2026-08-29 15:05\n----------------\n\s+5(\s|$)/);
 });
 
 test('clear all resets the open accumulator and clears grand total', () => {
@@ -231,7 +231,7 @@ test('addition tape prints addends and subtotal shows the live accumulator', () 
   calculator.subtotal();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toMatch(/\s+2\s+\+/);
+  expect(tape).toMatch(/\s+2(\s|$)/);
   expect(tape).toMatch(/\s+3\s+\+/);
   expect(tape).toMatch(/\s+4\s+\+/);
   expect(tape).toContain('Sub Total:');
@@ -252,7 +252,7 @@ test('subtotal commits the last open additive line before printing the subtotal 
   calculator.subtotal();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toContain('150 +');
+  expect(tape).toMatch(/\s+150(\s|$)/);
   expect(tape).toContain('100 +');
   expect(tape).toContain('ItemNo.: 002');
   expect(tape).toContain('Sub Total:');
@@ -277,7 +277,7 @@ test('add chain does not print running total until equals', () => {
   calculator.add();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toContain('152 +');
+  expect(tape).toMatch(/\s+152(\s|$)/);
   expect(tape).toContain('100 +');
   expect(calculator.getState().displayValue).toBe('352');
 
@@ -302,7 +302,7 @@ test('subtract chain does not print running total until equals', () => {
   calculator.subtract();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toContain('152 -');
+  expect(tape).toMatch(/\s+152(\s|$)/);
   expect(tape).toContain('20 -');
   expect(calculator.getState().displayValue).toBe('122');
 
@@ -325,7 +325,7 @@ test('equals result can open a new subtractive line directly from the displayed 
   calculator.equals();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toMatch(/\s+17\s+-/);
+  expect(tape).toMatch(/\s+17(\s|$)/);
   expect(tape).toMatch(/\s+7\s+-/);
   expect(tape).toMatch(/\s+10(\s|$)/);
   expect(calculator.getState().displayValue).toBe('10');
@@ -383,10 +383,10 @@ test('subtotal can open a subtractive continuation directly from the displayed s
   calculator.subtotal();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toMatch(/\s+194\.4\s+-/);
+  expect(tape).toMatch(/\s+194\.4(\s|$)/);
   expect(tape).toMatch(/\s+50\s+-/);
   expect(tape).toMatch(/\s+144\.4\s+◇/);
-  expect(tape).toMatch(/\s+144\.4\s+-/);
+  expect(tape).toMatch(/\s+144\.4(\s|$)/);
   expect(tape).toMatch(/\s+144\s+-/);
   expect(tape).toMatch(/\s+0\.4\s+◇/);
   expect(calculator.getState().displayValue).toBe('0.4');
@@ -440,7 +440,7 @@ test('chained additive percent flow prints the materialized percent operand on t
   calculator.equals();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toMatch(/\s+10\s+\+/);
+  expect(tape).toMatch(/\s+10(\s|$)/);
   expect(tape).toMatch(/\s+10\s+%/);
   expect(tape).toMatch(/\s+1\s+\+/);
   expect(tape).toMatch(/\s+5\s+\+/);
@@ -464,7 +464,7 @@ test('repeated additive percent flow keeps accumulated-base math and prints each
   calculator.equals();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toMatch(/\s+10\s+\+/);
+  expect(tape).toMatch(/\s+10(\s|$)/);
   expect(tape.match(/\s+10\s+%/g)?.length).toBe(2);
   expect(tape).toMatch(/\s+1\s+\+/);
   expect(tape).toMatch(/\s+1\.1\s+\+/);
@@ -485,7 +485,7 @@ test('subtractive percent prints the realized discount before subtotal or total'
 
   const tape = calculator.getState().paperTape.join('\n');
   expect(calculator.getState().displayValue).toBe('18');
-  expect(tape).toMatch(/\s+180\s+-/);
+  expect(tape).toMatch(/\s+180(\s|$)/);
   expect(tape).toMatch(/\s+10\s+%/);
   expect(tape).toMatch(/\s+18\s+-/);
 });
@@ -558,7 +558,8 @@ test('repeat addition, totals and grand total follow the Casio flow', () => {
   calculator.grandTotalRecall();
 
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape.match(/300 \+/g)?.length).toBe(2);
+  expect(tape).toMatch(/\s+300(\s|$)/);
+  expect(tape.match(/300 \+/g)?.length).toBe(1);
   expect(tape).toContain('1000 *');
   expect(tape).toContain('25 *');
   expect(tape).toContain('1025 G*');
@@ -607,7 +608,7 @@ test('tax addition rebases the active accumulator to the taxed total', () => {
 
   const tape = calculator.getState().paperTape.join('\n');
   expect(tape).toContain('TOTAL          208.8');
-  expect(tape).toMatch(/\s+208\.8\s+\+/);
+  expect(tape).toMatch(/\s+208\.8(\s|$)/);
   expect(tape).toMatch(/\s+5\s+\+/);
   expect(tape).toMatch(/\s+213\.8\s+◇/);
   expect(calculator.getState().displayValue).toBe('213.8');
@@ -628,7 +629,7 @@ test('tax subtraction rebases the active accumulator to the untaxed base', () =>
 
   const tape = calculator.getState().paperTape.join('\n');
   expect(tape).toContain('BASE             180');
-  expect(tape).toMatch(/\s+180\s+-/);
+  expect(tape).toMatch(/\s+180(\s|$)/);
   expect(tape).toMatch(/\s+8\s+-/);
   expect(tape).toMatch(/\s+172\s+◇/);
   expect(calculator.getState().displayValue).toBe('172');
@@ -739,10 +740,58 @@ test('respects multiplication precedence in mixed expression', () => {
 
   expect(calculator.getState().displayValue).toBe('19');
   const tape = calculator.getState().paperTape.join('\n');
-  expect(tape).toMatch(/\s+5\s+\+/);
+  expect(tape).toMatch(/\s+5(\s|$)/);
   expect(tape).toMatch(/\s+8\s+\+/);
   expect(tape).toMatch(/\s+3\s+x/);
   expect(tape).toMatch(/\s+2\s+=/);
   expect(tape).toMatch(/\s+6\s+\+/);
   expect(tape).toMatch(/\s+19/);
+});
+
+test('negative starting base prints as a signed base without trailing operator', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('5');
+  calculator.toggleSign();
+  calculator.subtract();
+  calculator.inputDigit('2');
+  calculator.equals();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+-5(\s|$)/);
+  expect(tape).toMatch(/\s+2\s+-/);
+  expect(tape).toMatch(/\s+-7(\s|$)/);
+  expect(calculator.getState().displayValue).toBe('-7');
+});
+
+test('negative additive operands print with their effective subtractive marker', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('5');
+  calculator.add();
+  calculator.inputDigit('2');
+  calculator.toggleSign();
+  calculator.equals();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+5(\s|$)/);
+  expect(tape).toMatch(/\s+2\s+-/);
+  expect(tape).toMatch(/\s+3(\s|$)/);
+  expect(calculator.getState().displayValue).toBe('3');
+});
+
+test('negative subtractive operands print with their effective additive marker', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('5');
+  calculator.subtract();
+  calculator.inputDigit('2');
+  calculator.toggleSign();
+  calculator.equals();
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+5(\s|$)/);
+  expect(tape).toMatch(/\s+2\s+\+/);
+  expect(tape).toMatch(/\s+7(\s|$)/);
+  expect(calculator.getState().displayValue).toBe('7');
 });
