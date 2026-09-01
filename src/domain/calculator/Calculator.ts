@@ -768,6 +768,14 @@ export class Calculator {
         return;
       }
 
+      if (
+        (operation === "*" || operation === "/") &&
+        (lastToken === "+" || lastToken === "-")
+      ) {
+        this.openMulDivFromAccumulatedPreview(operation);
+        return;
+      }
+
       if (typeof lastToken === "string") {
         this.state.expressionTokens[this.state.expressionTokens.length - 1] = operation;
         this.state.pendingOperation = operation;
@@ -947,6 +955,26 @@ export class Calculator {
     this.state.businessCost = null;
     this.state.businessSell = null;
     this.state.businessMargin = null;
+  }
+
+  private openMulDivFromAccumulatedPreview(operation: "*" | "/"): void {
+    const base = this.resolveRunningTotal();
+    this.printOperationToTape(`${formatForTape(base)} ${symbolFor(operation)}`);
+    this.state.expressionTokens = [base, operation];
+    this.state.pendingOperation = operation;
+    this.state.firstOperand = base;
+    this.state.lastOperator = operation;
+    this.state.lastOperand = base;
+    this.state.displayValue = formatForDisplay(base);
+    this.state.totalMemory = base;
+    this.state.waitingForNewEntry = true;
+    this.state.lastPercentInput = null;
+    this.state.pendingBusiness = null;
+    this.state.businessBase = null;
+    this.state.businessCost = null;
+    this.state.businessSell = null;
+    this.state.businessMargin = null;
+    this.state.accumulatorContext = "entry";
   }
 
   private materializeOpenExpressionForTape(): void {

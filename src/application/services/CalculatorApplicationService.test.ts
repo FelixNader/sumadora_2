@@ -207,7 +207,7 @@ test("exports receipt pdf through the configured file gateway", async () => {
 
   await service.exportReceiptPdf();
 
-  expect(fileGateway.exportedReceiptState?.paperTape.join("\n")).toContain("9 +");
+  expect(fileGateway.exportedReceiptState?.paperTape.at(-1)?.trim()).toBe("9");
 });
 
 test("imports snapshots from the file gateway and persists them", async () => {

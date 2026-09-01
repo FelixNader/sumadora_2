@@ -767,6 +767,56 @@ test('respects multiplication precedence in mixed expression', () => {
   expect(tape).toMatch(/\s+19/);
 });
 
+test('switching from an additive accumulator into division uses the accumulated total as the new base', () => {
+  const calculator = new Calculator(() => new Date('2026-09-01T17:20:00'));
+
+  calculator.inputDigit('2');
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('7');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('1');
+  calculator.inputDigit('7');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('1');
+  calculator.inputDigit('7');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.add();
+
+  expect(calculator.getState().displayValue).toBe('1340');
+
+  calculator.divide();
+  calculator.inputDigit('1');
+  calculator.inputDigit('1');
+  calculator.equals();
+  calculator.subtotal();
+
+  expect(calculator.getState().displayValue).toBe('121.8181818182');
+
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+250(\s|$)/);
+  expect(tape).toMatch(/\s+700\s+\+/);
+  expect(tape).toMatch(/\s+170\s+\+/g);
+  expect(tape).toMatch(/\s+50\s+\+/);
+  expect(tape).toMatch(/\s+1340\s+\//);
+  expect(tape).toMatch(/\s+11\s+=/);
+  expect(tape).toMatch(/\s+121\.8181818182(\s|$)/);
+  expect(tape).toContain('Sub Total:');
+  expect(tape).toContain('121.8181818182 ◇');
+
+  calculator.inputDigit('2');
+  calculator.add();
+
+  expect(calculator.getState().displayValue).toBe('123.8181818182');
+});
+
 test('negative starting base prints as a signed base without trailing operator', () => {
   const calculator = new Calculator();
 
