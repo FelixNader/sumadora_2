@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/sumadora_2/static/css/main.d97a4852.css",
+    "main.js": "/sumadora_2/static/js/main.2742a5aa.js",
+    "static/js/453.ee828984.chunk.js": "/sumadora_2/static/js/453.ee828984.chunk.js",
+    "service-worker.js": "/sumadora_2/service-worker.js",
+    "index.html": "/sumadora_2/index.html",
+    "main.d97a4852.css.map": "/sumadora_2/static/css/main.d97a4852.css.map",
+    "main.2742a5aa.js.map": "/sumadora_2/static/js/main.2742a5aa.js.map",
+    "453.ee828984.chunk.js.map": "/sumadora_2/static/js/453.ee828984.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.d97a4852.css",
+    "static/js/main.2742a5aa.js"
+  ]
+}
