@@ -820,13 +820,24 @@ export class Calculator {
     );
     this.state.operationCount = operationCounterUpdate.operationCount;
 
-    const preview = this.evaluateExpressionSafely(
-      this.state.expressionTokens.slice(0, -1)
-    );
-    if (preview !== null) {
-      this.state.displayValue = formatForDisplay(preview);
-      this.state.totalMemory = preview;
-      this.state.firstOperand = preview;
+    const shouldKeepCurrentOperandVisible =
+      (operation === "*" || operation === "/") &&
+      previousOperator !== "*" &&
+      previousOperator !== "/";
+
+    if (shouldKeepCurrentOperandVisible) {
+      this.state.displayValue = formatForDisplay(operand);
+      this.state.totalMemory = operand;
+      this.state.firstOperand = operand;
+    } else {
+      const preview = this.evaluateExpressionSafely(
+        this.state.expressionTokens.slice(0, -1)
+      );
+      if (preview !== null) {
+        this.state.displayValue = formatForDisplay(preview);
+        this.state.totalMemory = preview;
+        this.state.firstOperand = preview;
+      }
     }
 
     this.state.pendingOperation = operation;

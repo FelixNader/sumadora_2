@@ -364,6 +364,25 @@ test('subtotal lets the next additive line continue from the live accumulator', 
   expect(calculator.getState().displayValue).toBe('450');
 });
 
+test('opening a multiplicative step from an additive continuation keeps the entered operand in display', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.multiply();
+  calculator.inputDigit('5');
+  calculator.equals();
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.multiply();
+
+  expect(calculator.getState().displayValue).toBe('50');
+  const tape = calculator.getState().paperTape.join('\n');
+  expect(tape).toMatch(/\s+250(\s|$)/);
+  expect(tape).toMatch(/\s+50\s+x/);
+});
+
 test('subtotal can open a subtractive continuation directly from the displayed subtotal', () => {
   const calculator = new Calculator();
 
