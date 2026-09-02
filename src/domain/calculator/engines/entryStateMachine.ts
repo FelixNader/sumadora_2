@@ -4,7 +4,7 @@ import {
   createResetAllState,
 } from "../services/sessionStateService";
 import { exceedsDigitLimit } from "../policies/numericPolicy";
-import { CalculatorState } from "../types";
+import { EntryState } from "../stateSlices";
 
 interface EntryStateMachineDependencies {
   printToTape: (text: string, allowBlockHeader?: boolean) => void;
@@ -14,7 +14,7 @@ interface EntryStateMachineDependencies {
 
 export class EntryStateMachine {
   constructor(
-    private readonly state: CalculatorState,
+    private readonly state: EntryState,
     private readonly dependencies: EntryStateMachineDependencies
   ) {}
 

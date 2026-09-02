@@ -1,6 +1,7 @@
 import { formatForDisplay, formatForTape } from "../policies/numericPolicy";
 import { incrementOperationCount } from "../services/accountingService";
-import { AccumulatorContext, CalculatorState, ExpressionToken, Operation } from "../types";
+import { AccumulatorContext, ExpressionToken, Operation } from "../types";
+import { WorkingExpressionState } from "../stateSlices";
 
 interface MulDivEngineDependencies {
   evaluateExpressionSafely: (tokens: ExpressionToken[]) => number | null;
@@ -15,7 +16,7 @@ interface MulDivEngineDependencies {
 
 export class MulDivEngine {
   constructor(
-    private readonly state: CalculatorState,
+    private readonly state: WorkingExpressionState,
     private readonly dependencies: MulDivEngineDependencies
   ) {}
 

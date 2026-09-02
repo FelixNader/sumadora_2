@@ -1,6 +1,7 @@
 import { formatForDisplay, formatForTape } from "../policies/numericPolicy";
 import { calculateOperationAverage, incrementOperationCount } from "../services/accountingService";
-import { CalculatorState, ExpressionToken, Operation } from "../types";
+import { ExpressionToken, Operation } from "../types";
+import { AccountingAccumulatorState } from "../stateSlices";
 
 interface AccumulatorEngineDependencies {
   evaluateExpressionSafely: (tokens: ExpressionToken[]) => number | null;
@@ -27,7 +28,7 @@ interface AccumulatorEngineDependencies {
 
 export class AccumulatorEngine {
   constructor(
-    private readonly state: CalculatorState,
+    private readonly state: AccountingAccumulatorState,
     private readonly dependencies: AccumulatorEngineDependencies
   ) {}
 

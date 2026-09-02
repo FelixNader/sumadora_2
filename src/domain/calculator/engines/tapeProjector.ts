@@ -1,6 +1,7 @@
 import { appendTapeLine, canPrintToTape } from "../policies/tapePolicy";
 import { formatForDisplay, formatForTape, symbolFor } from "../policies/numericPolicy";
-import { BusinessMode, CalculatorState, Operation } from "../types";
+import { BusinessMode, Operation } from "../types";
+import { TapeLedgerState } from "../stateSlices";
 
 function padTimestampPart(value: number): string {
   return value.toString().padStart(2, "0");
@@ -16,7 +17,7 @@ function formatTapeBlockTimestamp(date: Date): string {
 
 export class TapeProjector {
   constructor(
-    private readonly state: CalculatorState,
+    private readonly state: TapeLedgerState,
     private readonly now: () => Date
   ) {}
 
