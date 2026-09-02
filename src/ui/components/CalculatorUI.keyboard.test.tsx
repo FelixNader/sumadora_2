@@ -92,6 +92,25 @@ test("keyboard arithmetic sequence computes correctly", () => {
   expect(getDisplay(container)).toBe("15");
 });
 
+test("enter confirms division by zero instead of opening a total", () => {
+  const { container } = render(<App />);
+
+  pressKey("1", "Digit1");
+  pressKey("/", "NumpadDivide");
+  pressKey("0", "Digit0");
+  pressKey("Enter", "Enter");
+
+  expect(getDisplay(container)).toBe("E");
+
+  pressKey("Backspace", "Backspace");
+  pressKey("2", "Digit2");
+  pressKey("+", "NumpadAdd");
+  pressKey("3", "Digit3");
+  pressKey("Enter", "Enter");
+
+  expect(getDisplay(container)).toBe("5");
+});
+
 test("backspace clears current entry and escape clears all", () => {
   const { container } = render(<App />);
 

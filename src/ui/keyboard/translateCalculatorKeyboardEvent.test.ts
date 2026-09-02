@@ -94,7 +94,7 @@ test("maps arithmetic and control keys", () => {
       altKey: false,
     })
   ).toEqual({
-    action: "*",
+    action: "=",
     preventDefault: true,
   });
 

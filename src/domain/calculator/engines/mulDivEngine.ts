@@ -103,6 +103,7 @@ export class MulDivEngine {
     }
 
     this.prepareEntryTransition(this.state.accumulatorContext);
+    this.state.pendingOperation = operation;
   }
 
   openMulDivFromAccumulatedPreview(operation: "*" | "/"): void {

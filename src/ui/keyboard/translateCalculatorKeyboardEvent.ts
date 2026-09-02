@@ -68,7 +68,7 @@ export function translateCalculatorKeyboardEvent(
     event.code === "NumpadEnter"
   ) {
     return {
-      action: "*",
+      action: "=",
       preventDefault: true,
     };
   }
