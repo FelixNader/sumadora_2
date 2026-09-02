@@ -23,6 +23,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "test:battery": "node scripts/run-differential-sequence-battery.js",
+    "test:certification": "node scripts/run-certification-suite.js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
