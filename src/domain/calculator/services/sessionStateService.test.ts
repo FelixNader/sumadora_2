@@ -58,6 +58,7 @@ test("createErrorState forces calculator error display and clears flow state", (
     firstOperand: null,
     waitingForNewEntry: false,
     accumulatorContext: "idle",
+    continuationSource: { origin: "none", value: null },
     pendingBusiness: null,
     businessBase: null,
     businessCost: null,

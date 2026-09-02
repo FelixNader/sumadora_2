@@ -654,6 +654,59 @@ test('tax subtraction rebases the active accumulator to the untaxed base', () =>
   expect(calculator.getState().displayValue).toBe('172');
 });
 
+test('tax-added totals can open a division directly from the derived result', () => {
+  const calculator = new Calculator(() => new Date('2026-09-01T17:20:00'));
+
+  calculator.inputDigit('2');
+  calculator.inputDigit('0');
+  calculator.setTaxRate();
+  calculator.inputDigit('2');
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.addTax();
+  calculator.divide();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('30');
+  expect(calculator.getState().error).toBeNull();
+  expect(calculator.getState().paperTape.slice(-6)).toEqual([
+    'BASE             250',
+    'TAX 20%             50',
+    'TOTAL            300',
+    '           300 /',
+    '            10 =',
+    '            30',
+  ]);
+});
+
+test('converted results can open a division directly from the derived result', () => {
+  const calculator = new Calculator(() => new Date('2026-09-01T17:20:00'));
+
+  calculator.inputDigit('3');
+  calculator.setConversionRate();
+  calculator.inputDigit('3');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.convertDomesticToForeign();
+  calculator.divide();
+  calculator.inputDigit('5');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('20');
+  expect(calculator.getState().error).toBeNull();
+  expect(calculator.getState().paperTape.slice(-6)).toEqual([
+    '2026-09-01 17:20',
+    '----------------',
+    'RATE              3',
+    '           300 ->            100 FC',
+    '           100 /',
+    '             5 =',
+    '            20',
+  ].slice(-6));
+});
+
 test('business keys solve with chained different keys', () => {
   const calculator = new Calculator();
 
@@ -714,6 +767,43 @@ test('percentage-shaped margin display still participates in numeric operations'
   calculator.equals();
 
   expect(calculator.getState().displayValue).toBe('40');
+});
+
+test('business margin result respects the active decimal mode when continued', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.businessFunction('COST');
+  calculator.inputDigit('1');
+  calculator.inputDigit('2');
+  calculator.inputDigit('5');
+  calculator.businessFunction('SELL');
+
+  expect(calculator.getState().displayValue).toBe('20%');
+
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('25');
+
+  calculator.setDecimalMode('ADD2');
+  calculator.clearAll();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.businessFunction('COST');
+  calculator.inputDigit('1');
+  calculator.inputDigit('2');
+  calculator.inputDigit('5');
+  calculator.businessFunction('SELL');
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('20.05');
 });
 
 test('multiply chain prints operation result on tape', () => {
@@ -799,6 +889,11 @@ test('switching from an additive accumulator into division uses the accumulated 
   calculator.subtotal();
 
   expect(calculator.getState().displayValue).toBe('121.8181818182');
+  expect(calculator.getState().continuationSource.origin).toBe('subtotal');
+  expect(calculator.getState().continuationSource.value).toBeCloseTo(
+    121.8181818182,
+    10
+  );
 
   const tape = calculator.getState().paperTape.join('\n');
   expect(tape).toMatch(/\s+250(\s|$)/);
@@ -815,6 +910,110 @@ test('switching from an additive accumulator into division uses the accumulated 
   calculator.add();
 
   expect(calculator.getState().displayValue).toBe('123.8181818182');
+  expect(calculator.getState().continuationSource).toEqual({
+    origin: 'none',
+    value: null,
+  });
+});
+
+test('a resolved tax result carries an explicit continuation source into division', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('2');
+  calculator.inputDigit('0');
+  calculator.setTaxRate();
+  calculator.inputDigit('2');
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.addTax();
+
+  expect(calculator.getState().continuationSource).toEqual({
+    origin: 'resolved-result',
+    value: 300,
+  });
+
+  calculator.divide();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('30');
+});
+
+test('a printed reference is not a calculation continuation source', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('2');
+  calculator.printReference();
+
+  expect(calculator.getState().continuationSource).toEqual({
+    origin: 'none',
+    value: null,
+  });
+
+  calculator.inputDigit('3');
+  calculator.add();
+  calculator.inputDigit('4');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('7');
+});
+
+test('average closes its source expression and can continue from the average', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('2');
+  calculator.inputDigit('5');
+  calculator.printOperationAverage();
+
+  expect(calculator.getState()).toMatchObject({
+    displayValue: '75',
+    totalMemory: 75,
+    pendingOperation: null,
+    firstOperand: 75,
+    lastOperator: null,
+    lastOperand: null,
+    expressionTokens: [75],
+    continuationSource: { origin: 'resolved-result', value: 75 },
+  });
+
+  calculator.inputDigit('5');
+  calculator.add();
+
+  expect(calculator.getState().displayValue).toBe('80');
+});
+
+test('a subtotal continuation keeps additive percentage semantics', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('9');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.subtotal();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.add();
+
+  expect(calculator.getState().pendingOperation).toBe('+');
+
+  calculator.percent();
+
+  expect(calculator.getState().displayValue).toBe('121');
+  expect(calculator.getState().paperTape.slice(-3)).toEqual([
+    '            10 +',
+    '           110 %',
+    '           121 +',
+  ]);
 });
 
 test('negative starting base prints as a signed base without trailing operator', () => {

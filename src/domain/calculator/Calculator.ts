@@ -5,12 +5,7 @@ import {
   normalizeOperandForOperation,
   roundByMode,
   symbolFor,
-  exceedsDigitLimit,
 } from "./policies/numericPolicy";
-import {
-  appendTapeLine,
-  canPrintToTape,
-} from "./policies/tapePolicy";
 import {
   evaluateExpression,
   executeOperation,
@@ -21,20 +16,14 @@ import {
   sanitizeSnapshot,
 } from "./state";
 import { solveBusinessValues } from "./services/businessMath";
-import {
-  calculateOperationAverage,
-  incrementOperationCount,
-} from "./services/accountingService";
+import { incrementOperationCount } from "./services/accountingService";
 import {
   convertDomesticToForeign,
   convertForeignToDomestic,
   normalizeConversionRate,
 } from "./services/currencyConversionService";
 import {
-  createClearedEntryState,
-  createClearAllState,
   createErrorState,
-  createResetAllState,
 } from "./services/sessionStateService";
 import {
   calculateTaxAddition,
@@ -49,6 +38,11 @@ import {
   ExpressionToken,
   Operation,
 } from "./types";
+import { TapeProjector } from "./engines/tapeProjector";
+import { EntryStateMachine } from "./engines/entryStateMachine";
+import { MulDivEngine } from "./engines/mulDivEngine";
+import { AccumulatorEngine } from "./engines/accumulatorEngine";
+import { CalculatorSession, createCalculatorSession, createCalculatorStateFacade } from "./session";
 
 export type {
   BusinessMode,
@@ -59,25 +53,23 @@ export type {
   Operation,
 } from "./types";
 
-function padTimestampPart(value: number): string {
-  return value.toString().padStart(2, "0");
-}
-
-function formatTapeBlockTimestamp(date: Date): string {
-  return [
-    date.getFullYear(),
-    padTimestampPart(date.getMonth() + 1),
-    padTimestampPart(date.getDate()),
-  ].join("-") + ` ${padTimestampPart(date.getHours())}:${padTimestampPart(date.getMinutes())}`;
-}
-
 export class Calculator {
   private state: CalculatorState;
+  private session: CalculatorSession;
   private readonly now: () => Date;
+  private tapeProjector: TapeProjector;
+  private entryStateMachine: EntryStateMachine;
+  private mulDivEngine: MulDivEngine;
+  private accumulatorEngine: AccumulatorEngine;
 
   constructor(now: () => Date = () => new Date()) {
     this.now = now;
-    this.state = createInitialCalculatorState();
+    this.session = createCalculatorSession(createInitialCalculatorState());
+    this.state = createCalculatorStateFacade(this.session);
+    this.tapeProjector = this.createTapeProjector();
+    this.entryStateMachine = this.createEntryStateMachine();
+    this.mulDivEngine = this.createMulDivEngine();
+    this.accumulatorEngine = this.createAccumulatorEngine();
   }
 
   getState(): CalculatorState {
@@ -99,7 +91,9 @@ export class Calculator {
       throw new Error("Unsupported snapshot format");
     }
 
-    this.state = sanitizeSnapshot(snapshot);
+    this.session = createCalculatorSession(sanitizeSnapshot(snapshot));
+    this.state = createCalculatorStateFacade(this.session);
+    this.rebuildEngines();
   }
 
   setDecimalMode(decimalMode: DecimalMode): void {
@@ -112,80 +106,33 @@ export class Calculator {
     if (!this.canOperate() || this.state.error) {
       return;
     }
-
-    this.resetAccumulatorBaseSuppression();
-    this.state.lastPercentInput = null;
-
-    if (this.state.waitingForNewEntry || this.state.displayValue === "E") {
-      this.state.displayValue = "0";
-      this.state.waitingForNewEntry = false;
-    }
-
-    if (this.state.displayValue === "0") {
-      this.state.displayValue = digit;
-    } else if (this.state.displayValue === "-0") {
-      this.state.displayValue = `-${digit}`;
-    } else {
-      const next = `${this.state.displayValue}${digit}`;
-      if (exceedsDigitLimit(next)) {
-        this.setError();
-        return;
-      }
-      this.state.displayValue = next;
-    }
-
-    this.state.accumulatorContext = "entry";
+    this.entryStateMachine.inputDigit(digit);
   }
 
   inputDecimal(): void {
     if (!this.canOperate() || this.state.error) {
       return;
     }
-
-    this.resetAccumulatorBaseSuppression();
-    this.state.lastPercentInput = null;
-
-    if (this.state.waitingForNewEntry) {
-      this.state.displayValue = "0";
-      this.state.waitingForNewEntry = false;
-    }
-
-    if (!this.state.displayValue.includes(".")) {
-      this.state.displayValue += ".";
-    }
-
-    this.state.accumulatorContext = "entry";
+    this.entryStateMachine.inputDecimal();
   }
 
   toggleSign(): void {
     if (!this.canOperate() || this.state.error || this.state.displayValue === "0") {
       return;
     }
-
-    this.resetAccumulatorBaseSuppression();
-    this.state.lastPercentInput = null;
-
-    this.state.displayValue = this.state.displayValue.startsWith("-")
-      ? this.state.displayValue.slice(1)
-      : `-${this.state.displayValue}`;
-    this.state.accumulatorContext = "entry";
+    this.entryStateMachine.toggleSign();
   }
 
   clearEntry(): void {
-    this.resetAccumulatorBaseSuppression();
-    Object.assign(this.state, createClearedEntryState());
+    this.entryStateMachine.clearEntry();
   }
 
   clearAll(): void {
-    this.resetAccumulatorBaseSuppression();
-    Object.assign(this.state, createClearAllState());
-    this.printToTape("..0.. CA", false);
-    this.state.needsTapeBlockHeader = true;
+    this.entryStateMachine.clearAll();
   }
 
   resetAll(): void {
-    this.resetAccumulatorBaseSuppression();
-    Object.assign(this.state, createResetAllState());
+    this.entryStateMachine.resetAll();
   }
 
   add(): void {
@@ -278,6 +225,7 @@ export class Calculator {
       this.state.expressionTokens = [result];
       this.state.waitingForNewEntry = true;
       this.state.accumulatorContext = "result";
+      this.setContinuationSource("resolved-result", result);
       return;
     }
 
@@ -306,6 +254,7 @@ export class Calculator {
       this.state.expressionTokens = [result];
       this.state.waitingForNewEntry = true;
       this.state.accumulatorContext = "result";
+      this.setContinuationSource("resolved-result", result);
     }
   }
 
@@ -315,29 +264,7 @@ export class Calculator {
     }
 
     this.resetAccumulatorBaseSuppression();
-    this.materializeOpenExpressionForTape();
-    const totalValue = this.resolveRunningTotal();
-    this.printAccumulatorSummary("Total", this.state.operationCount, totalValue, "*");
-
-    this.state.grandTotal = this.roundForCurrentMode(this.state.grandTotal + totalValue, "+");
-    this.state.subtotalCount += 1;
-    this.state.displayValue = formatForDisplay(totalValue);
-    this.state.totalMemory = totalValue;
-    this.state.pendingOperation = null;
-    this.state.firstOperand = null;
-    this.state.lastOperand = null;
-    this.state.lastOperator = null;
-    this.state.waitingForNewEntry = true;
-    this.state.pendingBusiness = null;
-    this.state.businessBase = null;
-    this.state.businessCost = null;
-    this.state.businessSell = null;
-    this.state.businessMargin = null;
-    this.state.expressionTokens = [];
-    this.state.operationCount = 0;
-    this.state.lastPercentInput = null;
-    this.state.accumulatorContext = "total";
-    this.state.needsTapeBlockHeader = true;
+    this.accumulatorEngine.total();
   }
 
   memoryAdd(): void {
@@ -365,6 +292,7 @@ export class Calculator {
     this.state.displayValue = formatForDisplay(this.state.independentMemory);
     this.state.waitingForNewEntry = true;
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", this.state.independentMemory);
     this.printToTape(`${formatForTape(this.state.independentMemory)} M◇`);
   }
 
@@ -373,6 +301,7 @@ export class Calculator {
     this.state.displayValue = formatForDisplay(this.state.independentMemory);
     this.state.waitingForNewEntry = true;
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", this.state.independentMemory);
     this.printToTape(`${formatForTape(this.state.independentMemory)} M*`);
     this.state.independentMemory = 0;
   }
@@ -383,26 +312,7 @@ export class Calculator {
     }
 
     this.resetAccumulatorBaseSuppression();
-    const grandTotalValue = this.state.grandTotal;
-    this.printAccumulatorSummary("GrandTotal", this.state.subtotalCount, grandTotalValue, "G*");
-    this.state.displayValue = formatForDisplay(grandTotalValue);
-    this.state.totalMemory = grandTotalValue;
-    this.state.grandTotal = 0;
-    this.state.subtotalCount = 0;
-    this.state.waitingForNewEntry = true;
-    this.state.pendingOperation = null;
-    this.state.firstOperand = null;
-    this.state.lastOperand = null;
-    this.state.lastOperator = null;
-    this.state.pendingBusiness = null;
-    this.state.businessBase = null;
-    this.state.businessCost = null;
-    this.state.businessSell = null;
-    this.state.businessMargin = null;
-    this.state.expressionTokens = [];
-    this.state.lastPercentInput = null;
-    this.state.accumulatorContext = "grand-total";
-    this.state.needsTapeBlockHeader = true;
+    this.accumulatorEngine.grandTotalRecall();
   }
 
   printReference(): void {
@@ -415,6 +325,7 @@ export class Calculator {
     this.printToTape(`${formatForTape(value)} #`);
     this.state.waitingForNewEntry = true;
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("none", null);
   }
 
   subtotal(): void {
@@ -423,38 +334,12 @@ export class Calculator {
     }
 
     this.resetAccumulatorBaseSuppression();
-    this.materializeOpenExpressionForTape();
-    const subtotalValue = this.resolveRunningTotal();
-    this.printAccumulatorSummary("Sub Total", this.state.operationCount, subtotalValue, "◇");
-    this.state.displayValue = formatForDisplay(subtotalValue);
-    this.state.totalMemory = subtotalValue;
-    this.state.pendingOperation = null;
-    this.state.firstOperand = subtotalValue;
-    this.state.lastOperator = null;
-    this.state.lastOperand = null;
-    this.state.expressionTokens = [subtotalValue];
-    this.state.waitingForNewEntry = true;
-    this.state.lastPercentInput = null;
-    this.state.pendingBusiness = null;
-    this.state.businessBase = null;
-    this.state.businessCost = null;
-    this.state.businessSell = null;
-    this.state.businessMargin = null;
-    this.state.accumulatorContext = "subtotal";
+    this.accumulatorEngine.subtotal();
   }
 
   printOperationAverage(): void {
     this.resetAccumulatorBaseSuppression();
-    const average = calculateOperationAverage(
-      this.state.operationCount,
-      this.state.totalMemory
-    );
-    this.printToTape("----------------");
-    this.printToTape("Average:");
-    this.printToTape(`${formatForTape(average)}`);
-    this.state.displayValue = formatForDisplay(average);
-    this.state.waitingForNewEntry = true;
-    this.state.accumulatorContext = "result";
+    this.accumulatorEngine.printOperationAverage();
   }
 
   percent(): void {
@@ -497,6 +382,10 @@ export class Calculator {
     }
     this.state.totalMemory = result;
     this.state.accumulatorContext = pendingOperation === null ? "result" : "entry";
+    this.setContinuationSource(
+      pendingOperation === null ? "resolved-result" : "none",
+      pendingOperation === null ? result : null
+    );
   }
 
   setTaxRate(): void {
@@ -543,6 +432,7 @@ export class Calculator {
     this.state.businessSell = null;
     this.state.businessMargin = null;
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", computation.result);
     this.printOperationToTape(`TAX+`);
     this.printOperationToTape(`BASE  ${formatForTape(value)}`);
     this.printOperationToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(computation.taxAmount)}`);
@@ -582,6 +472,7 @@ export class Calculator {
     this.state.businessSell = null;
     this.state.businessMargin = null;
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", computation.result);
     this.printOperationToTape(`TAX-`);
     this.printOperationToTape(`TOTAL ${formatForTape(value)}`);
     this.printOperationToTape(`BASE  ${formatForTape(computation.result)}`);
@@ -631,6 +522,7 @@ export class Calculator {
     this.state.lastPercentInput = null;
     this.state.expressionTokens = [result];
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", result);
     this.state.suppressNextAccumulatorBasePrint = true;
     this.printOperationToTape(`${formatForTape(value)} -> ${formatForTape(result)} FC`);
   }
@@ -662,6 +554,7 @@ export class Calculator {
     this.state.lastPercentInput = null;
     this.state.expressionTokens = [result];
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", result);
     this.state.suppressNextAccumulatorBasePrint = true;
     this.printOperationToTape(`${formatForTape(value)} FC -> ${formatForTape(result)} DC`);
   }
@@ -725,6 +618,7 @@ export class Calculator {
       solution.result
     );
     this.state.totalMemory = solution.result;
+    this.setContinuationSource("resolved-result", solution.result);
     this.printOperationToTape(
       `${solution.solvedKey} OUT ${this.formatBusinessValueForTape(solution.solvedKey, solution.result)}`
     );
@@ -747,8 +641,8 @@ export class Calculator {
       this.resetAccumulatorBaseSuppression();
     }
 
-    if (this.shouldOpenAccumulatorContinuation(operation)) {
-      this.openAccumulatorContinuation(operation);
+    if (this.mulDivEngine.shouldOpenAccumulatorContinuation(operation)) {
+      this.mulDivEngine.openAccumulatorContinuation(operation);
       return;
     }
 
@@ -772,7 +666,12 @@ export class Calculator {
         (operation === "*" || operation === "/") &&
         (lastToken === "+" || lastToken === "-")
       ) {
-        this.openMulDivFromAccumulatedPreview(operation);
+        this.mulDivEngine.openMulDivFromAccumulatedPreview(operation);
+        return;
+      }
+
+      if (this.mulDivEngine.shouldOpenMulDivFromResolvedValue(operation)) {
+        this.mulDivEngine.openMulDivFromResolvedValue(operation);
         return;
       }
 
@@ -783,8 +682,8 @@ export class Calculator {
       }
     }
 
-    if (this.shouldContinueFromAccumulatorValue(operation)) {
-      this.continueFromAccumulatorValue(operation, rawCurrent);
+    if (this.mulDivEngine.shouldContinueFromAccumulatorValue(operation)) {
+      this.mulDivEngine.continueFromAccumulatorValue(operation, rawCurrent);
       return;
     }
 
@@ -857,166 +756,7 @@ export class Calculator {
     this.state.businessSell = null;
     this.state.businessMargin = null;
     this.state.accumulatorContext = "entry";
-  }
-
-  private shouldOpenAccumulatorContinuation(operation: Operation): boolean {
-    const base = this.state.expressionTokens[0];
-    const current = this.parseDisplayValue();
-
-    return (
-      (operation === "+" || operation === "-") &&
-      this.state.waitingForNewEntry &&
-      this.state.expressionTokens.length === 1 &&
-      typeof base === "number" &&
-      current !== null &&
-      Math.abs(current - base) < 1e-9 &&
-      (this.state.accumulatorContext === "subtotal" ||
-        this.state.accumulatorContext === "result")
-    );
-  }
-
-  private openAccumulatorContinuation(operation: Operation): void {
-    const base = this.state.expressionTokens[0];
-    if (typeof base !== "number") {
-      return;
-    }
-
-    this.printAdditiveBaseToTape(base);
-    this.state.expressionTokens = [base, operation];
-    this.state.pendingOperation = operation;
-    this.state.firstOperand = base;
-    this.state.lastOperator = operation;
-    this.state.lastOperand = null;
-    this.state.displayValue = formatForDisplay(base);
-    this.state.totalMemory = base;
-
-    const operationCounterUpdate = incrementOperationCount(
-      this.state.operationCount,
-      operation
-    );
-    this.state.operationCount = operationCounterUpdate.operationCount;
-
-    this.state.waitingForNewEntry = true;
-    this.state.lastPercentInput = null;
-    this.state.pendingBusiness = null;
-    this.state.businessBase = null;
-    this.state.businessCost = null;
-    this.state.businessSell = null;
-    this.state.businessMargin = null;
-    this.state.accumulatorContext = "entry";
-  }
-
-  private shouldContinueFromAccumulatorValue(operation: Operation): boolean {
-    return (
-      (operation === "+" || operation === "-") &&
-      !this.state.waitingForNewEntry &&
-      this.state.expressionTokens.length === 1 &&
-      typeof this.state.expressionTokens[0] === "number"
-    );
-  }
-
-  private continueFromAccumulatorValue(operation: Operation, rawCurrent: number): void {
-    if (operation !== "+" && operation !== "-") {
-      return;
-    }
-
-    const base = this.state.expressionTokens[0];
-    if (typeof base !== "number") {
-      return;
-    }
-
-    const operand = this.normalizeOperandForCurrentDisplay(rawCurrent, operation);
-    this.printOperationToTape(this.formatAdditiveTapeLine(operand, operation));
-
-    this.state.expressionTokens = [base, operation, operand, operation];
-    this.state.lastOperator = operation;
-    this.state.lastOperand = operand;
-
-    const operationCounterUpdate = incrementOperationCount(
-      this.state.operationCount,
-      operation
-    );
-    this.state.operationCount = operationCounterUpdate.operationCount;
-
-    const preview = this.evaluateExpressionSafely(
-      this.state.expressionTokens.slice(0, -1)
-    );
-    if (preview !== null) {
-      this.state.displayValue = formatForDisplay(preview);
-      this.state.totalMemory = preview;
-      this.state.firstOperand = preview;
-    }
-
-    this.state.pendingOperation = operation;
-    this.state.waitingForNewEntry = true;
-    this.state.lastPercentInput = null;
-    this.state.pendingBusiness = null;
-    this.state.businessBase = null;
-    this.state.businessCost = null;
-    this.state.businessSell = null;
-    this.state.businessMargin = null;
-  }
-
-  private openMulDivFromAccumulatedPreview(operation: "*" | "/"): void {
-    const base = this.resolveRunningTotal();
-    this.printOperationToTape(`${formatForTape(base)} ${symbolFor(operation)}`);
-    this.state.expressionTokens = [base, operation];
-    this.state.pendingOperation = operation;
-    this.state.firstOperand = base;
-    this.state.lastOperator = operation;
-    this.state.lastOperand = base;
-    this.state.displayValue = formatForDisplay(base);
-    this.state.totalMemory = base;
-    this.state.waitingForNewEntry = true;
-    this.state.lastPercentInput = null;
-    this.state.pendingBusiness = null;
-    this.state.businessBase = null;
-    this.state.businessCost = null;
-    this.state.businessSell = null;
-    this.state.businessMargin = null;
-    this.state.accumulatorContext = "entry";
-  }
-
-  private materializeOpenExpressionForTape(): void {
-    const lastToken = this.state.expressionTokens[this.state.expressionTokens.length - 1];
-    if (typeof lastToken !== "string" || this.state.waitingForNewEntry) {
-      return;
-    }
-
-    const current = this.parseDisplayValue();
-    if (current === null) {
-      return;
-    }
-
-    const operand = this.normalizeOperandForCurrentDisplay(current, lastToken);
-    if (lastToken === "*" || lastToken === "/") {
-      const postingOperation = this.resolveMulDivPostingOperation(this.state.expressionTokens);
-      if (!this.printClosedMulDivSegment(
-        this.state.expressionTokens,
-        operand,
-        lastToken,
-        postingOperation
-      )) {
-        return;
-      }
-    } else if (this.state.lastPercentInput === null) {
-      this.printOperationToTape(this.formatAdditiveTapeLine(operand, lastToken));
-    }
-
-    this.state.expressionTokens.push(operand);
-    this.state.lastOperator = lastToken;
-    this.state.lastOperand = operand;
-
-    if (lastToken === "+" || lastToken === "-") {
-      const operationCounterUpdate = incrementOperationCount(
-        this.state.operationCount,
-        lastToken
-      );
-      this.state.operationCount = operationCounterUpdate.operationCount;
-    }
-
-    this.state.waitingForNewEntry = true;
-    this.state.lastPercentInput = null;
+    this.setContinuationSource("none", null);
   }
 
   private finalizeResult(
@@ -1041,54 +781,7 @@ export class Calculator {
   }
 
   private resolveRunningTotal(): number {
-    if (this.state.expressionTokens.length > 0) {
-      const tokens = [...this.state.expressionTokens];
-      const lastToken = tokens[tokens.length - 1];
-      if (typeof lastToken === "string") {
-        if (this.state.waitingForNewEntry) {
-          tokens.pop();
-        } else {
-          const current = this.parseDisplayValue();
-          if (current !== null) {
-            tokens.push(this.normalizeOperandForCurrentDisplay(current, lastToken));
-          }
-        }
-      }
-
-      const resolved = this.evaluateExpressionSafely(tokens);
-      if (resolved !== null) {
-        return resolved;
-      }
-    }
-
-    if (this.state.pendingOperation && this.state.firstOperand !== null) {
-      if (this.state.waitingForNewEntry) {
-        return this.state.firstOperand;
-      }
-
-      const current = this.parseDisplayValue();
-      if (current === null) {
-        return this.state.totalMemory;
-      }
-
-      const secondOperand = this.normalizeOperandForCurrentDisplay(current, this.state.pendingOperation);
-      const computed = this.executeOperationSafely(
-        this.state.firstOperand,
-        secondOperand,
-        this.state.pendingOperation
-      );
-      if (computed === null) {
-        return this.state.totalMemory;
-      }
-      return computed;
-    }
-
-    const current = this.parseDisplayValue();
-    if (current !== null) {
-      return current;
-    }
-
-    return this.state.totalMemory;
+    return this.accumulatorEngine.resolveRunningTotal();
   }
 
   private normalizeOperandForCurrentDisplay(value: number, operation: Operation): number {
@@ -1110,28 +803,15 @@ export class Calculator {
   }
 
   private printToTape(text: string, allowBlockHeader = true): void {
-    if (!canPrintToTape(this.state)) {
-      return;
-    }
-
-    if (allowBlockHeader) {
-      this.ensureTapeBlockHeader();
-    }
-
-    this.appendRawTapeLine(text);
+    this.tapeProjector.printToTape(text, allowBlockHeader);
   }
 
   private appendRawTapeLine(text: string): void {
-    if (!canPrintToTape(this.state)) {
-      return;
-    }
-
-    this.state.paperTape = appendTapeLine(this.state.paperTape, text);
+    this.tapeProjector.appendRawTapeLine(text);
   }
 
   private printOperationToTape(text: string): void {
-    this.state.tapeOperationSequence += 1;
-    this.printToTape(text);
+    this.tapeProjector.printOperationToTape(text);
   }
 
   private printClosedMulDivSegment(
@@ -1193,50 +873,27 @@ export class Calculator {
     value: number,
     marker: "◇" | "*" | "G*"
   ): void {
-    this.state.tapeSubtotalSequence += 1;
-    this.printToTape("----------------");
-    this.printToTape(`ItemNo.: ${itemCount.toString().padStart(3, "0")}`);
-    this.printToTape(`${title}:`);
-    this.printToTape(`${formatForTape(value)} ${marker}`);
-  }
-
-  private ensureTapeBlockHeader(): void {
-    if (!this.state.needsTapeBlockHeader) {
-      return;
-    }
-
-    this.appendRawTapeLine(formatTapeBlockTimestamp(this.now()));
-    this.appendRawTapeLine("----------------");
-    this.state.needsTapeBlockHeader = false;
+    this.tapeProjector.printAccumulatorSummary(title, itemCount, value, marker);
   }
 
   private resolveMulDivPostingOperation(
     tokens: ExpressionToken[]
   ): "+" | "-" | null {
-    for (let index = tokens.length - 1; index >= 0; index -= 1) {
-      const token = tokens[index];
-      if (token === "+" || token === "-") {
-        return token;
-      }
-    }
-
-    return null;
+    return this.mulDivEngine.resolveMulDivPostingOperation(tokens);
   }
 
   private formatBusinessValueForDisplay(
     key: Exclude<BusinessMode, null>,
     value: number
   ): string {
-    const formatted = formatForDisplay(value);
-    return key === "MGN" ? `${formatted}%` : formatted;
+    return this.tapeProjector.formatBusinessValueForDisplay(key, value);
   }
 
   private formatBusinessValueForTape(
     key: Exclude<BusinessMode, null>,
     value: number
   ): string {
-    const formatted = formatForTape(value);
-    return key === "MGN" ? `${formatted}%` : formatted;
+    return this.tapeProjector.formatBusinessValueForTape(key, value);
   }
 
   private setError(): void {
@@ -1294,24 +951,14 @@ export class Calculator {
   }
 
   private printAdditiveBaseToTape(value: number): void {
-    if (this.state.suppressNextAccumulatorBasePrint) {
-      this.state.suppressNextAccumulatorBasePrint = false;
-      return;
-    }
-
-    this.printOperationToTape(formatForTape(value));
+    this.tapeProjector.printAdditiveBaseToTape(value);
   }
 
   private formatAdditiveTapeLine(
     operand: number,
     operation: "+" | "-"
   ): string {
-    const effectiveOperation = operand < 0
-      ? operation === "+" ? "-" : "+"
-      : operation;
-    const magnitude = operand < 0 ? Math.abs(operand) : operand;
-
-    return `${formatForTape(magnitude)} ${symbolFor(effectiveOperation)}`;
+    return this.tapeProjector.formatAdditiveTapeLine(operand, operation);
   }
 
   private formatPercentInputForTape(
@@ -1323,5 +970,70 @@ export class Calculator {
 
   private resetAccumulatorBaseSuppression(): void {
     this.state.suppressNextAccumulatorBasePrint = false;
+  }
+
+  private setContinuationSource(
+    origin: CalculatorState["continuationSource"]["origin"],
+    value: number | null
+  ): void {
+    this.state.continuationSource = { origin, value };
+  }
+
+  private createTapeProjector(): TapeProjector {
+    return new TapeProjector(this.state, this.now);
+  }
+
+  private createEntryStateMachine(): EntryStateMachine {
+    return new EntryStateMachine(this.state, {
+      printToTape: (text, allowBlockHeader) =>
+        this.tapeProjector.printToTape(text, allowBlockHeader),
+      startNewTapeBlock: () => this.tapeProjector.startNewTapeBlock(),
+      resetAccumulatorBaseSuppression: () => this.resetAccumulatorBaseSuppression(),
+      setError: () => this.setError(),
+    });
+  }
+
+  private createMulDivEngine(): MulDivEngine {
+    return new MulDivEngine(this.state, {
+      evaluateExpressionSafely: (tokens) => this.evaluateExpressionSafely(tokens),
+      normalizeOperandForCurrentDisplay: (value, operation) =>
+        this.normalizeOperandForCurrentDisplay(value, operation),
+      parseDisplayValue: () => this.parseDisplayValue(),
+      printAdditiveBaseToTape: (value) => this.printAdditiveBaseToTape(value),
+      printOperationToTape: (text) => this.printOperationToTape(text),
+      resolveRunningTotal: () => this.resolveRunningTotal(),
+      formatAdditiveTapeLine: (operand, operation) =>
+        this.formatAdditiveTapeLine(operand, operation),
+      formatOperatorSymbol: (operation) => this.tapeProjector.formatOperatorSymbol(operation),
+    });
+  }
+
+  private createAccumulatorEngine(): AccumulatorEngine {
+    return new AccumulatorEngine(this.state, {
+      evaluateExpressionSafely: (tokens) => this.evaluateExpressionSafely(tokens),
+      executeOperationSafely: (first, second, operation) =>
+        this.executeOperationSafely(first, second, operation),
+      normalizeOperandForCurrentDisplay: (value, operation) =>
+        this.normalizeOperandForCurrentDisplay(value, operation),
+      parseDisplayValue: () => this.parseDisplayValue(),
+      printAccumulatorSummary: (title, itemCount, value, marker) =>
+        this.printAccumulatorSummary(title, itemCount, value, marker),
+      printClosedMulDivSegment: (expression, operand, operation, postingOperation) =>
+        this.printClosedMulDivSegment(expression, operand, operation, postingOperation),
+      printOperationToTape: (text) => this.printToTape(text),
+      formatAdditiveTapeLine: (operand, operation) =>
+        this.formatAdditiveTapeLine(operand, operation),
+      resolveMulDivPostingOperation: (tokens) =>
+        this.resolveMulDivPostingOperation(tokens),
+      roundForCurrentMode: (value, operation) =>
+        this.roundForCurrentMode(value, operation),
+    });
+  }
+
+  private rebuildEngines(): void {
+    this.tapeProjector = this.createTapeProjector();
+    this.entryStateMachine = this.createEntryStateMachine();
+    this.mulDivEngine = this.createMulDivEngine();
+    this.accumulatorEngine = this.createAccumulatorEngine();
   }
 }
