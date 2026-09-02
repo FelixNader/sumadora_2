@@ -228,6 +228,7 @@ export class Calculator {
       this.state.expressionTokens = [result];
       this.state.waitingForNewEntry = true;
       this.state.accumulatorContext = "result";
+      this.setContinuationSource("resolved-result", result);
       return;
     }
 
@@ -256,6 +257,7 @@ export class Calculator {
       this.state.expressionTokens = [result];
       this.state.waitingForNewEntry = true;
       this.state.accumulatorContext = "result";
+      this.setContinuationSource("resolved-result", result);
     }
   }
 
@@ -293,6 +295,7 @@ export class Calculator {
     this.state.displayValue = formatForDisplay(this.state.independentMemory);
     this.state.waitingForNewEntry = true;
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", this.state.independentMemory);
     this.printToTape(`${formatForTape(this.state.independentMemory)} M◇`);
   }
 
@@ -301,6 +304,7 @@ export class Calculator {
     this.state.displayValue = formatForDisplay(this.state.independentMemory);
     this.state.waitingForNewEntry = true;
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", this.state.independentMemory);
     this.printToTape(`${formatForTape(this.state.independentMemory)} M*`);
     this.state.independentMemory = 0;
   }
@@ -324,6 +328,7 @@ export class Calculator {
     this.printToTape(`${formatForTape(value)} #`);
     this.state.waitingForNewEntry = true;
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("none", null);
   }
 
   subtotal(): void {
@@ -380,6 +385,10 @@ export class Calculator {
     }
     this.state.totalMemory = result;
     this.state.accumulatorContext = pendingOperation === null ? "result" : "entry";
+    this.setContinuationSource(
+      pendingOperation === null ? "resolved-result" : "none",
+      pendingOperation === null ? result : null
+    );
   }
 
   setTaxRate(): void {
@@ -426,6 +435,7 @@ export class Calculator {
     this.state.businessSell = null;
     this.state.businessMargin = null;
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", computation.result);
     this.printOperationToTape(`TAX+`);
     this.printOperationToTape(`BASE  ${formatForTape(value)}`);
     this.printOperationToTape(`TAX ${formatForDisplay(this.state.taxRate)}% ${formatForTape(computation.taxAmount)}`);
@@ -465,6 +475,7 @@ export class Calculator {
     this.state.businessSell = null;
     this.state.businessMargin = null;
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", computation.result);
     this.printOperationToTape(`TAX-`);
     this.printOperationToTape(`TOTAL ${formatForTape(value)}`);
     this.printOperationToTape(`BASE  ${formatForTape(computation.result)}`);
@@ -514,6 +525,7 @@ export class Calculator {
     this.state.lastPercentInput = null;
     this.state.expressionTokens = [result];
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", result);
     this.state.suppressNextAccumulatorBasePrint = true;
     this.printOperationToTape(`${formatForTape(value)} -> ${formatForTape(result)} FC`);
   }
@@ -545,6 +557,7 @@ export class Calculator {
     this.state.lastPercentInput = null;
     this.state.expressionTokens = [result];
     this.state.accumulatorContext = "result";
+    this.setContinuationSource("resolved-result", result);
     this.state.suppressNextAccumulatorBasePrint = true;
     this.printOperationToTape(`${formatForTape(value)} FC -> ${formatForTape(result)} DC`);
   }
@@ -608,6 +621,7 @@ export class Calculator {
       solution.result
     );
     this.state.totalMemory = solution.result;
+    this.setContinuationSource("resolved-result", solution.result);
     this.printOperationToTape(
       `${solution.solvedKey} OUT ${this.formatBusinessValueForTape(solution.solvedKey, solution.result)}`
     );
@@ -745,6 +759,7 @@ export class Calculator {
     this.state.businessSell = null;
     this.state.businessMargin = null;
     this.state.accumulatorContext = "entry";
+    this.setContinuationSource("none", null);
   }
 
   private finalizeResult(
@@ -958,6 +973,13 @@ export class Calculator {
 
   private resetAccumulatorBaseSuppression(): void {
     this.state.suppressNextAccumulatorBasePrint = false;
+  }
+
+  private setContinuationSource(
+    origin: CalculatorState["continuationSource"]["origin"],
+    value: number | null
+  ): void {
+    this.state.continuationSource = { origin, value };
   }
 
   private createTapeProjector(): TapeProjector {

@@ -20,38 +20,24 @@ export class MulDivEngine {
   ) {}
 
   shouldOpenAccumulatorContinuation(operation: Operation): boolean {
-    const base = this.state.expressionTokens[0];
-    const current = this.dependencies.parseDisplayValue();
-
     return (
       (operation === "+" || operation === "-") &&
       this.state.waitingForNewEntry &&
-      this.state.expressionTokens.length === 1 &&
-      typeof base === "number" &&
-      current !== null &&
-      Math.abs(current - base) < 1e-9 &&
-      (this.state.accumulatorContext === "subtotal" ||
-        this.state.accumulatorContext === "result")
+      this.state.continuationSource.value !== null
     );
   }
 
   shouldOpenMulDivFromResolvedValue(operation: Operation): operation is "*" | "/" {
-    const base = this.state.expressionTokens[0];
-    const current = this.dependencies.parseDisplayValue();
-
     return (
       (operation === "*" || operation === "/") &&
       this.state.waitingForNewEntry &&
-      this.state.expressionTokens.length === 1 &&
-      typeof base === "number" &&
-      current !== null &&
-      Math.abs(current - base) < 1e-9
+      this.state.continuationSource.value !== null
     );
   }
 
   openAccumulatorContinuation(operation: Operation): void {
-    const base = this.state.expressionTokens[0];
-    if (typeof base !== "number") {
+    const base = this.state.continuationSource.value;
+    if (base === null) {
       return;
     }
 
@@ -77,8 +63,7 @@ export class MulDivEngine {
     return (
       (operation === "+" || operation === "-") &&
       !this.state.waitingForNewEntry &&
-      this.state.expressionTokens.length === 1 &&
-      typeof this.state.expressionTokens[0] === "number"
+      this.state.continuationSource.value !== null
     );
   }
 
@@ -87,8 +72,8 @@ export class MulDivEngine {
       return;
     }
 
-    const base = this.state.expressionTokens[0];
-    if (typeof base !== "number") {
+    const base = this.state.continuationSource.value;
+    if (base === null) {
       return;
     }
 
@@ -135,8 +120,8 @@ export class MulDivEngine {
   }
 
   openMulDivFromResolvedValue(operation: "*" | "/"): void {
-    const base = this.state.expressionTokens[0];
-    if (typeof base !== "number") {
+    const base = this.state.continuationSource.value;
+    if (base === null) {
       return;
     }
 
@@ -175,5 +160,6 @@ export class MulDivEngine {
     this.state.businessSell = null;
     this.state.businessMargin = null;
     this.state.accumulatorContext = context;
+    this.state.continuationSource = { origin: "none", value: null };
   }
 }

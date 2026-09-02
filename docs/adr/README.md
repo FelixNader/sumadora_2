@@ -12,3 +12,4 @@
 - [0010 - Remove working modes and drop legacy snapshot compatibility](./0010-remove-working-modes-and-drop-legacy-snapshots.md)
 - [0011 - Make tape sequences explicit and keep margin percentage-shaped](./0011-explicit-tape-sequences-and-percentage-margin.md)
 - [0012 - Drive keypad layout by frequency and semantic groups](./0012-keypad-layout-driven-by-frequency-and-semantic-groups.md)
+- [0013 - Model the continuation source explicitly](./0013-explicit-continuation-source.md)

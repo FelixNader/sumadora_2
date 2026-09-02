@@ -852,6 +852,11 @@ test('switching from an additive accumulator into division uses the accumulated 
   calculator.subtotal();
 
   expect(calculator.getState().displayValue).toBe('121.8181818182');
+  expect(calculator.getState().continuationSource.origin).toBe('subtotal');
+  expect(calculator.getState().continuationSource.value).toBeCloseTo(
+    121.8181818182,
+    10
+  );
 
   const tape = calculator.getState().paperTape.join('\n');
   expect(tape).toMatch(/\s+250(\s|$)/);
@@ -868,6 +873,54 @@ test('switching from an additive accumulator into division uses the accumulated 
   calculator.add();
 
   expect(calculator.getState().displayValue).toBe('123.8181818182');
+  expect(calculator.getState().continuationSource).toEqual({
+    origin: 'none',
+    value: null,
+  });
+});
+
+test('a resolved tax result carries an explicit continuation source into division', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('2');
+  calculator.inputDigit('0');
+  calculator.setTaxRate();
+  calculator.inputDigit('2');
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.addTax();
+
+  expect(calculator.getState().continuationSource).toEqual({
+    origin: 'resolved-result',
+    value: 300,
+  });
+
+  calculator.divide();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('30');
+});
+
+test('a printed reference is not a calculation continuation source', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('2');
+  calculator.printReference();
+
+  expect(calculator.getState().continuationSource).toEqual({
+    origin: 'none',
+    value: null,
+  });
+
+  calculator.inputDigit('3');
+  calculator.add();
+  calculator.inputDigit('4');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('7');
 });
 
 test('negative starting base prints as a signed base without trailing operator', () => {

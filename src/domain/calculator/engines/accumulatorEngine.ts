@@ -55,6 +55,7 @@ export class AccumulatorEngine {
     this.state.businessSell = null;
     this.state.businessMargin = null;
     this.state.accumulatorContext = "subtotal";
+    this.state.continuationSource = { origin: "subtotal", value: subtotalValue };
   }
 
   total(): void {
@@ -88,6 +89,7 @@ export class AccumulatorEngine {
     this.state.operationCount = 0;
     this.state.lastPercentInput = null;
     this.state.accumulatorContext = "total";
+    this.state.continuationSource = { origin: "none", value: null };
     this.state.needsTapeBlockHeader = true;
   }
 
@@ -116,6 +118,7 @@ export class AccumulatorEngine {
     this.state.expressionTokens = [];
     this.state.lastPercentInput = null;
     this.state.accumulatorContext = "grand-total";
+    this.state.continuationSource = { origin: "none", value: null };
     this.state.needsTapeBlockHeader = true;
   }
 
@@ -130,6 +133,7 @@ export class AccumulatorEngine {
     this.state.displayValue = formatForDisplay(average);
     this.state.waitingForNewEntry = true;
     this.state.accumulatorContext = "result";
+    this.state.continuationSource = { origin: "resolved-result", value: average };
   }
 
   resolveRunningTotal(): number {

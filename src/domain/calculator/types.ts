@@ -10,6 +10,17 @@ export type AccumulatorContext =
   | "total"
   | "grand-total";
 
+export type ContinuationOrigin = "none" | "subtotal" | "resolved-result";
+
+/**
+ * The value that may become the left side of the next calculation. It is kept
+ * separate from the display because the user may already be typing a new value.
+ */
+export interface ContinuationSource {
+  origin: ContinuationOrigin;
+  value: number | null;
+}
+
 export interface CalculatorState {
   decimalMode: DecimalMode;
   displayValue: string;
@@ -33,6 +44,7 @@ export interface CalculatorState {
   lastOperator: Operation | null;
   waitingForNewEntry: boolean;
   accumulatorContext: AccumulatorContext;
+  continuationSource: ContinuationSource;
   pendingBusiness: BusinessMode;
   businessBase: number | null;
   businessCost: number | null;
