@@ -1,7 +1,6 @@
-import { CalculatorState } from "../types";
 import { MAX_TAPE_LINES } from "../state";
 
-export function canPrintToTape(_state: CalculatorState): boolean {
+export function canPrintToTape(): boolean {
   return true;
 }
 

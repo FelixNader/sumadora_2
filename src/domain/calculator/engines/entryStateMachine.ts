@@ -8,6 +8,7 @@ import { EntryState } from "../stateSlices";
 
 interface EntryStateMachineDependencies {
   printToTape: (text: string, allowBlockHeader?: boolean) => void;
+  startNewTapeBlock: () => void;
   resetAccumulatorBaseSuppression: () => void;
   setError: () => void;
 }
@@ -78,7 +79,7 @@ export class EntryStateMachine {
     this.dependencies.resetAccumulatorBaseSuppression();
     Object.assign(this.state, createClearAllState());
     this.dependencies.printToTape("..0.. CA", false);
-    this.state.needsTapeBlockHeader = true;
+    this.dependencies.startNewTapeBlock();
   }
 
   resetAll(): void {

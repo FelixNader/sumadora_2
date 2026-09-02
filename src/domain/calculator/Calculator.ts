@@ -5,11 +5,7 @@ import {
   normalizeOperandForOperation,
   roundByMode,
   symbolFor,
-  exceedsDigitLimit,
 } from "./policies/numericPolicy";
-import {
-  canPrintToTape,
-} from "./policies/tapePolicy";
 import {
   evaluateExpression,
   executeOperation,
@@ -20,10 +16,7 @@ import {
   sanitizeSnapshot,
 } from "./state";
 import { solveBusinessValues } from "./services/businessMath";
-import {
-  calculateOperationAverage,
-  incrementOperationCount,
-} from "./services/accountingService";
+import { incrementOperationCount } from "./services/accountingService";
 import {
   convertDomesticToForeign,
   convertForeignToDomestic,
@@ -994,6 +987,7 @@ export class Calculator {
     return new EntryStateMachine(this.state, {
       printToTape: (text, allowBlockHeader) =>
         this.tapeProjector.printToTape(text, allowBlockHeader),
+      startNewTapeBlock: () => this.tapeProjector.startNewTapeBlock(),
       resetAccumulatorBaseSuppression: () => this.resetAccumulatorBaseSuppression(),
       setError: () => this.setError(),
     });

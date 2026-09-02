@@ -8,7 +8,6 @@ export type EntryState = Pick<
   | "waitingForNewEntry"
   | "lastPercentInput"
   | "accumulatorContext"
-  | "needsTapeBlockHeader"
 >;
 
 /** State owned by the paper-tape ledger. */
@@ -19,6 +18,7 @@ export type TapeLedgerState = Pick<
   | "tapeSubtotalSequence"
   | "needsTapeBlockHeader"
   | "error"
+  | "suppressNextAccumulatorBasePrint"
 >;
 
 /** State needed to open and continue arithmetic expressions. */

@@ -4,7 +4,7 @@ type StateKey = keyof CalculatorState;
 
 const entryKeys = [
   "displayValue", "error", "lastPercentInput", "waitingForNewEntry",
-  "accumulatorContext", "continuationSource", "suppressNextAccumulatorBasePrint",
+  "accumulatorContext", "continuationSource",
 ] as const satisfies readonly StateKey[];
 
 const workingExpressionKeys = [
@@ -18,6 +18,7 @@ const accountingKeys = [
 
 const tapeKeys = [
   "paperTape", "needsTapeBlockHeader", "tapeOperationSequence", "tapeSubtotalSequence",
+  "suppressNextAccumulatorBasePrint",
 ] as const satisfies readonly StateKey[];
 
 const configurationKeys = [
@@ -44,11 +45,11 @@ const parts: Array<readonly StateKey[]> = [
 ];
 
 function pick<K extends readonly StateKey[]>(state: CalculatorState, keys: K): SessionPart<K> {
-  const part = {} as SessionPart<K>;
+  const part: Record<string, unknown> = {};
   for (const key of keys) {
-    part[key] = state[key] as SessionPart<K>[typeof key];
+    part[key] = state[key];
   }
-  return part;
+  return part as SessionPart<K>;
 }
 
 /** The session is the internal source of truth; the flat state remains an API adapter. */

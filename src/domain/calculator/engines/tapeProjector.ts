@@ -22,7 +22,7 @@ export class TapeProjector {
   ) {}
 
   printToTape(text: string, allowBlockHeader = true): void {
-    if (!canPrintToTape(this.state)) {
+    if (!canPrintToTape()) {
       return;
     }
 
@@ -34,7 +34,7 @@ export class TapeProjector {
   }
 
   appendRawTapeLine(text: string): void {
-    if (!canPrintToTape(this.state)) {
+    if (!canPrintToTape()) {
       return;
     }
 
@@ -98,6 +98,10 @@ export class TapeProjector {
 
   formatOperatorSymbol(operation: Operation): string {
     return symbolFor(operation);
+  }
+
+  startNewTapeBlock(): void {
+    this.state.needsTapeBlockHeader = true;
   }
 
   private ensureTapeBlockHeader(): void {
