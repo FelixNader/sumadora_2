@@ -472,7 +472,9 @@ function main() {
 
 module.exports = {
   sequences,
+  applyAction,
   runBattery,
+  runSequence,
   compareResults,
   extractLastComparableTapeValue,
   normalizeComparableValue,

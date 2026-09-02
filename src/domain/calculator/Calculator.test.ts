@@ -769,6 +769,43 @@ test('percentage-shaped margin display still participates in numeric operations'
   expect(calculator.getState().displayValue).toBe('40');
 });
 
+test('business margin result respects the active decimal mode when continued', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.businessFunction('COST');
+  calculator.inputDigit('1');
+  calculator.inputDigit('2');
+  calculator.inputDigit('5');
+  calculator.businessFunction('SELL');
+
+  expect(calculator.getState().displayValue).toBe('20%');
+
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('25');
+
+  calculator.setDecimalMode('ADD2');
+  calculator.clearAll();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.businessFunction('COST');
+  calculator.inputDigit('1');
+  calculator.inputDigit('2');
+  calculator.inputDigit('5');
+  calculator.businessFunction('SELL');
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('20.05');
+});
+
 test('multiply chain prints operation result on tape', () => {
   const calculator = new Calculator();
 
