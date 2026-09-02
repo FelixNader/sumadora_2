@@ -923,6 +923,37 @@ test('a printed reference is not a calculation continuation source', () => {
   expect(calculator.getState().displayValue).toBe('7');
 });
 
+test('average closes its source expression and can continue from the average', () => {
+  const calculator = new Calculator();
+
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.add();
+  calculator.inputDigit('2');
+  calculator.inputDigit('5');
+  calculator.printOperationAverage();
+
+  expect(calculator.getState()).toMatchObject({
+    displayValue: '75',
+    totalMemory: 75,
+    pendingOperation: null,
+    firstOperand: 75,
+    lastOperator: null,
+    lastOperand: null,
+    expressionTokens: [75],
+    continuationSource: { origin: 'resolved-result', value: 75 },
+  });
+
+  calculator.inputDigit('5');
+  calculator.add();
+
+  expect(calculator.getState().displayValue).toBe('80');
+});
+
 test('negative starting base prints as a signed base without trailing operator', () => {
   const calculator = new Calculator();
 

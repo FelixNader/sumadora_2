@@ -132,6 +132,13 @@ export class AccumulatorEngine {
     this.dependencies.printOperationToTape("Average:");
     this.dependencies.printOperationToTape(`${formatForTape(average)}`);
     this.state.displayValue = formatForDisplay(average);
+    this.state.totalMemory = average;
+    this.state.pendingOperation = null;
+    this.state.firstOperand = average;
+    this.state.lastOperator = null;
+    this.state.lastOperand = null;
+    this.state.expressionTokens = [average];
+    this.state.lastPercentInput = null;
     this.state.waitingForNewEntry = true;
     this.state.accumulatorContext = "result";
     this.state.continuationSource = { origin: "resolved-result", value: average };
