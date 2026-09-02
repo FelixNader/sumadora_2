@@ -49,6 +49,7 @@ import { TapeProjector } from "./engines/tapeProjector";
 import { EntryStateMachine } from "./engines/entryStateMachine";
 import { MulDivEngine } from "./engines/mulDivEngine";
 import { AccumulatorEngine } from "./engines/accumulatorEngine";
+import { CalculatorSession, createCalculatorSession, createCalculatorStateFacade } from "./session";
 
 export type {
   BusinessMode,
@@ -61,6 +62,7 @@ export type {
 
 export class Calculator {
   private state: CalculatorState;
+  private session: CalculatorSession;
   private readonly now: () => Date;
   private tapeProjector: TapeProjector;
   private entryStateMachine: EntryStateMachine;
@@ -69,7 +71,8 @@ export class Calculator {
 
   constructor(now: () => Date = () => new Date()) {
     this.now = now;
-    this.state = createInitialCalculatorState();
+    this.session = createCalculatorSession(createInitialCalculatorState());
+    this.state = createCalculatorStateFacade(this.session);
     this.tapeProjector = this.createTapeProjector();
     this.entryStateMachine = this.createEntryStateMachine();
     this.mulDivEngine = this.createMulDivEngine();
@@ -95,7 +98,8 @@ export class Calculator {
       throw new Error("Unsupported snapshot format");
     }
 
-    this.state = sanitizeSnapshot(snapshot);
+    this.session = createCalculatorSession(sanitizeSnapshot(snapshot));
+    this.state = createCalculatorStateFacade(this.session);
     this.rebuildEngines();
   }
 
