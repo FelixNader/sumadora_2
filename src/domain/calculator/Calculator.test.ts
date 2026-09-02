@@ -654,6 +654,59 @@ test('tax subtraction rebases the active accumulator to the untaxed base', () =>
   expect(calculator.getState().displayValue).toBe('172');
 });
 
+test('tax-added totals can open a division directly from the derived result', () => {
+  const calculator = new Calculator(() => new Date('2026-09-01T17:20:00'));
+
+  calculator.inputDigit('2');
+  calculator.inputDigit('0');
+  calculator.setTaxRate();
+  calculator.inputDigit('2');
+  calculator.inputDigit('5');
+  calculator.inputDigit('0');
+  calculator.addTax();
+  calculator.divide();
+  calculator.inputDigit('1');
+  calculator.inputDigit('0');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('30');
+  expect(calculator.getState().error).toBeNull();
+  expect(calculator.getState().paperTape.slice(-6)).toEqual([
+    'BASE             250',
+    'TAX 20%             50',
+    'TOTAL            300',
+    '           300 /',
+    '            10 =',
+    '            30',
+  ]);
+});
+
+test('converted results can open a division directly from the derived result', () => {
+  const calculator = new Calculator(() => new Date('2026-09-01T17:20:00'));
+
+  calculator.inputDigit('3');
+  calculator.setConversionRate();
+  calculator.inputDigit('3');
+  calculator.inputDigit('0');
+  calculator.inputDigit('0');
+  calculator.convertDomesticToForeign();
+  calculator.divide();
+  calculator.inputDigit('5');
+  calculator.equals();
+
+  expect(calculator.getState().displayValue).toBe('20');
+  expect(calculator.getState().error).toBeNull();
+  expect(calculator.getState().paperTape.slice(-6)).toEqual([
+    '2026-09-01 17:20',
+    '----------------',
+    'RATE              3',
+    '           300 ->            100 FC',
+    '           100 /',
+    '             5 =',
+    '            20',
+  ].slice(-6));
+});
+
 test('business keys solve with chained different keys', () => {
   const calculator = new Calculator();
 
