@@ -1,18 +1,18 @@
 <!doctype html>
-<html lang="es-MX"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#082b31"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Atlas Captura"><title>Atlas Sort · Captura</title>
+<html lang="es-MX"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#082b31"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Atlas Captura"><title>Atlas Sort · Captura v0.2</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#eaf7f3;background:#071d23}*{box-sizing:border-box}body{margin:0}header{display:flex;justify-content:space-between;align-items:center;padding:17px max(15px,env(safe-area-inset-left));background:#0d313a;border-bottom:1px solid #305158}header b{letter-spacing:.08em}small, .muted{color:#a2bdba}.chip{background:#174f49;color:#95ead5;border-radius:99px;padding:7px 10px;font-size:12px}main{max-width:760px;margin:auto;padding:16px 13px 70px}.panel{border:1px solid #2c5256;border-radius:18px;background:#0c2b33;margin-bottom:14px;padding:14px}.tabs{display:flex;gap:8px;margin-bottom:16px}.tabs button{flex:1}.tabs button.active{background:#18aa8b;color:#07251e}.tabs button:not(.active){background:#173942}.tabPage[hidden], [hidden]{display:none!important}button,.pick{border:0;border-radius:11px;padding:13px 15px;font-size:15px;font-weight:700;background:#24565b;color:#eefdf9;cursor:pointer}button:disabled{opacity:.35;cursor:default}button.main{background:#28c6a0;color:#07352d}.pick{display:inline-flex;align-items:center;justify-content:center} .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:13px}#video{display:none;width:100%;max-height:390px;border-radius:12px;background:black;object-fit:cover}#cameraBox{min-height:230px;display:flex;align-items:center;justify-content:center;flex-direction:column;border:2px dashed #3b6c6d;border-radius:14px;background:#10272c;color:#a5bbb9;text-align:center;padding:14px}#cameraBox.on{display:block;min-height:0;padding:4px;border:1px solid #486b70}#cameraBox.on video{display:block}#cameraBox.on #cameraHelp{display:none}.big{font-size:42px;display:block;margin-bottom:10px}h2{font-size:18px;margin:1px 0 11px}h1{font-size:17px;margin:0}p{line-height:1.5}.status{font-size:14px;color:#b8d5d0}.warn{padding:10px;border-radius:10px;background:#45381d;color:#ffd697}label.field{font-size:13px;color:#bdd3cf;display:block;margin:12px 0}input[type=text],textarea{width:100%;margin-top:5px;background:#081e24;border:1px solid #42646a;border-radius:9px;padding:12px;color:#fff;font-size:16px;font-family:inherit}textarea{min-height:64px}input:focus,textarea:focus{outline:2px solid #1abf9b}.wide{width:100%}#history article{border-bottom:1px solid #31545c;padding:12px 0}#history article strong{display:block;margin-bottom:4px}footer{color:#7eaaa4;text-align:center;font-size:12px;padding:10px}.hint{font-size:13px;color:#a6c5c1}.notice{font-size:13px;color:#f3d7a0}#output{white-space:pre-wrap}
 </style></head><body>
-<header><div><b>ATLAS SORT</b><br><small>CAPTURA · DEMOSTRACIÓN MÓVIL</small></div><span class="chip" id="badge">OCR por iniciar</span></header>
+<header><div><b>ATLAS SORT</b><br><small>CAPTURA v0.2 · DEMOSTRACIÓN MÓVIL</small></div><span class="chip" id="badge">OCR por iniciar</span></header>
 <main>
 <div class="tabs"><button id="tabCamera" class="active">Capturar</button><button id="tabHistory">Historial <span id="count">0</span></button></div>
 <section id="capture" class="tabPage"><div class="panel">
 <div id="cameraBox"><video id="video" autoplay muted playsinline></video><div id="cameraHelp"><span class="big">▣</span><strong>Cámara preparada</strong><p>Apunta a una sola etiqueta y mantén la cámara estable.</p></div></div>
 <div class="actions"><button id="openCam">Abrir cámara</button><button id="scan" class="main" disabled>Capturar</button><label class="pick" for="photo">Foto / archivo</label><input type="file" id="photo" accept="image/*" capture="environment" hidden></div>
 <p class="hint">Primera vez: la biblioteca OCR y el idioma español requieren internet. Después el análisis ocurre en el dispositivo.</p></div>
-<div class="panel"><strong id="state">Lista para empezar</strong><p class="status" id="detail">Abre cámara o toma una fotografía de la etiqueta.</p><div id="error" class="warn" hidden></div></div>
-<div class="panel" id="result" hidden><h2>Lectura de etiqueta</h2><p class="notice">Revisa los campos: un resultado OCR no garantiza que la dirección sea correcta.</p>
+<div class="panel" id="photoReview" hidden><h2>Imagen capturada: comprueba que sea ésta</h2><p class="hint">Si falla, arrastra el dedo para delimitar únicamente la etiqueta y pulsa «Releer recorte».</p><canvas id="still" style="display:block;width:100%;height:auto;border-radius:10px;touch-action:none;background:black"></canvas><div class="actions" style="grid-template-columns:1fr 1fr"><button id="readCrop">Releer recorte</button><button id="clearCrop">Borrar recorte</button></div><p id="selectionHint" class="hint">Recorte: foto completa</p></div><div class="panel"><strong id="state">Lista para empezar</strong><p class="status" id="detail">Abre cámara o toma una fotografía de la etiqueta.</p><div id="error" class="warn" hidden></div></div>
+<div class="panel" id="result" hidden><h2>Lectura de etiqueta</h2><p id="quality" class="warn" hidden></p><p class="notice">Revisa los campos: un resultado OCR no garantiza que la dirección sea correcta.</p>
 <label class="field">Código de barras / número de guía<input type="text" id="barcode" placeholder="No identificado"></label>
 <label class="field">Domicilio<input type="text" id="address" placeholder="No identificado"></label>
 <label class="field">Colonia<input type="text" id="colonia" placeholder="No identificada"></label>
@@ -26,8 +26,18 @@
 </main>
 <script>
 "use strict";
-const $=id=>document.getElementById(id), key="atlas-sort-acquisitions-preview", t0=()=>performance.now();let stream=null,worker=null,init=null,working=false;
+const $=id=>document.getElementById(id), key="atlas-sort-acquisitions-preview", t0=()=>performance.now();let stream=null,worker=null,init=null,working=false,zxingPromise=null,captured=null,selection=null,anchor=null;
 const vals=["barcode","address","colonia","cp","references","raw"];
+function showCapture(c){captured=c;selection=null;$("photoReview").hidden=false;const v=$("still");v.width=c.width;v.height=c.height;drawSelection();$("selectionHint").textContent="Recorte: foto completa";}
+function drawSelection(){if(!captured)return;const v=$("still"),ctx=v.getContext("2d");ctx.drawImage(captured,0,0,v.width,v.height);if(selection){ctx.fillStyle="rgba(0,0,0,.30)";ctx.fillRect(0,0,v.width,v.height);ctx.drawImage(captured,selection.x,selection.y,selection.w,selection.h,selection.x,selection.y,selection.w,selection.h);ctx.strokeStyle="#27f0bb";ctx.lineWidth=Math.max(3,v.width/300);ctx.strokeRect(selection.x,selection.y,selection.w,selection.h)}}
+function coords(e){const r=$("still").getBoundingClientRect();return {x:Math.max(0,Math.min(captured.width,(e.clientX-r.left)/r.width*captured.width)),y:Math.max(0,Math.min(captured.height,(e.clientY-r.top)/r.height*captured.height))}}
+$("still").onpointerdown=e=>{if(!captured)return;anchor=coords(e);selection=null;$("still").setPointerCapture(e.pointerId)};
+$("still").onpointermove=e=>{if(!anchor)return;const p=coords(e);selection={x:Math.floor(Math.min(p.x,anchor.x)),y:Math.floor(Math.min(p.y,anchor.y)),w:Math.floor(Math.abs(p.x-anchor.x)),h:Math.floor(Math.abs(p.y-anchor.y))};if(selection.w>1&&selection.h>1)drawSelection()};
+$("still").onpointerup=()=>{anchor=null;if(selection&&(selection.w<60||selection.h<60))selection=null;drawSelection();$("selectionHint").textContent=selection?"Recorte elegido; pulsa Releer recorte":"Recorte: foto completa"};
+$("clearCrop").onclick=()=>{selection=null;drawSelection();$("selectionHint").textContent="Recorte: foto completa"};
+function crop(){if(!captured)return null;if(!selection)return captured;const p=selection,c=document.createElement("canvas");c.width=p.w;c.height=p.h;c.getContext("2d").drawImage(captured,p.x,p.y,p.w,p.h,0,0,p.w,p.h);return c}
+$("readCrop").onclick=()=>{const c=crop();if(c)analyze(c)};
+
 const status=(s,d,e="")=>{$("state").textContent=s;$("detail").textContent=d;$("error").hidden=!e;$("error").textContent=e;};
 function load(url){return new Promise((ok,fail)=>{const s=document.createElement("script");s.src=url;s.onload=ok;s.onerror=()=>fail(new Error("No se pudo cargar la biblioteca OCR"));document.head.append(s)})}
 async function ocr(){
@@ -35,7 +45,7 @@ async function ocr(){
  init=(async()=>{status("Cargando OCR","Inicializando motor español; requiere internet la primera vez.");
   if(!window.Tesseract)await load("https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js");
   if(!window.Tesseract?.createWorker)throw Error("Motor OCR no disponible");
-  worker=await Tesseract.createWorker("spa",1,{logger:m=>{if(m.status)$("detail").textContent=m.status+" "+Math.round((m.progress||0)*100)+"%"}});
+  worker=await Tesseract.createWorker(["spa","eng"],1,{logger:m=>{if(m.status)$("detail").textContent=m.status+" "+Math.round((m.progress||0)*100)+"%"}});await worker.setParameters({tessedit_pageseg_mode:Tesseract.PSM.SPARSE_TEXT,preserve_interword_spaces:"1"});
   $("badge").textContent="OCR preparado";return worker;
  })();
  try{return await init}finally{init=null}
@@ -44,12 +54,17 @@ function canvasFrom(source,w,h){const c=document.createElement("canvas"),max=250
 async function imageCanvas(file){const url=URL.createObjectURL(file),im=new Image();try{await new Promise((ok,err)=>{im.onload=ok;im.onerror=err;im.src=url});return canvasFrom(im,im.naturalWidth,im.naturalHeight)}finally{URL.revokeObjectURL(url)}}
 async function barcodeFind(c){
  if("BarcodeDetector" in window){try{const d=new BarcodeDetector();const a=await d.detect(c);if(a.length)return a[0].rawValue}catch(e){}}
+ try{
+  if(!window.ZXing){if(!zxingPromise)zxingPromise=load("https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js").catch(e=>{zxingPromise=null;throw e});await zxingPromise}
+  if(window.ZXing?.BrowserMultiFormatReader){const reader=new ZXing.BrowserMultiFormatReader();try{return reader.decodeFromCanvas(c).getText()||""}catch(e){}}
+ }catch(e){}
  return "";
 }
+function choosePostal(lines){const l=lines.find(x=>/^\s*C\.?P\.?\s*:/i.test(x));return ((l||lines.join(" ")).match(/\b77\d{3}\b/)||[])[0]||""}
 function parse(text,bar){
  const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  const full=lines.join(" ").replace(/\s+/g," ");
- const cp=(full.match(/\b77\d{3}\b/)||[])[0]||"";
+ const cp=choosePostal(lines);
  const choose=(re)=>{for(const l of lines){const m=l.match(re);if(m)return m[1].trim()}return ""};
  let addr=choose(/(?:domicilio|direcci[oó]n|calle y n[uú]mero)\s*[:\-]?\s*(.+)/i);
  if(!addr)addr=lines.find(x=>/\b(?:avenida|av[. ]|calle|c\.\s*\d|prolongaci[oó]n|carretera)\b/i.test(x)&&!/\breferencia/i.test(x))||"";
@@ -57,20 +72,32 @@ function parse(text,bar){
  if(colonia)colonia=colonia.replace(/\s+(?:CP|C\.P\.|776\d\d)\b.*/i,"");
  let refs=choose(/\b(?:referencias?|entre calles?)\s*[:\-]?\s*(.+)/i);
  if(!refs){let i=lines.findIndex(x=>/^referencias?\s*[:\-]?\s*$/i.test(x));if(i>=0)refs=lines[i+1]||""}
- if(!bar)bar=(full.match(/\b\d{10,14}\b/)||[])[0]||"";
+ if(!bar){const list=full.match(/\b\d{10,14}\b/g)||[];bar=list.find(x=>x.startsWith("483"))||list[0]||""}
  return {barcode:bar,address:addr,colonia:colonia,cp:cp,references:refs,raw:text};
 }
-async function process(c){
- if(working)return;working=true;$("scan").disabled=true;$("result").hidden=true;
- const start=t0();
- try{const b=barcodeFind(c),w=ocr();const [bar,engine]=await Promise.all([b,w]);status("Leyendo etiqueta","Reconociendo texto y posibles códigos…");
- const r=await engine.recognize(c);
- const rec=parse(r?.data?.text||"",bar);for(const k of vals)$(k).value=rec[k]||"";
- $("result").hidden=false;
- status("Lectura terminada",((t0()-start)/1000).toFixed(1)+" s · Revisa y corrige lo necesario.");$("result").scrollIntoView({behavior:"smooth"});
- }catch(e){status("Lectura fallida","Prueba otra foto o revisa la conexión.",e.message||String(e))}
- finally{working=false;$("scan").disabled=!stream}
+
+function enhance(c){
+ const s=Math.max(1,Math.min(2.5,2400/Math.max(c.width,c.height))),out=document.createElement("canvas");out.width=Math.max(1,Math.round(c.width*s));out.height=Math.max(1,Math.round(c.height*s));const ctx=out.getContext("2d");ctx.drawImage(c,0,0,out.width,out.height);
+ if(s>1.05){const im=ctx.getImageData(0,0,out.width,out.height),p=im.data;for(let i=0;i<p.length;i+=4){const y=.299*p[i]+.587*p[i+1]+.114*p[i+2],v=Math.max(0,Math.min(255,(y-128)*1.3+128));p[i]=p[i+1]=p[i+2]=v}ctx.putImageData(im,0,0)}
+ return out;
 }
+async function analyze(c){
+ if(working)return;working=true;$("scan").disabled=true;$("readCrop").disabled=true;$("result").hidden=true;const start=t0();
+ try{
+  status("Analizando imagen","La fotografía procesada está visible arriba.");
+  const [b,w]=await Promise.all([barcodeFind(captured||c),ocr()]);
+  status("Reconociendo texto","Leyendo campos con OCR…");
+  const r=await w.recognize(enhance(c)),rec=parse(r?.data?.text||"",b);
+  for(const k of vals)$(k).value=rec[k]||"";
+  $("result").hidden=false;const missing=["barcode","address","cp","references"].filter(k=>!rec[k]);
+  $("quality").hidden=!missing.length;$("quality").textContent=missing.length?"LECTURA INCOMPLETA: faltan "+missing.map(k=>({barcode:"código",address:"domicilio",cp:"CP",references:"referencias"})[k]).join(", ")+". No usar para clasificar sin verificar.":"";
+  status("Lectura terminada",((t0()-start)/1000).toFixed(1)+" s · Compara el texto con la foto de arriba.");
+  $("result").scrollIntoView({behavior:"smooth"});
+ }catch(e){status("Error de OCR","Acerca el celular, mejora el enfoque o vuelve a leer un recorte.",e.message||String(e))}
+ finally{working=false;$("scan").disabled=!stream;$("readCrop").disabled=false}
+}
+async function process(c){showCapture(c);await analyze(c)}
+
 $("openCam").onclick=async()=>{if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;$("video").srcObject=null;$("cameraBox").classList.remove("on");$("openCam").textContent="Abrir cámara";$("scan").disabled=true;return}
  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1920}},audio:false});$("video").srcObject=stream;await $("video").play();$("cameraBox").classList.add("on");$("openCam").textContent="Cerrar cámara";$("scan").disabled=false;status("Cámara activa","Alinea la etiqueta y toca Capturar.")}
  catch(e){status("No se pudo abrir la cámara","Usa Foto / archivo como alternativa.",e.message||"Permiso denegado")}};
